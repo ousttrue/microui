@@ -105,7 +105,6 @@ enum {
   MU_KEY_RETURN       = (1 << 4)
 };
 
-
 typedef struct mu_Context mu_Context;
 typedef unsigned mu_Id;
 typedef MU_REAL mu_Real;

@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "cstdlib": "c",
+        "renderer.h": "c",
+        "microui.h": "c"
+    }
+}
