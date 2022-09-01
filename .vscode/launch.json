@@ -11,15 +11,14 @@
             "program": "${workspaceFolder}/build/demo/debug/demo.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}\\_external\\SDL2-2.24.0\\bin;${ENV:PATH}"
+                    "value": "${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
                 }
             ],
             "console": "integratedTerminal"
         }
-
     ]
 }
