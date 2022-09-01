@@ -30,7 +30,7 @@ static void test_window(mu_Context *ctx) {
       char buf[64];
       {
         int widths[] = {54, -1};
-        mu_layout_row(ctx, 2, widths, 0);
+        ctx->layout_stack.back().row(2, widths, 0);
       }
       mu_label(ctx, "Position:");
       sprintf(buf, "%d, %d", win->rect.x, win->rect.y);
@@ -44,7 +44,7 @@ static void test_window(mu_Context *ctx) {
     if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
       {
         int widths[] = {86, -110, -1};
-        mu_layout_row(ctx, 3, widths, 0);
+        ctx->layout_stack.back().row(3, widths, 0);
       }
       mu_label(ctx, "Test buttons 1:");
       if (mu_button(ctx, "Button 1")) {
@@ -71,7 +71,7 @@ static void test_window(mu_Context *ctx) {
     if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
       {
         int widths[] = {140, -1};
-        mu_layout_row(ctx, 2, widths, 0);
+        ctx->layout_stack.back().row(2, widths, 0);
       }
       mu_layout_begin_column(ctx);
       if (mu_begin_treenode(ctx, "Test 1")) {
@@ -94,7 +94,7 @@ static void test_window(mu_Context *ctx) {
       if (mu_begin_treenode(ctx, "Test 2")) {
         {
           int widths[] = {54, 54};
-          mu_layout_row(ctx, 2, widths, 0);
+          ctx->layout_stack.back().row(2, widths, 0);
         }
         if (mu_button(ctx, "Button 3")) {
           write_log("Pressed button 3");
@@ -122,7 +122,7 @@ static void test_window(mu_Context *ctx) {
       mu_layout_begin_column(ctx);
       {
         int widths[] = {-1};
-        mu_layout_row(ctx, 1, widths, 0);
+        ctx->layout_stack.back().row(1, widths, 0);
       }
       mu_text(
           ctx,
@@ -136,13 +136,13 @@ static void test_window(mu_Context *ctx) {
     if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
       {
         int widths[] = {-78, -1};
-        mu_layout_row(ctx, 2, widths, 74);
+        ctx->layout_stack.back().row(2, widths, 74);
       }
       /* sliders */
       mu_layout_begin_column(ctx);
       {
         int widths[] = {46, -1};
-        mu_layout_row(ctx, 2, widths, 0);
+        ctx->layout_stack.back().row(2, widths, 0);
       }
       mu_label(ctx, "Red:");
       mu_slider(ctx, &bg[0], 0, 255);
@@ -168,13 +168,13 @@ static void log_window(mu_Context *ctx) {
     /* output text panel */
     {
       int widths[] = {-1};
-      mu_layout_row(ctx, 1, widths, -25);
+      ctx->layout_stack.back().row(1, widths, -25);
     }
     mu_begin_panel(ctx, "Log Output");
     auto panel = mu_get_current_container(ctx);
     {
       int widths[] = {-1};
-      mu_layout_row(ctx, 1, widths, -1);
+      ctx->layout_stack.back().row(1, widths, -1);
     }
     mu_text(ctx, logbuf);
     mu_end_panel(ctx);
@@ -188,7 +188,7 @@ static void log_window(mu_Context *ctx) {
     int submitted = 0;
     {
       int widths[] = {-70, -1};
-      mu_layout_row(ctx, 2, widths, 0);
+      ctx->layout_stack.back().row(2, widths, 0);
     }
     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
       ctx->set_focus(ctx->last_id);
@@ -241,7 +241,7 @@ static void style_window(mu_Context *ctx) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
     {
       int widths[] = {80, sw, sw, sw, sw, -1};
-      mu_layout_row(ctx, 6, widths, 0);
+      ctx->layout_stack.back().row(6, widths, 0);
     }
     for (int i = 0; colors[i].label; i++) {
       mu_label(ctx, colors[i].label);

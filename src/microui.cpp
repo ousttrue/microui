@@ -141,16 +141,12 @@ static void push_layout(mu_Context *ctx, mu_Rect body, mu_Vec2 scroll) {
   layout.max = mu_Vec2(-0x1000000, -0x1000000);
   ctx->layout_stack.push(layout);
   int width = 0;
-  mu_layout_row(ctx, 1, &width, 0);
-}
-
-static mu_Layout *get_layout(mu_Context *ctx) {
-  return &ctx->layout_stack.back();
+  ctx->layout_stack.back().row(1, &width, 0);
 }
 
 static void pop_container(mu_Context *ctx) {
   mu_Container *cnt = mu_get_current_container(ctx);
-  mu_Layout *layout = get_layout(ctx);
+  mu_Layout *layout = &ctx->layout_stack.back();
   cnt->content_size.x = layout->max.x - layout->body.x;
   cnt->content_size.y = layout->max.y - layout->body.y;
   // pop container, layout and id
@@ -326,44 +322,32 @@ void mu_layout_begin_column(mu_Context *ctx) {
 }
 
 void mu_layout_end_column(mu_Context *ctx) {
-  auto b = get_layout(ctx);
+  auto b = &ctx->layout_stack.back();
   ctx->layout_stack.pop();
   // inherit position/next_row/max from child layout if they are greater
-  auto a = get_layout(ctx);
+  auto a = &ctx->layout_stack.back();
   a->position.x = mu_max(a->position.x, b->position.x + b->body.x - a->body.x);
   a->next_row = mu_max(a->next_row, b->next_row + b->body.y - a->body.y);
   a->max.x = mu_max(a->max.x, b->max.x);
   a->max.y = mu_max(a->max.y, b->max.y);
 }
 
-void mu_layout_row(mu_Context *ctx, int items, const int *widths, int height) {
-  mu_Layout *layout = get_layout(ctx);
-  if (widths) {
-    expect(items <= MU_MAX_WIDTHS);
-    memcpy(layout->widths, widths, items * sizeof(widths[0]));
-  }
-  layout->items = items;
-  layout->position = mu_Vec2(layout->indent, layout->next_row);
-  layout->size.y = height;
-  layout->item_index = 0;
-}
-
 void mu_layout_width(mu_Context *ctx, int width) {
-  get_layout(ctx)->size.x = width;
+  ctx->layout_stack.back().size.x = width;
 }
 
 void mu_layout_height(mu_Context *ctx, int height) {
-  get_layout(ctx)->size.y = height;
+  ctx->layout_stack.back().size.y = height;
 }
 
 void mu_layout_set_next(mu_Context *ctx, mu_Rect r, int relative) {
-  mu_Layout *layout = get_layout(ctx);
+  mu_Layout *layout = &ctx->layout_stack.back();
   layout->next = r;
   layout->next_type = relative ? RELATIVE : ABSOLUTE;
 }
 
 mu_Rect mu_layout_next(mu_Context *ctx) {
-  mu_Layout *layout = get_layout(ctx);
+  mu_Layout *layout = &ctx->layout_stack.back();
   mu_Style *style = ctx->style;
   mu_Rect res;
 
@@ -379,7 +363,7 @@ mu_Rect mu_layout_next(mu_Context *ctx) {
   } else {
     // handle next row
     if (layout->item_index == layout->items) {
-      mu_layout_row(ctx, layout->items, nullptr, layout->size.y);
+      ctx->layout_stack.back().row(layout->items, nullptr, layout->size.y);
     }
 
     // position
@@ -507,7 +491,7 @@ void mu_text(mu_Context *ctx, const char *text) {
   mu_Font font = ctx->style->font;
   mu_Color color = ctx->style->colors[MU_COLOR_TEXT];
   mu_layout_begin_column(ctx);
-  mu_layout_row(ctx, 1, &width, ctx->text_height(font));
+  ctx->layout_stack.back().row(1, &width, ctx->text_height(font));
   do {
     mu_Rect r = mu_layout_next(ctx);
     int w = 0;
@@ -738,7 +722,7 @@ static int header(mu_Context *ctx, const char *label, int istreenode, int opt) {
   mu_Id id = mu_get_id(ctx, label, strlen(label));
   int idx = mu_pool_get(ctx, ctx->treenode_pool, MU_TREENODEPOOL_SIZE, id);
   int width = -1;
-  mu_layout_row(ctx, 1, &width, 0);
+  ctx->layout_stack.back().row(1, &width, 0);
 
   active = (idx >= 0);
   expanded = (opt & MU_OPT_EXPANDED) ? !active : active;
@@ -783,14 +767,14 @@ int mu_header_ex(mu_Context *ctx, const char *label, int opt) {
 int mu_begin_treenode_ex(mu_Context *ctx, const char *label, int opt) {
   int res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
-    get_layout(ctx)->indent += ctx->style->indent;
+    ctx->layout_stack.back().indent += ctx->style->indent;
     ctx->id_stack.push(ctx->last_id);
   }
   return res;
 }
 
 void mu_end_treenode(mu_Context *ctx) {
-  get_layout(ctx)->indent -= ctx->style->indent;
+  ctx->layout_stack.back().indent -= ctx->style->indent;
   mu_pop_id(ctx);
 }
 
@@ -959,7 +943,7 @@ int mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
 
   // resize to content size
   if (opt & MU_OPT_AUTOSIZE) {
-    mu_Rect r = get_layout(ctx)->body;
+    mu_Rect r = ctx->layout_stack.back().body;
     cnt->rect.w = cnt->content_size.x + (cnt->rect.w - r.w);
     cnt->rect.h = cnt->content_size.y + (cnt->rect.h - r.h);
   }
