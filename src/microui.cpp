@@ -37,9 +37,7 @@
     }                                                                          \
   } while (0)
 
-
 static mu_Rect unclipped_rect = {0, 0, 0x1000000, 0x1000000};
-
 
 static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
   mu_draw_rect(ctx, rect, ctx->style->colors[colorid]);
@@ -62,8 +60,8 @@ void mu_init(mu_Context *ctx) {
 
 void mu_begin(mu_Context *ctx) {
   expect(ctx->text_width && ctx->text_height);
-  ctx->command_list.idx = 0;
-  ctx->root_list.idx = 0;
+  ctx->command_list.clear();
+  ctx->root_list.clear();
   ctx->scroll_target = nullptr;
   ctx->hover_root = ctx->next_hover_root;
   ctx->next_hover_root = nullptr;
@@ -79,10 +77,10 @@ static int compare_zindex(const void *a, const void *b) {
 void mu_end(mu_Context *ctx) {
   int i, n;
   /* check stacks */
-  expect(ctx->container_stack.idx == 0);
-  expect(ctx->clip_stack.idx == 0);
-  expect(ctx->id_stack.idx == 0);
-  expect(ctx->layout_stack.idx == 0);
+  expect(ctx->container_stack.size() == 0);
+  expect(ctx->clip_stack.size() == 0);
+  expect(ctx->id_stack.size() == 0);
+  expect(ctx->layout_stack.size() == 0);
 
   /* handle scroll input */
   if (ctx->scroll_target) {
@@ -108,28 +106,27 @@ void mu_end(mu_Context *ctx) {
   ctx->last_mouse_pos = ctx->mouse_pos;
 
   /* sort root containers by zindex */
-  n = ctx->root_list.idx;
-  qsort(ctx->root_list.items, n, sizeof(mu_Container *), compare_zindex);
+  n = ctx->root_list.size();
+  qsort(ctx->root_list.data(), n, sizeof(mu_Container *), compare_zindex);
 
   /* set root container jump commands */
   for (i = 0; i < n; i++) {
-    mu_Container *cnt = ctx->root_list.items[i];
+    mu_Container *cnt = ctx->root_list.get(i);
     /* if this is the first container then make the first command jump to it.
     ** otherwise set the previous container's tail to jump to this one */
     if (i == 0) {
-      mu_Command *cmd = (mu_Command *)ctx->command_list.items;
+      mu_Command *cmd = (mu_Command *)ctx->command_list.data();
       cmd->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
     } else {
-      mu_Container *prev = ctx->root_list.items[i - 1];
+      mu_Container *prev = ctx->root_list.get(i - 1);
       prev->tail->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
     }
     /* make the last container's tail jump to the end of command list */
     if (i == n - 1) {
-      cnt->tail->jump.dst = ctx->command_list.items + ctx->command_list.idx;
+      cnt->tail->jump.dst = ctx->command_list.next();
     }
   }
 }
-
 
 /* 32bit fnv-1a hash */
 #define HASH_INITIAL 2166136261
@@ -916,7 +913,7 @@ void mu_end_treenode(mu_Context *ctx) {
                                                                                \
       /* handle input */                                                       \
       mu_update_control(ctx, id, base, 0);                                     \
-      if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {              \
+      if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {            \
         cnt->scroll.y += ctx->mouse_delta.y * cs.y / base.h;                   \
       }                                                                        \
       /* clamp scroll to limits */                                             \

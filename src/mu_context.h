@@ -5,10 +5,22 @@
 #include "mu_style.h"
 #include <assert.h>
 
-template <typename T, size_t N> struct mu_Stack {
-  int idx = 0;
+template <typename T, size_t N> class mu_Stack {
+public:
   T items[N];
-
+  int idx = 0;
+  const T *data() const { return &items[0]; }
+  T *data() { return &items[0]; }
+  int size() const { return idx; }
+  const T &get(int i) const { return items[i]; }
+  T &get(int i) { return items[i]; }
+  T &back() { return items[idx - 1]; }
+  T *next() { return items + idx; }
+  void grow(int size) {
+    assert(idx + size < N);
+    idx += size;
+  }
+  const T &back() const { return items[idx - 1]; }
   void push(const T &val) {
     assert(this->idx < (int)(sizeof(this->items) / sizeof(*this->items)));
     this->items[this->idx] = (val);
@@ -19,6 +31,8 @@ template <typename T, size_t N> struct mu_Stack {
     assert(this->idx > 0);
     this->idx--;
   }
+
+  void clear() { idx = 0; }
 };
 
 #define MU_COMMANDLIST_SIZE (256 * 1024)
