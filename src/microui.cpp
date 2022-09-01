@@ -309,15 +309,7 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
     ctx->_command_stack.set_clip(ctx->clip_stack.back());
   }
   // add command
-  if (len < 0) {
-    len = strlen(str);
-  }
-  cmd = ctx->_command_stack.push_command(MU_COMMAND::TEXT, sizeof(mu_TextCommand) + len);
-  memcpy(cmd->text.str, str, len);
-  cmd->text.str[len] = '\0';
-  cmd->text.pos = pos;
-  cmd->text.color = color;
-  cmd->text.font = font;
+  ctx->_command_stack.push_text(str, len, pos, color, font);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
     ctx->_command_stack.set_clip(unclipped_rect);
@@ -334,10 +326,7 @@ void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
     ctx->_command_stack.set_clip(ctx->clip_stack.back());
   }
   // do icon command
-  auto cmd = ctx->_command_stack.push_command(MU_COMMAND::ICON, sizeof(mu_IconCommand));
-  cmd->icon.id = id;
-  cmd->icon.rect = rect;
-  cmd->icon.color = color;
+  ctx->_command_stack.push_icon(id, rect, color);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
     ctx->_command_stack.set_clip(unclipped_rect);

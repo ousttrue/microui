@@ -5,41 +5,6 @@
 #include "mu_style.h"
 #include <assert.h>
 
-template <typename T, size_t N> class mu_Stack {
-  T items[N];
-  int idx = 0;
-
-public:
-  const T *begin() const { return items; }
-  T *begin() { return items; }
-  T *end() { return items + idx; }
-  int size() const { return idx; }
-  const T &get(int i) const { return items[i]; }
-  T &get(int i) { return items[i]; }
-  T &back() {
-    assert(idx > 0);
-    return items[idx - 1];
-  }
-  void grow(int size) {
-    assert(idx + size < N);
-    idx += size;
-  }
-  const T &back() const { return items[idx - 1]; }
-  void push(const T &val) {
-    assert(this->idx < (int)(sizeof(this->items) / sizeof(*this->items)));
-    this->items[this->idx] = (val);
-    this->idx++; /* incremented after incase `val` uses this value */
-  }
-
-  void pop() {
-    assert(this->idx > 0);
-    this->idx--;
-  }
-
-  void clear() { idx = 0; }
-};
-
-#define MU_COMMANDLIST_SIZE (256 * 1024)
 #define MU_ROOTLIST_SIZE 32
 #define MU_CONTAINERSTACK_SIZE 32
 #define MU_CLIPSTACK_SIZE 32
@@ -49,47 +14,6 @@ public:
 #define MU_TREENODEPOOL_SIZE 48
 
 enum class MU_CLIP : unsigned int { NONE, PART, ALL };
-
-class CommandStack {
-public:
-  mu_Stack<char, MU_COMMANDLIST_SIZE> _command_list;
-
-  void begin_frame() { _command_list.clear(); }
-
-  mu_Command *push_command(MU_COMMAND type, int size) {
-    mu_Command *cmd = (mu_Command *)(this->_command_list.end());
-    cmd->base.type = type;
-    cmd->base.size = size;
-    this->_command_list.grow(size);
-    return cmd;
-  }
-
-  mu_Command *push_jump(mu_Command *dst) {
-    auto cmd = push_command(MU_COMMAND::JUMP, sizeof(mu_JumpCommand));
-    cmd->jump.dst = dst;
-    return cmd;
-  }
-
-  void set_clip(mu_Rect rect) {
-    auto cmd = push_command(MU_COMMAND::CLIP, sizeof(mu_ClipCommand));
-    cmd->clip.rect = rect;
-  }
-
-  int mu_next_command(mu_Command **cmd) {
-    if (*cmd) {
-      *cmd = (mu_Command *)(((char *)*cmd) + (*cmd)->base.size);
-    } else {
-      *cmd = (mu_Command *)_command_list.begin();
-    }
-    while ((char *)*cmd != _command_list.end()) {
-      if ((*cmd)->type != MU_COMMAND::JUMP) {
-        return 1;
-      }
-      *cmd = (mu_Command *)((*cmd)->jump.dst);
-    }
-    return 0;
-  }
-};
 
 struct mu_Context {
   /* callbacks */
@@ -117,10 +41,7 @@ public:
   void draw_rect(mu_Rect rect, mu_Color color) {
     rect = rect.intersect(this->clip_stack.back());
     if (rect.w > 0 && rect.h > 0) {
-      auto cmd =
-          _command_stack.push_command(MU_COMMAND::RECT, sizeof(mu_RectCommand));
-      cmd->rect.rect = rect;
-      cmd->rect.color = color;
+      _command_stack.push_rect(rect, color);
     }
   }
 
