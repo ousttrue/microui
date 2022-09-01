@@ -21,6 +21,7 @@
 */
 
 #include "microui.h"
+#include "mu_layout.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

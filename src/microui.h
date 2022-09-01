@@ -10,25 +10,12 @@
 
 #define MU_VERSION "2.01"
 
-#define MU_COMMANDLIST_SIZE (256 * 1024)
-#define MU_ROOTLIST_SIZE 32
-#define MU_CONTAINERSTACK_SIZE 32
-#define MU_CLIPSTACK_SIZE 32
-#define MU_IDSTACK_SIZE 32
-#define MU_LAYOUTSTACK_SIZE 16
-#define MU_CONTAINERPOOL_SIZE 48
-#define MU_TREENODEPOOL_SIZE 48
-#define MU_MAX_WIDTHS 16
+
 #define MU_REAL float
 #define MU_REAL_FMT "%.3g"
 #define MU_SLIDER_FMT "%.2f"
 #define MU_MAX_FMT 127
 
-#define mu_stack(T, n)                                                         \
-  struct {                                                                     \
-    int idx;                                                                   \
-    T items[n];                                                                \
-  }
 #define mu_min(a, b) ((a) < (b) ? (a) : (b))
 #define mu_max(a, b) ((a) > (b) ? (a) : (b))
 #define mu_clamp(x, a, b) mu_min(b, mu_max(a, x))
@@ -42,24 +29,6 @@ enum {
   MU_COMMAND_TEXT,
   MU_COMMAND_ICON,
   MU_COMMAND_MAX
-};
-
-enum {
-  MU_COLOR_TEXT,
-  MU_COLOR_BORDER,
-  MU_COLOR_WINDOWBG,
-  MU_COLOR_TITLEBG,
-  MU_COLOR_TITLETEXT,
-  MU_COLOR_PANELBG,
-  MU_COLOR_BUTTON,
-  MU_COLOR_BUTTONHOVER,
-  MU_COLOR_BUTTONFOCUS,
-  MU_COLOR_BASE,
-  MU_COLOR_BASEHOVER,
-  MU_COLOR_BASEFOCUS,
-  MU_COLOR_SCROLLBASE,
-  MU_COLOR_SCROLLTHUMB,
-  MU_COLOR_MAX
 };
 
 enum {
@@ -110,149 +79,12 @@ typedef unsigned mu_Id;
 typedef MU_REAL mu_Real;
 typedef void *mu_Font;
 
-struct mu_Vec2 {
-  int x, y;
-  mu_Vec2() : x(0), y(0) {}
-  mu_Vec2(int x, int y) : x(x), y(y) {}
-};
-
-struct mu_Rect {
-  int x, y, w, h;
-  mu_Rect() : x(0), y(0), w(0), h(0) {}
-  mu_Rect(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
-  mu_Rect expand(int n) const {
-    return mu_Rect(x - n, y - n, w + n * 2, h + n * 2);
-  }
-};
-
-struct mu_Color {
-  unsigned char r, g, b, a;
-  mu_Color(int r, int g, int b, int a) : r(r), g(g), b(b), a(a) {}
-};
-
 struct mu_PoolItem {
   mu_Id id;
   int last_update;
 };
 
-struct mu_BaseCommand {
-  int type, size;
-};
-struct mu_JumpCommand {
-  mu_BaseCommand base;
-  void *dst;
-};
-struct mu_ClipCommand {
-  mu_BaseCommand base;
-  mu_Rect rect;
-};
-struct mu_RectCommand {
-  mu_BaseCommand base;
-  mu_Rect rect;
-  mu_Color color;
-};
-struct mu_TextCommand {
-  mu_BaseCommand base;
-  mu_Font font;
-  mu_Vec2 pos;
-  mu_Color color;
-  char str[1];
-};
-struct mu_IconCommand {
-  mu_BaseCommand base;
-  mu_Rect rect;
-  int id;
-  mu_Color color;
-};
-
-union mu_Command {
-  int type;
-  mu_BaseCommand base;
-  mu_JumpCommand jump;
-  mu_ClipCommand clip;
-  mu_RectCommand rect;
-  mu_TextCommand text;
-  mu_IconCommand icon;
-};
-
-struct mu_Layout {
-  mu_Rect body;
-  mu_Rect next;
-  mu_Vec2 position;
-  mu_Vec2 size;
-  mu_Vec2 max;
-  int widths[MU_MAX_WIDTHS];
-  int items;
-  int item_index;
-  int next_row;
-  int next_type;
-  int indent;
-};
-
-struct mu_Container {
-  mu_Command *head, *tail;
-  mu_Rect rect;
-  mu_Rect body;
-  mu_Vec2 content_size;
-  mu_Vec2 scroll;
-  int zindex;
-  int open;
-};
-
-struct mu_Style {
-  mu_Font font;
-  mu_Vec2 size;
-  int padding;
-  int spacing;
-  int indent;
-  int title_height;
-  int scrollbar_size;
-  int thumb_size;
-  mu_Color colors[MU_COLOR_MAX];
-};
-
-struct mu_Context {
-  /* callbacks */
-  int (*text_width)(mu_Font font, const char *str, int len);
-  int (*text_height)(mu_Font font);
-  void (*draw_frame)(mu_Context *ctx, mu_Rect rect, int colorid);
-  /* core state */
-  mu_Style _style;
-  mu_Style *style;
-  mu_Id hover;
-  mu_Id focus;
-  mu_Id last_id;
-  mu_Rect last_rect;
-  int last_zindex;
-  int updated_focus;
-  int frame;
-  mu_Container *hover_root;
-  mu_Container *next_hover_root;
-  mu_Container *scroll_target;
-  char number_edit_buf[MU_MAX_FMT];
-  mu_Id number_edit;
-  /* stacks */
-  mu_stack(char, MU_COMMANDLIST_SIZE) command_list;
-  mu_stack(mu_Container *, MU_ROOTLIST_SIZE) root_list;
-  mu_stack(mu_Container *, MU_CONTAINERSTACK_SIZE) container_stack;
-  mu_stack(mu_Rect, MU_CLIPSTACK_SIZE) clip_stack;
-  mu_stack(mu_Id, MU_IDSTACK_SIZE) id_stack;
-  mu_stack(mu_Layout, MU_LAYOUTSTACK_SIZE) layout_stack;
-  /* retained state pools */
-  mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE];
-  mu_Container containers[MU_CONTAINERPOOL_SIZE];
-  mu_PoolItem treenode_pool[MU_TREENODEPOOL_SIZE];
-  /* input state */
-  mu_Vec2 mouse_pos;
-  mu_Vec2 last_mouse_pos;
-  mu_Vec2 mouse_delta;
-  mu_Vec2 scroll_delta;
-  int mouse_down;
-  int mouse_pressed;
-  int key_down;
-  int key_pressed;
-  char input_text[32];
-};
+#include "mu_context.h"
 
 void mu_init(mu_Context *ctx);
 void mu_begin(mu_Context *ctx);
