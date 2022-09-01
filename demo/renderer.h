@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "microui.h"
+#include <microui.h>
 
 void r_init(void);
 void r_resize(int w, int h);

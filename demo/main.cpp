@@ -1,8 +1,16 @@
-#include "microui.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "renderer.h"
+#include <microui.h>
+#ifdef __cplusplus
+}
+#endif
+
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static char logbuf[64000];
 static int logbuf_updated = 0;
@@ -19,15 +27,18 @@ static void write_log(const char *text) {
 static void test_window(mu_Context *ctx) {
   /* do window */
   if (mu_begin_window(ctx, "Demo Window", mu_rect(40, 40, 300, 450))) {
-    mu_Container *win = mu_get_current_container(ctx);
+    auto win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 300);
 
     /* window info */
     if (mu_header(ctx, "Window Info")) {
-      mu_Container *win = mu_get_current_container(ctx);
+      auto win = mu_get_current_container(ctx);
       char buf[64];
-      mu_layout_row(ctx, 2, (int[]){54, -1}, 0);
+      {
+        int widths[] = {54, -1};
+        mu_layout_row(ctx, 2, widths, 0);
+      }
       mu_label(ctx, "Position:");
       sprintf(buf, "%d, %d", win->rect.x, win->rect.y);
       mu_label(ctx, buf);
@@ -38,7 +49,10 @@ static void test_window(mu_Context *ctx) {
 
     /* labels + buttons */
     if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 3, (int[]){86, -110, -1}, 0);
+      {
+        int widths[] = {86, -110, -1};
+        mu_layout_row(ctx, 3, widths, 0);
+      }
       mu_label(ctx, "Test buttons 1:");
       if (mu_button(ctx, "Button 1")) {
         write_log("Pressed button 1");
@@ -62,7 +76,10 @@ static void test_window(mu_Context *ctx) {
 
     /* tree */
     if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 2, (int[]){140, -1}, 0);
+      {
+        int widths[] = {140, -1};
+        mu_layout_row(ctx, 2, widths, 0);
+      }
       mu_layout_begin_column(ctx);
       if (mu_begin_treenode(ctx, "Test 1")) {
         if (mu_begin_treenode(ctx, "Test 1a")) {
@@ -82,7 +99,10 @@ static void test_window(mu_Context *ctx) {
         mu_end_treenode(ctx);
       }
       if (mu_begin_treenode(ctx, "Test 2")) {
-        mu_layout_row(ctx, 2, (int[]){54, 54}, 0);
+        {
+          int widths[] = {54, 54};
+          mu_layout_row(ctx, 2, widths, 0);
+        }
         if (mu_button(ctx, "Button 3")) {
           write_log("Pressed button 3");
         }
@@ -107,7 +127,10 @@ static void test_window(mu_Context *ctx) {
       mu_layout_end_column(ctx);
 
       mu_layout_begin_column(ctx);
-      mu_layout_row(ctx, 1, (int[]){-1}, 0);
+      {
+        int widths[] = {-1};
+        mu_layout_row(ctx, 1, widths, 0);
+      }
       mu_text(
           ctx,
           "Lorem ipsum dolor sit amet, consectetur adipiscing "
@@ -118,10 +141,16 @@ static void test_window(mu_Context *ctx) {
 
     /* background color sliders */
     if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 2, (int[]){-78, -1}, 74);
+      {
+        int widths[] = {-78, -1};
+        mu_layout_row(ctx, 2, widths, 74);
+      }
       /* sliders */
       mu_layout_begin_column(ctx);
-      mu_layout_row(ctx, 2, (int[]){46, -1}, 0);
+      {
+        int widths[] = {46, -1};
+        mu_layout_row(ctx, 2, widths, 0);
+      }
       mu_label(ctx, "Red:");
       mu_slider(ctx, &bg[0], 0, 255);
       mu_label(ctx, "Green:");
@@ -144,10 +173,16 @@ static void test_window(mu_Context *ctx) {
 static void log_window(mu_Context *ctx) {
   if (mu_begin_window(ctx, "Log Window", mu_rect(350, 40, 300, 200))) {
     /* output text panel */
-    mu_layout_row(ctx, 1, (int[]){-1}, -25);
+    {
+      int widths[] = {-1};
+      mu_layout_row(ctx, 1, widths, -25);
+    }
     mu_begin_panel(ctx, "Log Output");
-    mu_Container *panel = mu_get_current_container(ctx);
-    mu_layout_row(ctx, 1, (int[]){-1}, -1);
+    auto panel = mu_get_current_container(ctx);
+    {
+      int widths[] = {-1};
+      mu_layout_row(ctx, 1, widths, -1);
+    }
     mu_text(ctx, logbuf);
     mu_end_panel(ctx);
     if (logbuf_updated) {
@@ -158,7 +193,10 @@ static void log_window(mu_Context *ctx) {
     /* input textbox + submit button */
     static char buf[128];
     int submitted = 0;
-    mu_layout_row(ctx, 2, (int[]){-70, -1}, 0);
+    {
+      int widths[] = {-70, -1};
+      mu_layout_row(ctx, 2, widths, 0);
+    }
     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
       mu_set_focus(ctx, ctx->last_id);
       submitted = 1;
@@ -208,7 +246,10 @@ static void style_window(mu_Context *ctx) {
 
   if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
-    mu_layout_row(ctx, 6, (int[]){80, sw, sw, sw, sw, -1}, 0);
+    {
+      int widths[] = {80, sw, sw, sw, sw, -1};
+      mu_layout_row(ctx, 6, widths, 0);
+    }
     for (int i = 0; colors[i].label; i++) {
       mu_label(ctx, colors[i].label);
       uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
@@ -259,7 +300,8 @@ int mouse_x = 0;
 int mouse_y = 0;
 static void cursor_position_callback(GLFWwindow *window, double xpos,
                                      double ypos) {
-  mu_input_mousemove(glfwGetWindowUserPointer(window), xpos, ypos);
+  mu_input_mousemove((mu_Context *)glfwGetWindowUserPointer(window), xpos,
+                     ypos);
   mouse_x = xpos;
   mouse_y = ypos;
 }
@@ -268,14 +310,17 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
                            int mods) {
   int b = button_map[button];
   if (action == GLFW_PRESS) {
-    mu_input_mousedown(glfwGetWindowUserPointer(window), mouse_x, mouse_y, b);
+    mu_input_mousedown((mu_Context *)glfwGetWindowUserPointer(window), mouse_x,
+                       mouse_y, b);
   } else if (action == GLFW_RELEASE) {
-    mu_input_mouseup(glfwGetWindowUserPointer(window), mouse_x, mouse_y, b);
+    mu_input_mouseup((mu_Context *)glfwGetWindowUserPointer(window), mouse_x,
+                     mouse_y, b);
   }
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  mu_input_scroll(glfwGetWindowUserPointer(window), xoffset, yoffset);
+  mu_input_scroll((mu_Context *)glfwGetWindowUserPointer(window), xoffset,
+                  yoffset);
 }
 
 int main(int argc, char **argv) {
@@ -295,7 +340,7 @@ int main(int argc, char **argv) {
   r_init();
 
   // init microui
-  mu_Context *ctx = malloc(sizeof(mu_Context));
+  auto ctx = (mu_Context *)malloc(sizeof(mu_Context));
   mu_init(ctx);
   glfwSetWindowUserPointer(window, ctx);
   ctx->text_width = text_width;
