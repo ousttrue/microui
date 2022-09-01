@@ -108,24 +108,6 @@ void mu_end(mu_Context *ctx) {
   // sort root containers by zindex
   n = ctx->root_list.size();
   qsort(ctx->root_list.begin(), n, sizeof(mu_Container *), compare_zindex);
-
-  // set root container jump commands
-  for (i = 0; i < n; i++) {
-    mu_Container *cnt = ctx->root_list.get(i);
-    /* if this is the first container then make the first command jump to it.
-    ** otherwise set the previous container's tail to jump to this one */
-    if (i == 0) {
-      mu_Command *cmd = (mu_Command *)ctx->_command_stack._command_list.begin();
-      cmd->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
-    } else {
-      mu_Container *prev = ctx->root_list.get(i - 1);
-      prev->tail->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
-    }
-    // make the last container's tail jump to the end of command list
-    if (i == n - 1) {
-      cnt->tail->jump.dst = ctx->_command_stack._command_list.end();
-    }
-  }
 }
 
 // 32bit fnv-1a hash
@@ -884,7 +866,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   ctx->container_stack.push(cnt);
   // push container to roots list and push head command
   ctx->root_list.push(cnt);
-  cnt->head = ctx->_command_stack.push_jump(nullptr);
+  cnt->head = ctx->_command_stack.size();
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
   if (cnt->rect.overlaps_vec2(ctx->mouse_pos) &&
@@ -901,8 +883,7 @@ static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
   mu_Container *cnt = mu_get_current_container(ctx);
-  cnt->tail = ctx->_command_stack.push_jump(nullptr);
-  cnt->head->jump.dst = ctx->_command_stack._command_list.end();
+  cnt->tail = ctx->_command_stack.size();
   // pop base clip rect and container
   ctx->pop_clip_rect();
   pop_container(ctx);

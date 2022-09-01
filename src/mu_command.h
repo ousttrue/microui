@@ -6,15 +6,11 @@
 #include "mu_vec2.h"
 #include <string.h>
 
-enum class MU_COMMAND { JUMP = 1, CLIP, RECT, TEXT, ICON, MAX };
+enum class MU_COMMAND { CLIP, RECT, TEXT, ICON };
 
 struct mu_BaseCommand {
   MU_COMMAND type;
   int size;
-};
-struct mu_JumpCommand {
-  mu_BaseCommand base;
-  void *dst;
 };
 struct mu_ClipCommand {
   mu_BaseCommand base;
@@ -42,18 +38,20 @@ struct mu_IconCommand {
 union mu_Command {
   MU_COMMAND type;
   mu_BaseCommand base;
-  mu_JumpCommand jump;
   mu_ClipCommand clip;
   mu_RectCommand rect;
   mu_TextCommand text;
   mu_IconCommand icon;
 };
 
-#define MU_COMMANDLIST_SIZE (256 * 1024)
+const size_t MU_COMMANDLIST_SIZE = (256 * 1024);
 
 class CommandStack {
-public:
   mu_Stack<char, MU_COMMANDLIST_SIZE> _command_list;
+
+public:
+  size_t size() const { return _command_list.size(); }
+  char *get(size_t i) { return &_command_list.get(i); }
 
   void begin_frame() { _command_list.clear(); }
 
@@ -62,12 +60,6 @@ public:
     cmd->base.type = type;
     cmd->base.size = size;
     this->_command_list.grow(size);
-    return cmd;
-  }
-
-  mu_Command *push_jump(mu_Command *dst) {
-    auto cmd = push_command(MU_COMMAND::JUMP, sizeof(mu_JumpCommand));
-    cmd->jump.dst = dst;
     return cmd;
   }
 
@@ -100,20 +92,5 @@ public:
     auto cmd = push_command(MU_COMMAND::RECT, sizeof(mu_RectCommand));
     cmd->rect.rect = rect;
     cmd->rect.color = color;
-  }
-
-  int mu_next_command(mu_Command **cmd) {
-    if (*cmd) {
-      *cmd = (mu_Command *)(((char *)*cmd) + (*cmd)->base.size);
-    } else {
-      *cmd = (mu_Command *)_command_list.begin();
-    }
-    while ((char *)*cmd != _command_list.end()) {
-      if ((*cmd)->type != MU_COMMAND::JUMP) {
-        return 1;
-      }
-      *cmd = (mu_Command *)((*cmd)->jump.dst);
-    }
-    return 0;
   }
 };

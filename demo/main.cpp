@@ -376,21 +376,28 @@ int main(int argc, char **argv) {
     glViewport(0, 0, width, height);
     glScissor(0, 0, width, height);
     r_clear(mu_Color(bg[0], bg[1], bg[2], 255));
-    mu_Command *cmd = NULL;
-    while (ctx->_command_stack.mu_next_command(&cmd)) {
-      switch (cmd->type) {
-      case MU_COMMAND::TEXT:
-        r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
-        break;
-      case MU_COMMAND::RECT:
-        r_draw_rect(cmd->rect.rect, cmd->rect.color);
-        break;
-      case MU_COMMAND::ICON:
-        r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
-        break;
-      case MU_COMMAND::CLIP:
-        r_set_clip_rect(cmd->clip.rect);
-        break;
+
+    auto end = ctx->root_list.end();
+    for (auto it = ctx->root_list.begin(); it != end; ++it) {
+      auto tail = ctx->_command_stack.get((*it)->tail);
+      mu_Command *cmd = nullptr;
+      for (auto p = ctx->_command_stack.get((*it)->head); p != tail;
+           p = p + cmd->base.size) {
+        cmd = (mu_Command *)p;
+        switch (cmd->type) {
+        case MU_COMMAND::TEXT:
+          r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
+          break;
+        case MU_COMMAND::RECT:
+          r_draw_rect(cmd->rect.rect, cmd->rect.color);
+          break;
+        case MU_COMMAND::ICON:
+          r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
+          break;
+        case MU_COMMAND::CLIP:
+          r_set_clip_rect(cmd->clip.rect);
+          break;
+        }
       }
     }
     flush();
