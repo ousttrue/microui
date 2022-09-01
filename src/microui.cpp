@@ -134,15 +134,6 @@ void mu_push_id(mu_Context *ctx, const void *data, int size) {
 
 void mu_pop_id(mu_Context *ctx) { ctx->id_stack.pop(); }
 
-static void push_layout(mu_Context *ctx, mu_Rect body, mu_Vec2 scroll) {
-  mu_Layout layout;
-  memset(&layout, 0, sizeof(layout));
-  layout.body = mu_Rect(body.x - scroll.x, body.y - scroll.y, body.w, body.h);
-  layout.max = mu_Vec2(-0x1000000, -0x1000000);
-  ctx->layout_stack.push(layout);
-  int width = 0;
-  ctx->layout_stack.back().row(1, &width, 0);
-}
 
 static void pop_container(mu_Context *ctx) {
   mu_Container *cnt = mu_get_current_container(ctx);
@@ -318,7 +309,7 @@ void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
 enum { RELATIVE = 1, ABSOLUTE = 2 };
 
 void mu_layout_begin_column(mu_Context *ctx) {
-  push_layout(ctx, mu_layout_next(ctx), mu_Vec2(0, 0));
+  ctx->layout_stack.push(mu_Layout(mu_layout_next(ctx), mu_Vec2(0, 0)));
 }
 
 void mu_layout_end_column(mu_Context *ctx) {
@@ -842,7 +833,7 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt,
   if (~opt & MU_OPT_NOSCROLL) {
     scrollbars(ctx, cnt, &body);
   }
-  push_layout(ctx, body.expand(-ctx->style->padding), cnt->scroll);
+  ctx->layout_stack.push(mu_Layout(body.expand(-ctx->style->padding), cnt->scroll));
   cnt->body = body;
 }
 
