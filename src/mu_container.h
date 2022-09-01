@@ -12,4 +12,15 @@ struct mu_Container {
   mu_Vec2 scroll;
   int zindex;
   int open;
+
+  void init() {
+    head = 0;
+    tail = 0;
+    rect = {};
+    body = {};
+    content_size = {};
+    scroll = {};
+    zindex = 0;
+    open = 1;
+  }
 };

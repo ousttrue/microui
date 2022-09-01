@@ -166,8 +166,7 @@ static mu_Container *get_container(mu_Context *ctx, mu_Id id, int opt) {
   // container not found in pool: init new container
   idx = mu_pool_init(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
   cnt = &ctx->containers[idx];
-  memset(cnt, 0, sizeof(*cnt));
-  cnt->open = 1;
+  cnt->init();
   mu_bring_to_front(ctx, cnt);
   return cnt;
 }
