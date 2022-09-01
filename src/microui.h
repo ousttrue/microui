@@ -19,16 +19,6 @@
 #define mu_max(a, b) ((a) > (b) ? (a) : (b))
 #define mu_clamp(x, a, b) mu_min(b, mu_max(a, x))
 
-
-enum {
-  MU_COMMAND_JUMP = 1,
-  MU_COMMAND_CLIP,
-  MU_COMMAND_RECT,
-  MU_COMMAND_TEXT,
-  MU_COMMAND_ICON,
-  MU_COMMAND_MAX
-};
-
 enum {
   MU_ICON_CLOSE = 1,
   MU_ICON_CHECK,

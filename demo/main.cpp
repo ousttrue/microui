@@ -379,16 +379,16 @@ int main(int argc, char **argv) {
     mu_Command *cmd = NULL;
     while (mu_next_command(ctx, &cmd)) {
       switch (cmd->type) {
-      case MU_COMMAND_TEXT:
+      case MU_COMMAND::TEXT:
         r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
         break;
-      case MU_COMMAND_RECT:
+      case MU_COMMAND::RECT:
         r_draw_rect(cmd->rect.rect, cmd->rect.color);
         break;
-      case MU_COMMAND_ICON:
+      case MU_COMMAND::ICON:
         r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
         break;
-      case MU_COMMAND_CLIP:
+      case MU_COMMAND::CLIP:
         r_set_clip_rect(cmd->clip.rect);
         break;
       }

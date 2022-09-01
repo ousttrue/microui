@@ -294,7 +294,7 @@ int mu_next_command(mu_Context *ctx, mu_Command **cmd) {
     *cmd = (mu_Command *)ctx->command_list.data();
   }
   while ((char *)*cmd != ctx->command_list.next()) {
-    if ((*cmd)->type != MU_COMMAND_JUMP) {
+    if ((*cmd)->type != MU_COMMAND::JUMP) {
       return 1;
     }
     *cmd = (mu_Command *)((*cmd)->jump.dst);
@@ -325,7 +325,7 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
   if (len < 0) {
     len = strlen(str);
   }
-  cmd = ctx->push_command(MU_COMMAND_TEXT, sizeof(mu_TextCommand) + len);
+  cmd = ctx->push_command(MU_COMMAND::TEXT, sizeof(mu_TextCommand) + len);
   memcpy(cmd->text.str, str, len);
   cmd->text.str[len] = '\0';
   cmd->text.pos = pos;
@@ -347,7 +347,7 @@ void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
     ctx->set_clip(ctx->clip_stack.back());
   }
   /* do icon command */
-  auto cmd = ctx->push_command(MU_COMMAND_ICON, sizeof(mu_IconCommand));
+  auto cmd = ctx->push_command(MU_COMMAND::ICON, sizeof(mu_IconCommand));
   cmd->icon.id = id;
   cmd->icon.rect = rect;
   cmd->icon.color = color;

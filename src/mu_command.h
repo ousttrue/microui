@@ -1,11 +1,14 @@
 #pragma once
 #include "mu_color.h"
 #include "mu_rect.h"
-#include "mu_vec2.h"
 #include "mu_types.h"
+#include "mu_vec2.h"
+
+enum class MU_COMMAND { JUMP = 1, CLIP, RECT, TEXT, ICON, MAX };
 
 struct mu_BaseCommand {
-  int type, size;
+  MU_COMMAND type;
+  int size;
 };
 struct mu_JumpCommand {
   mu_BaseCommand base;
@@ -35,7 +38,7 @@ struct mu_IconCommand {
 };
 
 union mu_Command {
-  int type;
+  MU_COMMAND type;
   mu_BaseCommand base;
   mu_JumpCommand jump;
   mu_ClipCommand clip;

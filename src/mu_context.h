@@ -72,7 +72,7 @@ public:
   mu_Id number_edit;
   /* stacks */
   mu_Stack<char, MU_COMMANDLIST_SIZE> command_list;
-  mu_Command *push_command(int type, int size) {
+  mu_Command *push_command(MU_COMMAND type, int size) {
     mu_Command *cmd = (mu_Command *)(this->command_list.next());
     cmd->base.type = type;
     cmd->base.size = size;
@@ -81,7 +81,7 @@ public:
   }
 
   mu_Command *push_jump(mu_Command *dst) {
-    auto cmd = push_command(MU_COMMAND_JUMP, sizeof(mu_JumpCommand));
+    auto cmd = push_command(MU_COMMAND::JUMP, sizeof(mu_JumpCommand));
     cmd->jump.dst = dst;
     return cmd;
   }
@@ -90,14 +90,14 @@ public:
     mu_Command *cmd;
     rect = rect.intersect(this->clip_stack.back());
     if (rect.w > 0 && rect.h > 0) {
-      cmd = push_command(MU_COMMAND_RECT, sizeof(mu_RectCommand));
+      cmd = push_command(MU_COMMAND::RECT, sizeof(mu_RectCommand));
       cmd->rect.rect = rect;
       cmd->rect.color = color;
     }
   }
 
   void set_clip(mu_Rect rect) {
-    auto cmd = push_command(MU_COMMAND_CLIP, sizeof(mu_ClipCommand));
+    auto cmd = push_command(MU_COMMAND::CLIP, sizeof(mu_ClipCommand));
     cmd->clip.rect = rect;
   }
 
