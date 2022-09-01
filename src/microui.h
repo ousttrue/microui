@@ -10,7 +10,6 @@
 
 #define MU_VERSION "2.01"
 
-
 #define MU_REAL float
 #define MU_REAL_FMT "%.3g"
 #define MU_SLIDER_FMT "%.2f"
@@ -20,7 +19,6 @@
 #define mu_max(a, b) ((a) > (b) ? (a) : (b))
 #define mu_clamp(x, a, b) mu_min(b, mu_max(a, x))
 
-enum { MU_CLIP_PART = 1, MU_CLIP_ALL };
 
 enum {
   MU_COMMAND_JUMP = 1,
@@ -78,7 +76,6 @@ enum {
 typedef unsigned mu_Id;
 typedef MU_REAL mu_Real;
 
-
 struct mu_PoolItem {
   mu_Id id;
   int last_update;
@@ -93,10 +90,7 @@ void mu_end(mu_Context *ctx);
 mu_Id mu_get_id(mu_Context *ctx, const void *data, int size);
 void mu_push_id(mu_Context *ctx, const void *data, int size);
 void mu_pop_id(mu_Context *ctx);
-void mu_push_clip_rect(mu_Context *ctx, mu_Rect rect);
-void mu_pop_clip_rect(mu_Context *ctx);
-mu_Rect mu_get_clip_rect(mu_Context *ctx);
-int mu_check_clip(mu_Context *ctx, mu_Rect r);
+
 mu_Container *mu_get_current_container(mu_Context *ctx);
 mu_Container *mu_get_container(mu_Context *ctx, const char *name);
 void mu_bring_to_front(mu_Context *ctx, mu_Container *cnt);
@@ -113,10 +107,8 @@ void mu_input_keydown(mu_Context *ctx, int key);
 void mu_input_keyup(mu_Context *ctx, int key);
 void mu_input_text(mu_Context *ctx, const char *text);
 
-mu_Command *mu_push_command(mu_Context *ctx, int type, int size);
 int mu_next_command(mu_Context *ctx, mu_Command **cmd);
-void mu_set_clip(mu_Context *ctx, mu_Rect rect);
-void mu_draw_rect(mu_Context *ctx, mu_Rect rect, mu_Color color);
+
 void mu_draw_box(mu_Context *ctx, mu_Rect rect, mu_Color color);
 void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
                   mu_Vec2 pos, mu_Color color);

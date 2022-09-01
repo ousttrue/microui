@@ -40,7 +40,7 @@
 static mu_Rect unclipped_rect = {0, 0, 0x1000000, 0x1000000};
 
 static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
-  mu_draw_rect(ctx, rect, ctx->style->colors[colorid]);
+  ctx->draw_rect(rect, ctx->style->colors[colorid]);
   if (colorid == MU_COLOR_SCROLLBASE || colorid == MU_COLOR_SCROLLTHUMB ||
       colorid == MU_COLOR_TITLEBG) {
     return;
@@ -151,28 +151,6 @@ void mu_push_id(mu_Context *ctx, const void *data, int size) {
 }
 
 void mu_pop_id(mu_Context *ctx) { ctx->id_stack.pop(); }
-
-void mu_push_clip_rect(mu_Context *ctx, mu_Rect rect) {
-  mu_Rect last = mu_get_clip_rect(ctx);
-  ctx->clip_stack.push(rect.intersect(last));
-}
-
-void mu_pop_clip_rect(mu_Context *ctx) { ctx->clip_stack.pop(); }
-
-mu_Rect mu_get_clip_rect(mu_Context *ctx) { return ctx->clip_stack.back(); }
-
-int mu_check_clip(mu_Context *ctx, mu_Rect r) {
-  mu_Rect cr = mu_get_clip_rect(ctx);
-  if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
-      r.y + r.h < cr.y) {
-    return MU_CLIP_ALL;
-  }
-  if (r.x >= cr.x && r.x + r.w <= cr.x + cr.w && r.y >= cr.y &&
-      r.y + r.h <= cr.y + cr.h) {
-    return 0;
-  }
-  return MU_CLIP_PART;
-}
 
 static void push_layout(mu_Context *ctx, mu_Rect body, mu_Vec2 scroll) {
   mu_Layout layout;
@@ -309,14 +287,6 @@ void mu_input_text(mu_Context *ctx, const char *text) {
 ** commandlist
 **============================================================================*/
 
-mu_Command *mu_push_command(mu_Context *ctx, int type, int size) {
-  mu_Command *cmd = (mu_Command *)(ctx->command_list.next());
-  cmd->base.type = type;
-  cmd->base.size = size;
-  ctx->command_list.grow(size);
-  return cmd;
-}
-
 int mu_next_command(mu_Context *ctx, mu_Command **cmd) {
   if (*cmd) {
     *cmd = (mu_Command *)(((char *)*cmd) + (*cmd)->base.size);
@@ -332,35 +302,11 @@ int mu_next_command(mu_Context *ctx, mu_Command **cmd) {
   return 0;
 }
 
-static mu_Command *push_jump(mu_Context *ctx, mu_Command *dst) {
-  mu_Command *cmd;
-  cmd = mu_push_command(ctx, MU_COMMAND_JUMP, sizeof(mu_JumpCommand));
-  cmd->jump.dst = dst;
-  return cmd;
-}
-
-void mu_set_clip(mu_Context *ctx, mu_Rect rect) {
-  mu_Command *cmd;
-  cmd = mu_push_command(ctx, MU_COMMAND_CLIP, sizeof(mu_ClipCommand));
-  cmd->clip.rect = rect;
-}
-
-void mu_draw_rect(mu_Context *ctx, mu_Rect rect, mu_Color color) {
-  mu_Command *cmd;
-  rect = rect.intersect(mu_get_clip_rect(ctx));
-  if (rect.w > 0 && rect.h > 0) {
-    cmd = mu_push_command(ctx, MU_COMMAND_RECT, sizeof(mu_RectCommand));
-    cmd->rect.rect = rect;
-    cmd->rect.color = color;
-  }
-}
-
 void mu_draw_box(mu_Context *ctx, mu_Rect rect, mu_Color color) {
-  mu_draw_rect(ctx, mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
-  mu_draw_rect(ctx, mu_Rect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
-               color);
-  mu_draw_rect(ctx, mu_Rect(rect.x, rect.y, 1, rect.h), color);
-  mu_draw_rect(ctx, mu_Rect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
+  ctx->draw_rect(mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
+  ctx->draw_rect(mu_Rect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),color);
+  ctx->draw_rect(mu_Rect(rect.x, rect.y, 1, rect.h), color);
+  ctx->draw_rect(mu_Rect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
 }
 
 void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
@@ -368,47 +314,46 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
   mu_Command *cmd;
   mu_Rect rect = mu_Rect(pos.x, pos.y, ctx->text_width(font, str, len),
                          ctx->text_height(font));
-  int clipped = mu_check_clip(ctx, rect);
-  if (clipped == MU_CLIP_ALL) {
+  auto clipped = ctx->check_clip(rect);
+  if (clipped == MU_CLIP::ALL) {
     return;
   }
-  if (clipped == MU_CLIP_PART) {
-    mu_set_clip(ctx, mu_get_clip_rect(ctx));
+  if (clipped == MU_CLIP::PART) {
+    ctx->set_clip(ctx->clip_stack.back());
   }
   /* add command */
   if (len < 0) {
     len = strlen(str);
   }
-  cmd = mu_push_command(ctx, MU_COMMAND_TEXT, sizeof(mu_TextCommand) + len);
+  cmd = ctx->push_command(MU_COMMAND_TEXT, sizeof(mu_TextCommand) + len);
   memcpy(cmd->text.str, str, len);
   cmd->text.str[len] = '\0';
   cmd->text.pos = pos;
   cmd->text.color = color;
   cmd->text.font = font;
   /* reset clipping if it was set */
-  if (clipped) {
-    mu_set_clip(ctx, unclipped_rect);
+  if (clipped != MU_CLIP::NONE) {
+    ctx->set_clip(unclipped_rect);
   }
 }
 
 void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
-  mu_Command *cmd;
   /* do clip command if the rect isn't fully contained within the cliprect */
-  int clipped = mu_check_clip(ctx, rect);
-  if (clipped == MU_CLIP_ALL) {
+  auto clipped = ctx->check_clip(rect);
+  if (clipped == MU_CLIP::ALL) {
     return;
   }
-  if (clipped == MU_CLIP_PART) {
-    mu_set_clip(ctx, mu_get_clip_rect(ctx));
+  if (clipped == MU_CLIP::PART) {
+    ctx->set_clip(ctx->clip_stack.back());
   }
   /* do icon command */
-  cmd = mu_push_command(ctx, MU_COMMAND_ICON, sizeof(mu_IconCommand));
+  auto cmd = ctx->push_command(MU_COMMAND_ICON, sizeof(mu_IconCommand));
   cmd->icon.id = id;
   cmd->icon.rect = rect;
   cmd->icon.color = color;
   /* reset clipping if it was set */
-  if (clipped) {
-    mu_set_clip(ctx, unclipped_rect);
+  if (clipped != MU_CLIP::NONE) {
+    ctx->set_clip(unclipped_rect);
   }
 }
 
@@ -548,10 +493,10 @@ void mu_draw_control_frame(mu_Context *ctx, mu_Id id, mu_Rect rect, int colorid,
 
 void mu_draw_control_text(mu_Context *ctx, const char *str, mu_Rect rect,
                           int colorid, int opt) {
-  mu_Vec2 pos;
   mu_Font font = ctx->style->font;
   int tw = ctx->text_width(font, str, -1);
-  mu_push_clip_rect(ctx, rect);
+  ctx->push_clip_rect(rect);
+  mu_Vec2 pos;
   pos.y = rect.y + (rect.h - ctx->text_height(font)) / 2;
   if (opt & MU_OPT_ALIGNCENTER) {
     pos.x = rect.x + (rect.w - tw) / 2;
@@ -561,12 +506,12 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, mu_Rect rect,
     pos.x = rect.x + ctx->style->padding;
   }
   mu_draw_text(ctx, font, str, -1, pos, ctx->style->colors[colorid]);
-  mu_pop_clip_rect(ctx);
+  ctx->pop_clip_rect();
 }
 
 int mu_mouse_over(mu_Context *ctx, mu_Rect rect) {
   return rect.overlaps_vec2(ctx->mouse_pos) &&
-         mu_get_clip_rect(ctx).overlaps_vec2(ctx->mouse_pos) &&
+         ctx->clip_stack.back().overlaps_vec2(ctx->mouse_pos) &&
          in_hover_root(ctx);
 }
 
@@ -713,10 +658,10 @@ int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
     int ofx = r.w - ctx->style->padding - textw - 1;
     int textx = r.x + mu_min(ofx, ctx->style->padding);
     int texty = r.y + (r.h - texth) / 2;
-    mu_push_clip_rect(ctx, r);
+    ctx->push_clip_rect(r);
     mu_draw_text(ctx, font, buf, -1, mu_Vec2(textx, texty), color);
-    mu_draw_rect(ctx, mu_Rect(textx + textw, texty, 1, texth), color);
-    mu_pop_clip_rect(ctx);
+    ctx->draw_rect(mu_Rect(textx + textw, texty, 1, texth), color);
+    ctx->pop_clip_rect();
   } else {
     mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, opt);
   }
@@ -935,7 +880,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, mu_Rect *body) {
   mu_Vec2 cs = cnt->content_size;
   cs.x += ctx->style->padding * 2;
   cs.y += ctx->style->padding * 2;
-  mu_push_clip_rect(ctx, *body);
+  ctx->push_clip_rect(*body);
   /* resize body to make room for scrollbars */
   if (cs.y > cnt->body.h) {
     body->w -= sz;
@@ -947,7 +892,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, mu_Rect *body) {
   ** used; only the references to `x|y` `w|h` need to be switched */
   scrollbar(ctx, cnt, body, cs, x, y, w, h);
   scrollbar(ctx, cnt, body, cs, y, x, h, w);
-  mu_pop_clip_rect(ctx);
+  ctx->pop_clip_rect();
 }
 
 static void push_container_body(mu_Context *ctx, mu_Container *cnt,
@@ -963,7 +908,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   ctx->container_stack.push(cnt);
   /* push container to roots list and push head command */
   ctx->root_list.push(cnt);
-  cnt->head = push_jump(ctx, nullptr);
+  cnt->head = ctx->push_jump(nullptr);
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
   if (cnt->rect.overlaps_vec2(ctx->mouse_pos) &&
@@ -980,10 +925,10 @@ static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
   mu_Container *cnt = mu_get_current_container(ctx);
-  cnt->tail = push_jump(ctx, nullptr);
+  cnt->tail = ctx->push_jump(nullptr);
   cnt->head->jump.dst = ctx->command_list.next();
   /* pop base clip rect and container */
-  mu_pop_clip_rect(ctx);
+  ctx->pop_clip_rect();
   pop_container(ctx);
 }
 
@@ -1067,12 +1012,12 @@ int mu_begin_window_ex(mu_Context *ctx, const char *title, mu_Rect rect,
     cnt->open = 0;
   }
 
-  mu_push_clip_rect(ctx, cnt->body);
+  ctx->push_clip_rect(cnt->body);
   return MU_RES_ACTIVE;
 }
 
 void mu_end_window(mu_Context *ctx) {
-  mu_pop_clip_rect(ctx);
+  ctx->pop_clip_rect();
   end_root_container(ctx);
 }
 
@@ -1095,19 +1040,18 @@ int mu_begin_popup(mu_Context *ctx, const char *name) {
 void mu_end_popup(mu_Context *ctx) { mu_end_window(ctx); }
 
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, int opt) {
-  mu_Container *cnt;
   mu_push_id(ctx, name, strlen(name));
-  cnt = get_container(ctx, ctx->last_id, opt);
+  auto cnt = get_container(ctx, ctx->last_id, opt);
   cnt->rect = mu_layout_next(ctx);
   if (~opt & MU_OPT_NOFRAME) {
     ctx->draw_frame(ctx, cnt->rect, MU_COLOR_PANELBG);
   }
   ctx->container_stack.push(cnt);
   push_container_body(ctx, cnt, cnt->rect, opt);
-  mu_push_clip_rect(ctx, cnt->body);
+  ctx->push_clip_rect(cnt->body);
 }
 
 void mu_end_panel(mu_Context *ctx) {
-  mu_pop_clip_rect(ctx);
+  ctx->pop_clip_rect();
   pop_container(ctx);
 }

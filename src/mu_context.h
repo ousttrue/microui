@@ -8,6 +8,7 @@
 template <typename T, size_t N> class mu_Stack {
   T items[N];
   int idx = 0;
+
 public:
   const T *data() const { return &items[0]; }
   T *data() { return &items[0]; }
@@ -47,6 +48,8 @@ public:
 #define MU_CONTAINERPOOL_SIZE 48
 #define MU_TREENODEPOOL_SIZE 48
 
+enum class MU_CLIP : unsigned int { NONE, PART, ALL };
+
 struct mu_Context {
   /* callbacks */
   int (*text_width)(mu_Font font, const char *str, int len) = nullptr;
@@ -69,9 +72,57 @@ public:
   mu_Id number_edit;
   /* stacks */
   mu_Stack<char, MU_COMMANDLIST_SIZE> command_list;
+  mu_Command *push_command(int type, int size) {
+    mu_Command *cmd = (mu_Command *)(this->command_list.next());
+    cmd->base.type = type;
+    cmd->base.size = size;
+    this->command_list.grow(size);
+    return cmd;
+  }
+
+  mu_Command *push_jump(mu_Command *dst) {
+    auto cmd = push_command(MU_COMMAND_JUMP, sizeof(mu_JumpCommand));
+    cmd->jump.dst = dst;
+    return cmd;
+  }
+
+  void draw_rect(mu_Rect rect, mu_Color color) {
+    mu_Command *cmd;
+    rect = rect.intersect(this->clip_stack.back());
+    if (rect.w > 0 && rect.h > 0) {
+      cmd = push_command(MU_COMMAND_RECT, sizeof(mu_RectCommand));
+      cmd->rect.rect = rect;
+      cmd->rect.color = color;
+    }
+  }
+
+  void set_clip(mu_Rect rect) {
+    auto cmd = push_command(MU_COMMAND_CLIP, sizeof(mu_ClipCommand));
+    cmd->clip.rect = rect;
+  }
+
   mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
+
   mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
+  void push_clip_rect(mu_Rect rect) {
+    mu_Rect last = this->clip_stack.back();
+    this->clip_stack.push(rect.intersect(last));
+  }
+  void pop_clip_rect() { this->clip_stack.pop(); }
+  MU_CLIP check_clip(mu_Rect r) {
+    mu_Rect cr = this->clip_stack.back();
+    if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
+        r.y + r.h < cr.y) {
+      return MU_CLIP::ALL;
+    }
+    if (r.x >= cr.x && r.x + r.w <= cr.x + cr.w && r.y >= cr.y &&
+        r.y + r.h <= cr.y + cr.h) {
+      return MU_CLIP::NONE;
+    }
+    return MU_CLIP::PART;
+  }
+
   mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
   /* retained state pools */
