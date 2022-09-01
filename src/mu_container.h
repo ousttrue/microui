@@ -4,7 +4,8 @@
 #include "mu_vec2.h"
 
 struct mu_Container {
-  mu_Command *head, *tail;
+  mu_Command *head;
+  mu_Command *tail;
   mu_Rect rect;
   mu_Rect body;
   mu_Vec2 content_size;

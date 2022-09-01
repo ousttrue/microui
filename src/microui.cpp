@@ -60,7 +60,7 @@ void mu_init(mu_Context *ctx) {
 
 void mu_begin(mu_Context *ctx) {
   expect(ctx->text_width && ctx->text_height);
-  ctx->command_list.clear();
+  ctx->_command_stack.begin_frame();
   ctx->root_list.clear();
   ctx->scroll_target = nullptr;
   ctx->hover_root = ctx->next_hover_root;
@@ -115,7 +115,7 @@ void mu_end(mu_Context *ctx) {
     /* if this is the first container then make the first command jump to it.
     ** otherwise set the previous container's tail to jump to this one */
     if (i == 0) {
-      mu_Command *cmd = (mu_Command *)ctx->command_list.data();
+      mu_Command *cmd = (mu_Command *)ctx->_command_stack._command_list.data();
       cmd->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
     } else {
       mu_Container *prev = ctx->root_list.get(i - 1);
@@ -123,7 +123,7 @@ void mu_end(mu_Context *ctx) {
     }
     // make the last container's tail jump to the end of command list
     if (i == n - 1) {
-      cnt->tail->jump.dst = ctx->command_list.next();
+      cnt->tail->jump.dst = ctx->_command_stack._command_list.next();
     }
   }
 }
@@ -287,20 +287,6 @@ void mu_input_text(mu_Context *ctx, const char *text) {
 ** commandlist
 **============================================================================*/
 
-int mu_next_command(mu_Context *ctx, mu_Command **cmd) {
-  if (*cmd) {
-    *cmd = (mu_Command *)(((char *)*cmd) + (*cmd)->base.size);
-  } else {
-    *cmd = (mu_Command *)ctx->command_list.data();
-  }
-  while ((char *)*cmd != ctx->command_list.next()) {
-    if ((*cmd)->type != MU_COMMAND::JUMP) {
-      return 1;
-    }
-    *cmd = (mu_Command *)((*cmd)->jump.dst);
-  }
-  return 0;
-}
 
 void mu_draw_box(mu_Context *ctx, mu_Rect rect, mu_Color color) {
   ctx->draw_rect(mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
@@ -320,13 +306,13 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
     return;
   }
   if (clipped == MU_CLIP::PART) {
-    ctx->set_clip(ctx->clip_stack.back());
+    ctx->_command_stack.set_clip(ctx->clip_stack.back());
   }
   // add command
   if (len < 0) {
     len = strlen(str);
   }
-  cmd = ctx->push_command(MU_COMMAND::TEXT, sizeof(mu_TextCommand) + len);
+  cmd = ctx->_command_stack.push_command(MU_COMMAND::TEXT, sizeof(mu_TextCommand) + len);
   memcpy(cmd->text.str, str, len);
   cmd->text.str[len] = '\0';
   cmd->text.pos = pos;
@@ -334,7 +320,7 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
   cmd->text.font = font;
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(unclipped_rect);
   }
 }
 
@@ -345,16 +331,16 @@ void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
     return;
   }
   if (clipped == MU_CLIP::PART) {
-    ctx->set_clip(ctx->clip_stack.back());
+    ctx->_command_stack.set_clip(ctx->clip_stack.back());
   }
   // do icon command
-  auto cmd = ctx->push_command(MU_COMMAND::ICON, sizeof(mu_IconCommand));
+  auto cmd = ctx->_command_stack.push_command(MU_COMMAND::ICON, sizeof(mu_IconCommand));
   cmd->icon.id = id;
   cmd->icon.rect = rect;
   cmd->icon.color = color;
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(unclipped_rect);
   }
 }
 
@@ -909,7 +895,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   ctx->container_stack.push(cnt);
   // push container to roots list and push head command
   ctx->root_list.push(cnt);
-  cnt->head = ctx->push_jump(nullptr);
+  cnt->head = ctx->_command_stack.push_jump(nullptr);
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
   if (cnt->rect.overlaps_vec2(ctx->mouse_pos) &&
@@ -926,8 +912,8 @@ static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
   mu_Container *cnt = mu_get_current_container(ctx);
-  cnt->tail = ctx->push_jump(nullptr);
-  cnt->head->jump.dst = ctx->command_list.next();
+  cnt->tail = ctx->_command_stack.push_jump(nullptr);
+  cnt->head->jump.dst = ctx->_command_stack._command_list.next();
   // pop base clip rect and container
   ctx->pop_clip_rect();
   pop_container(ctx);
