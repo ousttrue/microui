@@ -33,7 +33,8 @@ enum {
   MU_RES_CHANGE = (1 << 2)
 };
 
-enum {
+enum MU_OPT {
+  MU_OPT_NONE = 0,
   MU_OPT_ALIGNCENTER = (1 << 0),
   MU_OPT_ALIGNRIGHT = (1 << 1),
   MU_OPT_NOINTERACT = (1 << 2),
@@ -127,8 +128,6 @@ void mu_update_control(mu_Context *ctx, mu_Id id, mu_Rect rect, int opt);
   mu_number_ex(ctx, value, step, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER)
 #define mu_header(ctx, label) mu_header_ex(ctx, label, 0)
 #define mu_begin_treenode(ctx, label) mu_begin_treenode_ex(ctx, label, 0)
-#define mu_begin_window(ctx, title, rect)                                      \
-  mu_begin_window_ex(ctx, title, rect, 0)
 #define mu_begin_panel(ctx, name) mu_begin_panel_ex(ctx, name, 0)
 
 void mu_text(mu_Context *ctx, const char *text);
@@ -145,8 +144,7 @@ int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
 int mu_header_ex(mu_Context *ctx, const char *label, int opt);
 int mu_begin_treenode_ex(mu_Context *ctx, const char *label, int opt);
 void mu_end_treenode(mu_Context *ctx);
-int mu_begin_window_ex(mu_Context *ctx, const char *title, mu_Rect rect,
-                       int opt);
+int mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect, MU_OPT opt = MU_OPT_NONE);
 void mu_end_window(mu_Context *ctx);
 void mu_open_popup(mu_Context *ctx, const char *name);
 int mu_begin_popup(mu_Context *ctx, const char *name);
