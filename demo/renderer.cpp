@@ -142,7 +142,7 @@ void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
   mu_Rect src = *((mu_Rect*)&atlas[id]);
   int x = rect.x + (rect.w - src.w) / 2;
   int y = rect.y + (rect.h - src.h) / 2;
-  push_quad(mu_rect(x, y, src.w, src.h), src, color);
+  push_quad(mu_Rect(x, y, src.w, src.h), src, color);
 }
 
 int r_get_text_width(const char *text, int len) {

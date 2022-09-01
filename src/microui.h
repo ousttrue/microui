@@ -112,13 +112,24 @@ typedef void *mu_Font;
 
 struct mu_Vec2 {
   int x, y;
+  mu_Vec2() : x(0), y(0) {}
+  mu_Vec2(int x, int y) : x(x), y(y) {}
 };
+
 struct mu_Rect {
   int x, y, w, h;
+  mu_Rect() : x(0), y(0), w(0), h(0) {}
+  mu_Rect(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
+  mu_Rect expand(int n) const {
+    return mu_Rect(x - n, y - n, w + n * 2, h + n * 2);
+  }
 };
+
 struct mu_Color {
   unsigned char r, g, b, a;
+  mu_Color(int r, int g, int b, int a) : r(r), g(g), b(b), a(a) {}
 };
+
 struct mu_PoolItem {
   mu_Id id;
   int last_update;
@@ -242,10 +253,6 @@ struct mu_Context {
   int key_pressed;
   char input_text[32];
 };
-
-mu_Vec2 mu_vec2(int x, int y);
-mu_Rect mu_rect(int x, int y, int w, int h);
-mu_Color mu_color(int r, int g, int b, int a);
 
 void mu_init(mu_Context *ctx);
 void mu_begin(mu_Context *ctx);

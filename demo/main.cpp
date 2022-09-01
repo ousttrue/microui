@@ -19,7 +19,7 @@ static void write_log(const char *text) {
 
 static void test_window(mu_Context *ctx) {
   /* do window */
-  if (mu_begin_window(ctx, "Demo Window", mu_rect(40, 40, 300, 450))) {
+  if (mu_begin_window(ctx, "Demo Window", mu_Rect(40, 40, 300, 450))) {
     auto win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 300);
@@ -153,7 +153,7 @@ static void test_window(mu_Context *ctx) {
       mu_layout_end_column(ctx);
       /* color preview */
       mu_Rect r = mu_layout_next(ctx);
-      mu_draw_rect(ctx, r, mu_color(bg[0], bg[1], bg[2], 255));
+      mu_draw_rect(ctx, r, mu_Color(bg[0], bg[1], bg[2], 255));
       char buf[32];
       sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
       mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
@@ -164,7 +164,7 @@ static void test_window(mu_Context *ctx) {
 }
 
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log Window", mu_rect(350, 40, 300, 200))) {
+  if (mu_begin_window(ctx, "Log Window", mu_Rect(350, 40, 300, 200))) {
     /* output text panel */
     {
       int widths[] = {-1};
@@ -237,7 +237,7 @@ static void style_window(mu_Context *ctx) {
                 {"scrollthumb:", MU_COLOR_SCROLLTHUMB},
                 {NULL}};
 
-  if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
+  if (mu_begin_window(ctx, "Style Editor", mu_Rect(350, 250, 300, 240))) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
     {
       int widths[] = {80, sw, sw, sw, sw, -1};
@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
     // /* render */
     glViewport(0, 0, width, height);
     glScissor(0, 0, width, height);
-    r_clear(mu_color(bg[0], bg[1], bg[2], 255));
+    r_clear(mu_Color(bg[0], bg[1], bg[2], 255));
     mu_Command *cmd = NULL;
     while (mu_next_command(ctx, &cmd)) {
       switch (cmd->type) {
