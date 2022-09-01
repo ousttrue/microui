@@ -120,7 +120,7 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
 }
 
 void r_draw_rect(mu_Rect rect, mu_Color color) {
-  push_quad(rect, atlas[ATLAS_WHITE], color);
+  push_quad(rect, *((mu_Rect*)&atlas[ATLAS_WHITE]), color);
 }
 
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
@@ -130,7 +130,7 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
       continue;
     }
     int chr = mu_min((unsigned char)*p, 127);
-    mu_Rect src = atlas[ATLAS_FONT + chr];
+    mu_Rect src = *((mu_Rect*)&atlas[ATLAS_FONT + chr]);
     dst.w = src.w;
     dst.h = src.h;
     push_quad(dst, src, color);
@@ -139,7 +139,7 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
 }
 
 void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
-  mu_Rect src = atlas[id];
+  mu_Rect src = *((mu_Rect*)&atlas[id]);
   int x = rect.x + (rect.w - src.w) / 2;
   int y = rect.y + (rect.h - src.h) / 2;
   push_quad(mu_rect(x, y, src.w, src.h), src, color);

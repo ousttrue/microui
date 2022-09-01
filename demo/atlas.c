@@ -885,7 +885,15 @@ unsigned char atlas_texture[ATLAS_WIDTH * ATLAS_HEIGHT] = {
     0x00, 0x00, 0xba, 0xf7, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-mu_Rect atlas[] = {
+enum {
+  MU_ICON_CLOSE = 1,
+  MU_ICON_CHECK,
+  MU_ICON_COLLAPSED,
+  MU_ICON_EXPANDED,
+  MU_ICON_MAX
+};
+
+struct Rect atlas[] = {
     [MU_ICON_CLOSE] = {88, 68, 16, 16},
     [MU_ICON_CHECK] = {0, 0, 18, 18},
     [MU_ICON_EXPANDED] = {118, 68, 7, 5},
