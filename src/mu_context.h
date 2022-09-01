@@ -10,8 +10,9 @@ template <typename T, size_t N> class mu_Stack {
   int idx = 0;
 
 public:
-  const T *data() const { return &items[0]; }
-  T *data() { return &items[0]; }
+  const T *begin() const { return items; }
+  T *begin() { return items; }
+  T *end() { return items + idx; }
   int size() const { return idx; }
   const T &get(int i) const { return items[i]; }
   T &get(int i) { return items[i]; }
@@ -19,7 +20,6 @@ public:
     assert(idx > 0);
     return items[idx - 1];
   }
-  T *next() { return items + idx; }
   void grow(int size) {
     assert(idx + size < N);
     idx += size;
@@ -57,7 +57,7 @@ public:
   void begin_frame() { _command_list.clear(); }
 
   mu_Command *push_command(MU_COMMAND type, int size) {
-    mu_Command *cmd = (mu_Command *)(this->_command_list.next());
+    mu_Command *cmd = (mu_Command *)(this->_command_list.end());
     cmd->base.type = type;
     cmd->base.size = size;
     this->_command_list.grow(size);
@@ -79,9 +79,9 @@ public:
     if (*cmd) {
       *cmd = (mu_Command *)(((char *)*cmd) + (*cmd)->base.size);
     } else {
-      *cmd = (mu_Command *)_command_list.data();
+      *cmd = (mu_Command *)_command_list.begin();
     }
-    while ((char *)*cmd != _command_list.next()) {
+    while ((char *)*cmd != _command_list.end()) {
       if ((*cmd)->type != MU_COMMAND::JUMP) {
         return 1;
       }

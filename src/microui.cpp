@@ -107,7 +107,7 @@ void mu_end(mu_Context *ctx) {
 
   // sort root containers by zindex
   n = ctx->root_list.size();
-  qsort(ctx->root_list.data(), n, sizeof(mu_Container *), compare_zindex);
+  qsort(ctx->root_list.begin(), n, sizeof(mu_Container *), compare_zindex);
 
   // set root container jump commands
   for (i = 0; i < n; i++) {
@@ -115,7 +115,7 @@ void mu_end(mu_Context *ctx) {
     /* if this is the first container then make the first command jump to it.
     ** otherwise set the previous container's tail to jump to this one */
     if (i == 0) {
-      mu_Command *cmd = (mu_Command *)ctx->_command_stack._command_list.data();
+      mu_Command *cmd = (mu_Command *)ctx->_command_stack._command_list.begin();
       cmd->jump.dst = (char *)cnt->head + sizeof(mu_JumpCommand);
     } else {
       mu_Container *prev = ctx->root_list.get(i - 1);
@@ -123,7 +123,7 @@ void mu_end(mu_Context *ctx) {
     }
     // make the last container's tail jump to the end of command list
     if (i == n - 1) {
-      cnt->tail->jump.dst = ctx->_command_stack._command_list.next();
+      cnt->tail->jump.dst = ctx->_command_stack._command_list.end();
     }
   }
 }
@@ -913,7 +913,7 @@ static void end_root_container(mu_Context *ctx) {
   ** on initing these are done in mu_end() */
   mu_Container *cnt = mu_get_current_container(ctx);
   cnt->tail = ctx->_command_stack.push_jump(nullptr);
-  cnt->head->jump.dst = ctx->_command_stack._command_list.next();
+  cnt->head->jump.dst = ctx->_command_stack._command_list.end();
   // pop base clip rect and container
   ctx->pop_clip_rect();
   pop_container(ctx);
