@@ -1,7 +1,8 @@
 #include "renderer.h"
-#include "atlas.inl"
+#include "atlas.h"
 #include <GLFW/glfw3.h>
 #include <assert.h>
+#include <string.h>
 
 #define BUFFER_SIZE 16384
 

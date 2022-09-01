@@ -1,7 +1,13 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <microui.h>
+#ifdef __cplusplus
+}
+#endif
 
 void r_init(void);
 void r_resize(int w, int h);

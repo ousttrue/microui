@@ -1,12 +1,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "renderer.h"
 #include <microui.h>
 #ifdef __cplusplus
 }
 #endif
 
+#include "renderer.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdlib.h>
