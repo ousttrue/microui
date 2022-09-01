@@ -1,8 +1,8 @@
 #pragma once
 #include "mu_container.h"
+#include "mu_layout.h"
 #include "mu_rect.h"
 #include "mu_style.h"
-#include "mu_layout.h"
 
 #define mu_stack(T, n)                                                         \
   struct {                                                                     \
@@ -20,18 +20,18 @@
 
 struct mu_Context {
   /* callbacks */
-  int (*text_width)(mu_Font font, const char *str, int len);
-  int (*text_height)(mu_Font font);
-  void (*draw_frame)(mu_Context *ctx, mu_Rect rect, int colorid);
+  int (*text_width)(mu_Font font, const char *str, int len) = nullptr;
+  int (*text_height)(mu_Font font) = nullptr;
+  void (*draw_frame)(mu_Context *ctx, mu_Rect rect, int colorid) = nullptr;
   /* core state */
-  mu_Style _style;
+  mu_Style _style = {};
   mu_Style *style;
   mu_Id hover;
-  mu_Id focus;
   mu_Id last_id;
   mu_Rect last_rect;
   int last_zindex;
-  int updated_focus;
+
+public:
   int frame;
   mu_Container *hover_root;
   mu_Container *next_hover_root;
@@ -59,4 +59,29 @@ struct mu_Context {
   int key_down;
   int key_pressed;
   char input_text[32];
+
+private:
+  mu_Id focus = 0;
+  bool updated_focus = false;
+
+public:
+  void set_focus(mu_Id id) {
+    focus = id;
+    updated_focus = 1;
+  }
+
+  void unset_focus() {
+    if (!updated_focus) {
+      focus = 0;
+    }
+    updated_focus = 0;
+  }
+
+  bool has_focus(mu_Id id) const { return focus == id; }
+
+  void update_focus(mu_Id id) {
+    if (focus == id) {
+      updated_focus = true;
+    }
+  }
 };

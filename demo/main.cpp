@@ -191,7 +191,7 @@ static void log_window(mu_Context *ctx) {
       mu_layout_row(ctx, 2, widths, 0);
     }
     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-      mu_set_focus(ctx, ctx->last_id);
+      ctx->set_focus(ctx->last_id);
       submitted = 1;
     }
     if (mu_button(ctx, "Submit")) {

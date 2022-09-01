@@ -77,7 +77,7 @@ enum {
 
 typedef unsigned mu_Id;
 typedef MU_REAL mu_Real;
-typedef void *mu_Font;
+
 
 struct mu_PoolItem {
   mu_Id id;
@@ -89,7 +89,7 @@ struct mu_PoolItem {
 void mu_init(mu_Context *ctx);
 void mu_begin(mu_Context *ctx);
 void mu_end(mu_Context *ctx);
-void mu_set_focus(mu_Context *ctx, mu_Id id);
+
 mu_Id mu_get_id(mu_Context *ctx, const void *data, int size);
 void mu_push_id(mu_Context *ctx, const void *data, int size);
 void mu_pop_id(mu_Context *ctx);

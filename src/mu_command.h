@@ -2,6 +2,7 @@
 #include "mu_color.h"
 #include "mu_rect.h"
 #include "mu_vec2.h"
+#include "mu_types.h"
 
 struct mu_BaseCommand {
   int type, size;
