@@ -229,11 +229,11 @@ static void process_frame(mu_Context *ctx) {
   mu_end(ctx);
 }
 
-// static const char button_map[256] = {
-//   [ SDL_BUTTON_LEFT   & 0xff ] =  MU_MOUSE_LEFT,
-//   [ SDL_BUTTON_RIGHT  & 0xff ] =  MU_MOUSE_RIGHT,
-//   [ SDL_BUTTON_MIDDLE & 0xff ] =  MU_MOUSE_MIDDLE,
-// };
+static const char button_map[256] = {
+    MU_MOUSE_LEFT,
+    MU_MOUSE_RIGHT,
+    MU_MOUSE_MIDDLE,
+};
 
 // static const char key_map[256] = {
 //   [ SDLK_LSHIFT       & 0xff ] = MU_KEY_SHIFT,
@@ -255,12 +255,35 @@ static int text_width(mu_Font font, const char *text, int len) {
 
 static int text_height(mu_Font font) { return r_get_text_height(); }
 
+int mouse_x = 0;
+int mouse_y = 0;
+static void cursor_position_callback(GLFWwindow *window, double xpos,
+                                     double ypos) {
+  mu_input_mousemove(glfwGetWindowUserPointer(window), xpos, ypos);
+  mouse_x = xpos;
+  mouse_y = ypos;
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+                           int mods) {
+  int b = button_map[button];
+  if (action == GLFW_PRESS) {
+    mu_input_mousedown(glfwGetWindowUserPointer(window), mouse_x, mouse_y, b);
+  } else if (action == GLFW_RELEASE) {
+    mu_input_mouseup(glfwGetWindowUserPointer(window), mouse_x, mouse_y, b);
+  }
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+  mu_input_scroll(glfwGetWindowUserPointer(window), xoffset, yoffset);
+}
+
 int main(int argc, char **argv) {
   if (!glfwInit())
     exit(1);
 
   /* Create a windowed mode window and its OpenGL context */
-  GLFWwindow *window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(1200, 1000, "Hello World", NULL, NULL);
   if (!window) {
     glfwTerminate();
     return -1;
@@ -274,8 +297,13 @@ int main(int argc, char **argv) {
   // init microui
   mu_Context *ctx = malloc(sizeof(mu_Context));
   mu_init(ctx);
+  glfwSetWindowUserPointer(window, ctx);
   ctx->text_width = text_width;
   ctx->text_height = text_height;
+
+  glfwSetCursorPosCallback(window, cursor_position_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
+  glfwSetScrollCallback(window, scroll_callback);
 
   /* main loop */
   while (!glfwWindowShouldClose(window)) {
@@ -285,34 +313,9 @@ int main(int argc, char **argv) {
     glfwGetFramebufferSize(window, &width, &height);
     r_resize(width, height);
 
-    /* handle SDL events */
-    // SDL_Event e;
-    // while (SDL_PollEvent(&e)) {
-    //   switch (e.type) {
-    //   case SDL_QUIT:
-    //     exit(0);
-    //     break;
-    //   case SDL_MOUSEMOTION:
-    //     mu_input_mousemove(ctx, e.motion.x, e.motion.y);
-    //     break;
-    //   case SDL_MOUSEWHEEL:
-    //     mu_input_scroll(ctx, 0, e.wheel.y * -30);
-    //     break;
     //   case SDL_TEXTINPUT:
     //     mu_input_text(ctx, e.text.text);
     //     break;
-
-    //   case SDL_MOUSEBUTTONDOWN:
-    //   case SDL_MOUSEBUTTONUP: {
-    //     int b = button_map[e.button.button & 0xff];
-    //     if (b && e.type == SDL_MOUSEBUTTONDOWN) {
-    //       mu_input_mousedown(ctx, e.button.x, e.button.y, b);
-    //     }
-    //     if (b && e.type == SDL_MOUSEBUTTONUP) {
-    //       mu_input_mouseup(ctx, e.button.x, e.button.y, b);
-    //     }
-    //     break;
-    //   }
 
     //   case SDL_KEYDOWN:
     //   case SDL_KEYUP: {
