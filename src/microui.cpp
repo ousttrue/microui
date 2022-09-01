@@ -80,25 +80,6 @@ static mu_Style default_style = {
         {30, 30, 30, 255}     /* MU_COLOR_SCROLLTHUMB */
     }};
 
-
-static mu_Rect intersect_rects(mu_Rect r1, mu_Rect r2) {
-  int x1 = mu_max(r1.x, r2.x);
-  int y1 = mu_max(r1.y, r2.y);
-  int x2 = mu_min(r1.x + r1.w, r2.x + r2.w);
-  int y2 = mu_min(r1.y + r1.h, r2.y + r2.h);
-  if (x2 < x1) {
-    x2 = x1;
-  }
-  if (y2 < y1) {
-    y2 = y1;
-  }
-  return mu_Rect(x1, y1, x2 - x1, y2 - y1);
-}
-
-static int rect_overlaps_vec2(mu_Rect r, mu_Vec2 p) {
-  return p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h;
-}
-
 static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
   mu_draw_rect(ctx, rect, ctx->style->colors[colorid]);
   if (colorid == MU_COLOR_SCROLLBASE || colorid == MU_COLOR_SCROLLTHUMB ||
@@ -222,7 +203,7 @@ void mu_pop_id(mu_Context *ctx) { pop(ctx->id_stack); }
 
 void mu_push_clip_rect(mu_Context *ctx, mu_Rect rect) {
   mu_Rect last = mu_get_clip_rect(ctx);
-  push(ctx->clip_stack, intersect_rects(rect, last));
+  push(ctx->clip_stack, rect.intersect(last));
 }
 
 void mu_pop_clip_rect(mu_Context *ctx) { pop(ctx->clip_stack); }
@@ -421,7 +402,7 @@ void mu_set_clip(mu_Context *ctx, mu_Rect rect) {
 
 void mu_draw_rect(mu_Context *ctx, mu_Rect rect, mu_Color color) {
   mu_Command *cmd;
-  rect = intersect_rects(rect, mu_get_clip_rect(ctx));
+  rect = rect.intersect(mu_get_clip_rect(ctx));
   if (rect.w > 0 && rect.h > 0) {
     cmd = mu_push_command(ctx, MU_COMMAND_RECT, sizeof(mu_RectCommand));
     cmd->rect.rect = rect;
@@ -640,8 +621,8 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, mu_Rect rect,
 }
 
 int mu_mouse_over(mu_Context *ctx, mu_Rect rect) {
-  return rect_overlaps_vec2(rect, ctx->mouse_pos) &&
-         rect_overlaps_vec2(mu_get_clip_rect(ctx), ctx->mouse_pos) &&
+  return rect.overlaps_vec2(ctx->mouse_pos) &&
+         mu_get_clip_rect(ctx).overlaps_vec2(ctx->mouse_pos) &&
          in_hover_root(ctx);
 }
 
@@ -1044,7 +1025,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   cnt->head = push_jump(ctx, NULL);
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
-  if (rect_overlaps_vec2(cnt->rect, ctx->mouse_pos) &&
+  if (cnt->rect.overlaps_vec2(ctx->mouse_pos) &&
       (!ctx->next_hover_root || cnt->zindex > ctx->next_hover_root->zindex)) {
     ctx->next_hover_root = cnt;
   }
