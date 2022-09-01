@@ -333,8 +333,7 @@ int main(int argc, char **argv) {
   r_init();
 
   // init microui
-  auto ctx = (mu_Context *)malloc(sizeof(mu_Context));
-  mu_init(ctx);
+  auto ctx = new mu_Context;
   glfwSetWindowUserPointer(window, ctx);
   ctx->text_width = text_width;
   ctx->text_height = text_height;

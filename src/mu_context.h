@@ -16,25 +16,54 @@
 enum class MU_CLIP : unsigned int { NONE, PART, ALL };
 
 struct mu_Context {
+  mu_Context(const mu_Context &) = delete;
+  mu_Context &operator=(const mu_Context &) = delete;
+
+  void draw_box(mu_Rect rect, mu_Color color) {
+    this->draw_rect(mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
+    this->draw_rect(mu_Rect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
+                    color);
+    this->draw_rect(mu_Rect(rect.x, rect.y, 1, rect.h), color);
+    this->draw_rect(mu_Rect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
+  }
+
+  static void default_draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
+    ctx->draw_rect(rect, ctx->style->colors[colorid]);
+    if (colorid == MU_COLOR_SCROLLBASE || colorid == MU_COLOR_SCROLLTHUMB ||
+        colorid == MU_COLOR_TITLEBG) {
+      return;
+    }
+    // draw border
+    if (ctx->style->colors[MU_COLOR_BORDER].a) {
+      ctx->draw_box(rect.expand(1), ctx->style->colors[MU_COLOR_BORDER]);
+    }
+  }
+
+  mu_Context() {
+    this->draw_frame = default_draw_frame;
+    this->_style = {};
+    this->style = &this->_style;
+  }
+
   /* callbacks */
   int (*text_width)(mu_Font font, const char *str, int len) = nullptr;
   int (*text_height)(mu_Font font) = nullptr;
   void (*draw_frame)(mu_Context *ctx, mu_Rect rect, int colorid) = nullptr;
   /* core state */
   mu_Style _style = {};
-  mu_Style *style;
-  mu_Id hover;
-  mu_Id last_id;
+  mu_Style *style = nullptr;
+  mu_Id hover = 0;
+  mu_Id last_id = 0;
   mu_Rect last_rect;
-  int last_zindex;
+  int last_zindex = 0;
 
 public:
-  int frame;
-  mu_Container *hover_root;
-  mu_Container *next_hover_root;
-  mu_Container *scroll_target;
-  char number_edit_buf[MU_MAX_FMT];
-  mu_Id number_edit;
+  int frame = 0;
+  mu_Container *hover_root = nullptr;
+  mu_Container *next_hover_root = nullptr;
+  mu_Container *scroll_target = nullptr;
+  char number_edit_buf[MU_MAX_FMT] = {0};
+  mu_Id number_edit = 0;
   /* stacks */
   CommandStack _command_stack;
 
@@ -70,19 +99,19 @@ public:
   mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
   /* retained state pools */
-  mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE];
-  mu_Container containers[MU_CONTAINERPOOL_SIZE];
-  mu_PoolItem treenode_pool[MU_TREENODEPOOL_SIZE];
+  mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE] = {0};
+  mu_Container containers[MU_CONTAINERPOOL_SIZE] = {0};
+  mu_PoolItem treenode_pool[MU_TREENODEPOOL_SIZE] = {0};
   /* input state */
   mu_Vec2 mouse_pos;
   mu_Vec2 last_mouse_pos;
   mu_Vec2 mouse_delta;
   mu_Vec2 scroll_delta;
-  int mouse_down;
-  int mouse_pressed;
-  int key_down;
-  int key_pressed;
-  char input_text[32];
+  int mouse_down = 0;
+  int mouse_pressed = 0;
+  int key_down = 0;
+  int key_pressed = 0;
+  char input_text[32] = {0};
 
 private:
   mu_Id focus = 0;

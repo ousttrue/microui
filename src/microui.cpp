@@ -39,25 +39,6 @@
 
 static mu_Rect unclipped_rect = {0, 0, 0x1000000, 0x1000000};
 
-static void draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
-  ctx->draw_rect(rect, ctx->style->colors[colorid]);
-  if (colorid == MU_COLOR_SCROLLBASE || colorid == MU_COLOR_SCROLLTHUMB ||
-      colorid == MU_COLOR_TITLEBG) {
-    return;
-  }
-  // draw border
-  if (ctx->style->colors[MU_COLOR_BORDER].a) {
-    mu_draw_box(ctx, rect.expand(1), ctx->style->colors[MU_COLOR_BORDER]);
-  }
-}
-
-void mu_init(mu_Context *ctx) {
-  memset(ctx, 0, sizeof(*ctx));
-  ctx->draw_frame = draw_frame;
-  ctx->_style = {};
-  ctx->style = &ctx->_style;
-}
-
 void mu_begin(mu_Context *ctx) {
   expect(ctx->text_width && ctx->text_height);
   ctx->_command_stack.begin_frame();
@@ -133,7 +114,6 @@ void mu_push_id(mu_Context *ctx, const void *data, int size) {
 }
 
 void mu_pop_id(mu_Context *ctx) { ctx->id_stack.pop(); }
-
 
 static void pop_container(mu_Context *ctx) {
   mu_Container *cnt = mu_get_current_container(ctx);
@@ -254,15 +234,6 @@ void mu_input_text(mu_Context *ctx, const char *text) {
 /*============================================================================
 ** commandlist
 **============================================================================*/
-
-
-void mu_draw_box(mu_Context *ctx, mu_Rect rect, mu_Color color) {
-  ctx->draw_rect(mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
-  ctx->draw_rect(mu_Rect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
-                 color);
-  ctx->draw_rect(mu_Rect(rect.x, rect.y, 1, rect.h), color);
-  ctx->draw_rect(mu_Rect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
-}
 
 void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
                   mu_Vec2 pos, mu_Color color) {
@@ -665,7 +636,7 @@ int mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   x = (v - low) * (base.w - w) / (high - low);
   thumb = mu_Rect(base.x + x, base.y, w, base.h);
   mu_draw_control_frame(ctx, id, thumb, MU_COLOR_BUTTON, opt);
-  // draw text 
+  // draw text
   sprintf(buf, fmt, v);
   mu_draw_control_text(ctx, buf, base, MU_COLOR_TEXT, opt);
 
@@ -699,7 +670,7 @@ int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
 
   // draw base
   mu_draw_control_frame(ctx, id, base, MU_COLOR_BASE, opt);
-  // draw text 
+  // draw text
   sprintf(buf, fmt, *value);
   mu_draw_control_text(ctx, buf, base, MU_COLOR_TEXT, opt);
 
@@ -832,7 +803,8 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt,
   if (~opt & MU_OPT_NOSCROLL) {
     scrollbars(ctx, cnt, &body);
   }
-  ctx->layout_stack.push(mu_Layout(body.expand(-ctx->style->padding), cnt->scroll));
+  ctx->layout_stack.push(
+      mu_Layout(body.expand(-ctx->style->padding), cnt->scroll));
   cnt->body = body;
 }
 
@@ -954,7 +926,7 @@ void mu_end_window(mu_Context *ctx) {
 
 void mu_open_popup(mu_Context *ctx, const char *name) {
   mu_Container *cnt = mu_get_container(ctx, name);
-  // set as hover root so popup isn't closed in begin_window_ex() 
+  // set as hover root so popup isn't closed in begin_window_ex()
   ctx->hover_root = ctx->next_hover_root = cnt;
   // position at mouse cursor, open and bring-to-front
   cnt->rect = mu_Rect(ctx->mouse_pos.x, ctx->mouse_pos.y, 1, 1);
