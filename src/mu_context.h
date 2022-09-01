@@ -6,15 +6,18 @@
 #include <assert.h>
 
 template <typename T, size_t N> class mu_Stack {
-public:
   T items[N];
   int idx = 0;
+public:
   const T *data() const { return &items[0]; }
   T *data() { return &items[0]; }
   int size() const { return idx; }
   const T &get(int i) const { return items[i]; }
   T &get(int i) { return items[i]; }
-  T &back() { return items[idx - 1]; }
+  T &back() {
+    assert(idx > 0);
+    return items[idx - 1];
+  }
   T *next() { return items + idx; }
   void grow(int size) {
     assert(idx + size < N);
