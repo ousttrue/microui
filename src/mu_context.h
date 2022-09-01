@@ -3,12 +3,24 @@
 #include "mu_layout.h"
 #include "mu_rect.h"
 #include "mu_style.h"
+#include <assert.h>
 
-#define mu_stack(T, n)                                                         \
-  struct {                                                                     \
-    int idx;                                                                   \
-    T items[n];                                                                \
+template <typename T, size_t N> struct mu_Stack {
+  int idx = 0;
+  T items[N];
+
+  void push(const T &val) {
+    assert(this->idx < (int)(sizeof(this->items) / sizeof(*this->items)));
+    this->items[this->idx] = (val);
+    this->idx++; /* incremented after incase `val` uses this value */
   }
+
+  void pop() {
+    assert(this->idx > 0);
+    this->idx--;
+  }
+};
+
 #define MU_COMMANDLIST_SIZE (256 * 1024)
 #define MU_ROOTLIST_SIZE 32
 #define MU_CONTAINERSTACK_SIZE 32
@@ -39,12 +51,12 @@ public:
   char number_edit_buf[MU_MAX_FMT];
   mu_Id number_edit;
   /* stacks */
-  mu_stack(char, MU_COMMANDLIST_SIZE) command_list;
-  mu_stack(mu_Container *, MU_ROOTLIST_SIZE) root_list;
-  mu_stack(mu_Container *, MU_CONTAINERSTACK_SIZE) container_stack;
-  mu_stack(mu_Rect, MU_CLIPSTACK_SIZE) clip_stack;
-  mu_stack(mu_Id, MU_IDSTACK_SIZE) id_stack;
-  mu_stack(mu_Layout, MU_LAYOUTSTACK_SIZE) layout_stack;
+  mu_Stack<char, MU_COMMANDLIST_SIZE> command_list;
+  mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
+  mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
+  mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
+  mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
+  mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
   /* retained state pools */
   mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE];
   mu_Container containers[MU_CONTAINERPOOL_SIZE];

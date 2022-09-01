@@ -37,18 +37,6 @@
     }                                                                          \
   } while (0)
 
-#define push(stk, val)                                                         \
-  do {                                                                         \
-    expect((stk).idx < (int)(sizeof((stk).items) / sizeof(*(stk).items)));     \
-    (stk).items[(stk).idx] = (val);                                            \
-    (stk).idx++; /* incremented after incase `val` uses this value */          \
-  } while (0)
-
-#define pop(stk)                                                               \
-  do {                                                                         \
-    expect((stk).idx > 0);                                                     \
-    (stk).idx--;                                                               \
-  } while (0)
 
 static mu_Rect unclipped_rect = {0, 0, 0x1000000, 0x1000000};
 
@@ -162,17 +150,17 @@ mu_Id mu_get_id(mu_Context *ctx, const void *data, int size) {
 }
 
 void mu_push_id(mu_Context *ctx, const void *data, int size) {
-  push(ctx->id_stack, mu_get_id(ctx, data, size));
+  ctx->id_stack.push(mu_get_id(ctx, data, size));
 }
 
-void mu_pop_id(mu_Context *ctx) { pop(ctx->id_stack); }
+void mu_pop_id(mu_Context *ctx) { ctx->id_stack.pop(); }
 
 void mu_push_clip_rect(mu_Context *ctx, mu_Rect rect) {
   mu_Rect last = mu_get_clip_rect(ctx);
-  push(ctx->clip_stack, rect.intersect(last));
+  ctx->clip_stack.push(rect.intersect(last));
 }
 
-void mu_pop_clip_rect(mu_Context *ctx) { pop(ctx->clip_stack); }
+void mu_pop_clip_rect(mu_Context *ctx) { ctx->clip_stack.pop(); }
 
 mu_Rect mu_get_clip_rect(mu_Context *ctx) {
   expect(ctx->clip_stack.idx > 0);
@@ -194,11 +182,11 @@ int mu_check_clip(mu_Context *ctx, mu_Rect r) {
 
 static void push_layout(mu_Context *ctx, mu_Rect body, mu_Vec2 scroll) {
   mu_Layout layout;
-  int width = 0;
   memset(&layout, 0, sizeof(layout));
   layout.body = mu_Rect(body.x - scroll.x, body.y - scroll.y, body.w, body.h);
   layout.max = mu_Vec2(-0x1000000, -0x1000000);
-  push(ctx->layout_stack, layout);
+  ctx->layout_stack.push(layout);
+  int width = 0;
   mu_layout_row(ctx, 1, &width, 0);
 }
 
@@ -212,8 +200,8 @@ static void pop_container(mu_Context *ctx) {
   cnt->content_size.x = layout->max.x - layout->body.x;
   cnt->content_size.y = layout->max.y - layout->body.y;
   /* pop container, layout and id */
-  pop(ctx->container_stack);
-  pop(ctx->layout_stack);
+  ctx->container_stack.pop();
+  ctx->layout_stack.pop();
   mu_pop_id(ctx);
 }
 
@@ -444,11 +432,10 @@ void mu_layout_begin_column(mu_Context *ctx) {
 }
 
 void mu_layout_end_column(mu_Context *ctx) {
-  mu_Layout *a, *b;
-  b = get_layout(ctx);
-  pop(ctx->layout_stack);
+  auto b = get_layout(ctx);
+  ctx->layout_stack.pop();
   /* inherit position/next_row/max from child layout if they are greater */
-  a = get_layout(ctx);
+  auto a = get_layout(ctx);
   a->position.x = mu_max(a->position.x, b->position.x + b->body.x - a->body.x);
   a->next_row = mu_max(a->next_row, b->next_row + b->body.y - a->body.y);
   a->max.x = mu_max(a->max.x, b->max.x);
@@ -903,7 +890,7 @@ int mu_begin_treenode_ex(mu_Context *ctx, const char *label, int opt) {
   int res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
     get_layout(ctx)->indent += ctx->style->indent;
-    push(ctx->id_stack, ctx->last_id);
+    ctx->id_stack.push(ctx->last_id);
   }
   return res;
 }
@@ -982,9 +969,9 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt,
 }
 
 static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
-  push(ctx->container_stack, cnt);
+  ctx->container_stack.push(cnt);
   /* push container to roots list and push head command */
-  push(ctx->root_list, cnt);
+  ctx->root_list.push(cnt);
   cnt->head = push_jump(ctx, nullptr);
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
@@ -995,7 +982,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   /* clipping is reset here in case a root-container is made within
   ** another root-containers's begin/end block; this prevents the inner
   ** root-container being clipped to the outer */
-  push(ctx->clip_stack, unclipped_rect);
+  ctx->clip_stack.push(unclipped_rect);
 }
 
 static void end_root_container(mu_Context *ctx) {
@@ -1017,7 +1004,7 @@ int mu_begin_window_ex(mu_Context *ctx, const char *title, mu_Rect rect,
   if (!cnt || !cnt->open) {
     return 0;
   }
-  push(ctx->id_stack, id);
+  ctx->id_stack.push(id);
 
   if (cnt->rect.w == 0) {
     cnt->rect = rect;
@@ -1124,7 +1111,7 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, int opt) {
   if (~opt & MU_OPT_NOFRAME) {
     ctx->draw_frame(ctx, cnt->rect, MU_COLOR_PANELBG);
   }
-  push(ctx->container_stack, cnt);
+  ctx->container_stack.push(cnt);
   push_container_body(ctx, cnt, cnt->rect, opt);
   mu_push_clip_rect(ctx, cnt->body);
 }
