@@ -89,7 +89,7 @@ static int compare_zindex(const void *a, const void *b) {
   return (*(mu_Container **)a)->zindex - (*(mu_Container **)b)->zindex;
 }
 
-void mu_end(mu_Context *ctx) {
+void mu_end(mu_Context *ctx, mu_RenderCommand *command) {
   // check stacks
   assert(ctx->container_stack.size() == 0);
   assert(ctx->clip_stack.size() == 0);
@@ -102,6 +102,16 @@ void mu_end(mu_Context *ctx) {
   // sort root containers by zindex
   auto n = ctx->root_list.size();
   qsort(ctx->root_list.begin(), n, sizeof(mu_Container *), compare_zindex);
+
+  auto end = ctx->root_list.end();
+  auto p = &ctx->root_window_ranges[0];
+  for (auto it = ctx->root_list.begin(); it != end; ++it, ++p) {
+    *p = (*it)->range;
+  }
+
+  command->window_range_list = &ctx->root_window_ranges[0];
+  command->window_count = ctx->root_list.size();
+  command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
 }
 
 // 32bit fnv-1a hash
@@ -318,7 +328,7 @@ static int in_hover_root(mu_Context *ctx) {
     }
     /* only root containers have their `head` field set; stop searching if we've
     ** reached the current root container */
-    if (ctx->container_stack.get(i)->head) {
+    if (ctx->container_stack.get(i)->range.head) {
       break;
     }
   }
@@ -757,7 +767,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   ctx->container_stack.push(cnt);
   // push container to roots list and push head command
   ctx->root_list.push(cnt);
-  cnt->head = ctx->_command_stack.size();
+  cnt->range.head = ctx->_command_stack.size();
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
   if (cnt->rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
@@ -774,7 +784,7 @@ static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
   mu_Container *cnt = mu_get_current_container(ctx);
-  cnt->tail = ctx->_command_stack.size();
+  cnt->range.tail = ctx->_command_stack.size();
   // pop base clip rect and container
   ctx->pop_clip_rect();
   pop_container(ctx);

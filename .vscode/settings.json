@@ -8,7 +8,8 @@
     "files.associations": {
         "cstdlib": "c",
         "renderer.h": "c",
-        "microui.h": "c"
+        "microui.h": "c",
+        "utility": "cpp"
     },
     "cSpell.words": [
         "adipiscing",

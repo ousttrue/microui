@@ -11,11 +11,11 @@
 #include "mu_rect.h"
 #include "mu_types.h"
 #include "mu_vec2.h"
+#include "mu_render_command.h"
 #define MU_VERSION "2.01"
 
 #define MU_REAL_FMT "%.3g"
 #define MU_SLIDER_FMT "%.2f"
-#define MU_MAX_FMT 127
 
 #define mu_min(a, b) ((a) < (b) ? (a) : (b))
 #define mu_max(a, b) ((a) > (b) ? (a) : (b))
@@ -88,7 +88,7 @@ EXPORT_MICROUI void mu_input_mouseup(mu_Context *ctx, int button);
 EXPORT_MICROUI void mu_input_scroll(mu_Context *ctx, int x, int y);
 
 EXPORT_MICROUI void mu_begin(mu_Context *ctx);
-EXPORT_MICROUI void mu_end(mu_Context *ctx);
+EXPORT_MICROUI void mu_end(mu_Context *ctx, mu_RenderCommand *command);
 
 EXPORT_MICROUI mu_Id mu_get_id(mu_Context *ctx, const void *data, int size);
 EXPORT_MICROUI void mu_push_id(mu_Context *ctx, const void *data, int size);

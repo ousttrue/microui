@@ -4,6 +4,7 @@
 
 #include "atlas.h"
 #include "renderer.h"
+#include <algorithm>
 #include <assert.h>
 #include <mu_context.h>
 #include <stdio.h>
@@ -134,7 +135,7 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
     if ((*p & 0xc0) == 0x80) {
       continue;
     }
-    int chr = mu_min((unsigned char)*p, 127);
+    int chr = std::min((uint8_t)*p, (uint8_t)127);
     mu_Rect src = *((mu_Rect *)&atlas[ATLAS_FONT + chr]);
     dst.w = src.w;
     dst.h = src.h;
@@ -156,7 +157,7 @@ int r_get_text_width(const char *text, int len) {
     if ((*p & 0xc0) == 0x80) {
       continue;
     }
-    int chr = mu_min((unsigned char)*p, 127);
+    int chr = std::min((uint8_t)*p, (uint8_t)127);
     res += atlas[ATLAS_FONT + chr].w;
   }
   return res;
@@ -175,7 +176,8 @@ void r_clear(mu_Color clr) {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void render(mu_Context *ctx, int width, int height, float bg[4]) {
+void render(int width, int height, float bg[4],
+            const mu_RenderCommand *command) {
   r_resize(width, height);
 
   // /* render */
@@ -183,11 +185,11 @@ void render(mu_Context *ctx, int width, int height, float bg[4]) {
   glScissor(0, 0, width, height);
   r_clear(mu_Color(bg[0], bg[1], bg[2], 255));
 
-  auto end = ctx->root_list.end();
-  for (auto it = ctx->root_list.begin(); it != end; ++it) {
-    auto tail = ctx->_command_stack.get((*it)->tail);
+  auto end = command->end();
+  for (auto it = command->begin(); it != end; ++it) {
+    auto tail = command->command_buffer + it->tail;
     mu_Command *cmd = nullptr;
-    for (auto p = ctx->_command_stack.get((*it)->head); p != tail;
+    for (auto p = command->command_buffer + it->head; p != tail;
          p = p + cmd->size) {
       cmd = (mu_Command *)p;
       switch (cmd->type) {

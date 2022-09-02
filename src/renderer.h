@@ -1,5 +1,5 @@
 #pragma once
-#include <microui.h>
+#include <mu_render_command.h>
 
 #ifdef BUILD_MICROUI
 #define EXPORT_MICROUI __declspec(dllexport)
@@ -21,7 +21,7 @@ EXPORT_MICROUI int r_get_text_height(void);
 EXPORT_MICROUI void r_set_clip_rect(mu_Rect rect);
 EXPORT_MICROUI void r_clear(mu_Color color);
 EXPORT_MICROUI void flush();
-EXPORT_MICROUI void render(mu_Context *ctx, int width, int height, float bg[4]);
+EXPORT_MICROUI void render(int width, int height, float bg[4], const mu_RenderCommand *command);
 
 #ifdef __cplusplus
 }

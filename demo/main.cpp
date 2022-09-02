@@ -110,9 +110,9 @@ int main(int argc, char **argv) {
     //   }
     //   }
     // }
-    process_frame(ctx, bg);
-
-    render(ctx, width, height, bg);
+    mu_RenderCommand command;
+    process_frame(ctx, bg, &command);
+    render(width, height, bg, &command);
 
     glfwSwapBuffers(window);
   }

@@ -2,10 +2,10 @@
 #include "mu_command.h"
 #include "mu_rect.h"
 #include "mu_vec2.h"
+#include "mu_render_command.h"
 
 struct mu_Container {
-  size_t head;
-  size_t tail;
+  mu_WindowRange range;
   mu_Rect rect;
   mu_Rect body;
   mu_Vec2 content_size;
@@ -14,8 +14,8 @@ struct mu_Container {
   bool open;
 
   void init() {
-    head = 0;
-    tail = 0;
+    range.head = 0;
+    range.tail = 0;
     rect = {};
     body = {};
     content_size = {};

@@ -1,12 +1,13 @@
 #pragma once
 #include "mu_container.h"
+#include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
 #include "mu_rect.h"
 #include "mu_style.h"
-#include "mu_input.h"
 #include <assert.h>
 
+#define MU_MAX_FMT 127
 #define MU_ROOTLIST_SIZE 32
 #define MU_CONTAINERSTACK_SIZE 32
 #define MU_CLIPSTACK_SIZE 32
@@ -76,6 +77,7 @@ struct mu_Context {
   // stacks
   CommandStack _command_stack;
   mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
+  mu_WindowRange root_window_ranges[MU_ROOTLIST_SIZE];
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
   mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
 
