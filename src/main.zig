@@ -1,5 +1,6 @@
 const std = @import("std");
 const c = @import("c");
+const ui = @import("./ui.zig");
 
 fn text_width(_: ?*anyopaque, text: [*c]const u8, _len: c_int) callconv(.C) c_int {
     const len = if (_len == -1)
@@ -66,12 +67,18 @@ pub fn main() anyerror!void {
     c.r_init();
 
     // init microui
-    const ctx = c.mu_new(text_width, text_height);
+    const ctx = c.mu_new(text_width, text_height) orelse {
+        @panic("mu_new");
+    };
     c.glfwSetWindowUserPointer(window, ctx);
 
     _ = c.glfwSetCursorPosCallback(window, cursor_position_callback);
     _ = c.glfwSetMouseButtonCallback(window, mouse_button_callback);
     _ = c.glfwSetScrollCallback(window, scroll_callback);
+
+    var bg = [3]f32{
+        90, 95, 100,
+    };
 
     // Loop until the user closes the window
     while (c.glfwWindowShouldClose(window) == 0) {
@@ -82,7 +89,9 @@ pub fn main() anyerror!void {
         var height: c_int = undefined;
         c.glfwGetFramebufferSize(window, &width, &height);
 
-        c.render(ctx, width, height);
+        ui.process_frame(ctx, &bg);
+
+        c.render(ctx, width, height, &bg[0]);
 
         // Swap front and back buffers
         c.glfwSwapBuffers(window);

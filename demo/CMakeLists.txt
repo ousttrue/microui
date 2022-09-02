@@ -1,5 +1,5 @@
 set(TARGET_NAME demo)
-add_executable(${TARGET_NAME} main.cpp)
+add_executable(${TARGET_NAME} main.cpp ui.cpp)
 target_include_directories(
   ${TARGET_NAME}
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}

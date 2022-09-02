@@ -1,4 +1,6 @@
+#define GLFW_INCLUDE_NONE
 #include "renderer.h"
+#include "ui.h"
 #include <GLFW/glfw3.h>
 #include <microui.h>
 #include <mu_context.h>
@@ -82,6 +84,8 @@ int main(int argc, char **argv) {
   glfwSetMouseButtonCallback(window, mouse_button_callback);
   glfwSetScrollCallback(window, scroll_callback);
 
+  float bg[3] = {90, 95, 100};
+
   /* main loop */
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
@@ -106,8 +110,9 @@ int main(int argc, char **argv) {
     //   }
     //   }
     // }
+    process_frame(ctx, bg);
 
-    render(ctx, width, height);
+    render(ctx, width, height, bg);
 
     glfwSwapBuffers(window);
   }
