@@ -254,7 +254,7 @@ static void test_window(mu_Context *ctx, float bg[4]) {
   }
 }
 
-void process_frame(mu_Context *ctx, float bg[4], mu_RenderCommand *command) {
+void process_frame(mu_Context *ctx, float bg[4], UIRenderFrame *command) {
   mu_begin(ctx);
   style_window(ctx);
   log_window(ctx);

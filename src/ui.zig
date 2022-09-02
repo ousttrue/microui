@@ -228,10 +228,10 @@ fn test_window(ctx: *c.mu_Context, bg: [*]f32) void {
     }
 }
 
-pub fn process_frame(ctx: *c.mu_Context, bg: [*]f32) void {
+pub fn process_frame(ctx: *c.mu_Context, bg: [*]f32, frame: *c.UIRenderFrame) void {
     c.mu_begin(ctx);
     style_window(ctx);
     log_window(ctx);
     test_window(ctx, bg);
-    c.mu_end(ctx);
+    c.mu_end(ctx, frame);
 }

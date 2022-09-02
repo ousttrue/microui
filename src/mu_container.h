@@ -2,10 +2,10 @@
 #include "mu_command.h"
 #include "mu_rect.h"
 #include "mu_vec2.h"
-#include "mu_render_command.h"
+#include <UIRenderFrame.h>
 
 struct mu_Container {
-  mu_WindowRange range;
+  UICommandRange range;
   mu_Rect rect;
   mu_Rect body;
   mu_Vec2 content_size;

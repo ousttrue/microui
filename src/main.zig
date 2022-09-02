@@ -89,9 +89,9 @@ pub fn main() anyerror!void {
         var height: c_int = undefined;
         c.glfwGetFramebufferSize(window, &width, &height);
 
-        ui.process_frame(ctx, &bg);
-
-        c.render(ctx, width, height, &bg[0]);
+        var frame: c.UIRenderFrame = undefined;
+        ui.process_frame(ctx, &bg, &frame);
+        c.render(width, height, &bg[0], &frame);
 
         // Swap front and back buffers
         c.glfwSwapBuffers(window);

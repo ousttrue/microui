@@ -19,6 +19,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(c_pkg);
     exe.addIncludePath(GLFW_BASE ++ "/include");
     exe.addIncludePath("src");
+    exe.addIncludePath("uirf");
     // exe.addCSourceFiles(&.{
     //     "src/microui.cpp",
     //     "src/renderer.cpp",

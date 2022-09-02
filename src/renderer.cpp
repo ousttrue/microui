@@ -177,7 +177,7 @@ void r_clear(mu_Color clr) {
 }
 
 void render(int width, int height, float bg[4],
-            const mu_RenderCommand *command) {
+            const UIRenderFrame *command) {
   r_resize(width, height);
 
   // /* render */

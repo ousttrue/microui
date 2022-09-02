@@ -89,7 +89,7 @@ static int compare_zindex(const void *a, const void *b) {
   return (*(mu_Container **)a)->zindex - (*(mu_Container **)b)->zindex;
 }
 
-void mu_end(mu_Context *ctx, mu_RenderCommand *command) {
+void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   // check stacks
   assert(ctx->container_stack.size() == 0);
   assert(ctx->clip_stack.size() == 0);
@@ -109,8 +109,8 @@ void mu_end(mu_Context *ctx, mu_RenderCommand *command) {
     *p = (*it)->range;
   }
 
-  command->window_range_list = &ctx->root_window_ranges[0];
-  command->window_count = ctx->root_list.size();
+  command->command_groups = &ctx->root_window_ranges[0];
+  command->command_group_count = ctx->root_list.size();
   command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
 }
 

@@ -77,7 +77,7 @@ struct mu_Context {
   // stacks
   CommandStack _command_stack;
   mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
-  mu_WindowRange root_window_ranges[MU_ROOTLIST_SIZE];
+  UICommandRange root_window_ranges[MU_ROOTLIST_SIZE];
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
   mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
 

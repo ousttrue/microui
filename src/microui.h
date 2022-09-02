@@ -6,12 +6,11 @@
 */
 
 #pragma once
-// #include "mu_context.h"
 #include "mu_color.h"
 #include "mu_rect.h"
 #include "mu_types.h"
 #include "mu_vec2.h"
-#include "mu_render_command.h"
+#include <UIRenderFrame.h>
 #define MU_VERSION "2.01"
 
 #define MU_REAL_FMT "%.3g"
@@ -88,7 +87,7 @@ EXPORT_MICROUI void mu_input_mouseup(mu_Context *ctx, int button);
 EXPORT_MICROUI void mu_input_scroll(mu_Context *ctx, int x, int y);
 
 EXPORT_MICROUI void mu_begin(mu_Context *ctx);
-EXPORT_MICROUI void mu_end(mu_Context *ctx, mu_RenderCommand *command);
+EXPORT_MICROUI void mu_end(mu_Context *ctx, struct UIRenderFrame *command);
 
 EXPORT_MICROUI mu_Id mu_get_id(mu_Context *ctx, const void *data, int size);
 EXPORT_MICROUI void mu_push_id(mu_Context *ctx, const void *data, int size);

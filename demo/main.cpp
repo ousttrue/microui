@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     //   }
     //   }
     // }
-    mu_RenderCommand command;
+    UIRenderFrame command;
     process_frame(ctx, bg, &command);
     render(width, height, bg, &command);
 
