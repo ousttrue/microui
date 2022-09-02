@@ -4,9 +4,10 @@
 
 #include "atlas.h"
 #include "renderer.h"
+#include <UIRenderFrame.h>
 #include <algorithm>
 #include <assert.h>
-#include <mu_context.h>
+// #include <mu_context.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -75,7 +76,8 @@ void flush(void) {
   buf_idx = 0;
 }
 
-static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
+static void push_quad(const UIRect &dst, const UIRect &src,
+                      const UIColor32 &color) {
   if (buf_idx == BUFFER_SIZE) {
     flush();
   }
@@ -125,18 +127,19 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   index_buf[index_idx + 5] = element_idx + 1;
 }
 
-void r_draw_rect(mu_Rect rect, mu_Color color) {
-  push_quad(rect, *((mu_Rect *)&atlas[ATLAS_WHITE]), color);
+void r_draw_rect(UIRect rect, UIColor32 color) {
+  push_quad(rect, *((UIRect *)&atlas[ATLAS_WHITE]), color);
 }
 
-void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
-  mu_Rect dst = {pos.x, pos.y, 0, 0};
-  for (const char *p = text; *p; p++) {
+void r_draw_text(const uint8_t *begin, const uint8_t *end, UIVec2 pos,
+                 UIColor32 color) {
+  UIRect dst = {pos.x, pos.y, 0, 0};
+  for (auto *p = begin; p != end; p++) {
     if ((*p & 0xc0) == 0x80) {
       continue;
     }
     int chr = std::min((uint8_t)*p, (uint8_t)127);
-    mu_Rect src = *((mu_Rect *)&atlas[ATLAS_FONT + chr]);
+    UIRect src = *((UIRect *)&atlas[ATLAS_FONT + chr]);
     dst.w = src.w;
     dst.h = src.h;
     push_quad(dst, src, color);
@@ -144,11 +147,11 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
   }
 }
 
-void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
-  mu_Rect src = *((mu_Rect *)&atlas[id]);
+void r_draw_icon(int id, UIRect rect, UIColor32 color) {
+  UIRect src = *((UIRect *)&atlas[id]);
   int x = rect.x + (rect.w - src.w) / 2;
   int y = rect.y + (rect.h - src.h) / 2;
-  push_quad(mu_Rect(x, y, src.w, src.h), src, color);
+  push_quad(UIRect(x, y, src.w, src.h), src, color);
 }
 
 int r_get_text_width(const char *text, int len) {
@@ -165,45 +168,45 @@ int r_get_text_width(const char *text, int len) {
 
 int r_get_text_height(void) { return 18; }
 
-void r_set_clip_rect(mu_Rect rect) {
+void r_set_clip_rect(UIRect rect) {
   flush();
   glScissor(rect.x, height - (rect.y + rect.h), rect.w, rect.h);
 }
 
-void r_clear(mu_Color clr) {
+void r_clear(UIColor32 clr) {
   flush();
   glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void render(int width, int height, float bg[4],
-            const UIRenderFrame *command) {
+void render(int width, int height, float bg[4], const UIRenderFrame *command) {
   r_resize(width, height);
 
   // /* render */
   glViewport(0, 0, width, height);
   glScissor(0, 0, width, height);
-  r_clear(mu_Color(bg[0], bg[1], bg[2], 255));
+  r_clear(UIColor32(bg[0], bg[1], bg[2], 255));
 
   auto end = command->end();
   for (auto it = command->begin(); it != end; ++it) {
     auto tail = command->command_buffer + it->tail;
-    mu_Command *cmd = nullptr;
+    UICommand *cmd = nullptr;
     for (auto p = command->command_buffer + it->head; p != tail;
-         p = p + cmd->size) {
-      cmd = (mu_Command *)p;
-      switch (cmd->type) {
-      case MU_COMMAND::TEXT:
-        r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
+         p = p + cmd->size()) {
+      cmd = (UICommand *)p;
+      switch (cmd->command) {
+      case UI_COMMAND_TEXT:
+        r_draw_text(cmd->text()->begin(), cmd->text()->end(), cmd->text()->pos,
+                    cmd->text()->color);
         break;
-      case MU_COMMAND::RECT:
-        r_draw_rect(cmd->rect.rect, cmd->rect.color);
+      case UI_COMMAND_RECT:
+        r_draw_rect(cmd->rect()->rect, cmd->rect()->color);
         break;
-      case MU_COMMAND::ICON:
-        r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
+      case UI_COMMAND_ICON:
+        r_draw_icon(cmd->icon()->id, cmd->icon()->rect, cmd->icon()->color);
         break;
-      case MU_COMMAND::CLIP:
-        r_set_clip_rect(cmd->clip.rect);
+      case UI_COMMAND_CLIP:
+        r_set_clip_rect(cmd->clip()->rect);
         break;
       }
     }

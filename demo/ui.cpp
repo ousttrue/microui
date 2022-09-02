@@ -28,23 +28,23 @@ static void style_window(mu_Context *ctx) {
   static struct {
     const char *label;
     int idx;
-  } colors[] = {{"text:", MU_COLOR_TEXT},
-                {"border:", MU_COLOR_BORDER},
-                {"windowbg:", MU_COLOR_WINDOWBG},
-                {"titlebg:", MU_COLOR_TITLEBG},
-                {"titletext:", MU_COLOR_TITLETEXT},
-                {"panelbg:", MU_COLOR_PANELBG},
-                {"button:", MU_COLOR_BUTTON},
-                {"buttonhover:", MU_COLOR_BUTTONHOVER},
-                {"buttonfocus:", MU_COLOR_BUTTONFOCUS},
-                {"base:", MU_COLOR_BASE},
-                {"basehover:", MU_COLOR_BASEHOVER},
-                {"basefocus:", MU_COLOR_BASEFOCUS},
-                {"scrollbase:", MU_COLOR_SCROLLBASE},
-                {"scrollthumb:", MU_COLOR_SCROLLTHUMB},
+  } colors[] = {{"text:", MU_STYLE_TEXT},
+                {"border:", MU_STYLE_BORDER},
+                {"windowbg:", MU_STYLE_WINDOWBG},
+                {"titlebg:", MU_STYLE_TITLEBG},
+                {"titletext:", MU_STYLE_TITLETEXT},
+                {"panelbg:", MU_STYLE_PANELBG},
+                {"button:", MU_STYLE_BUTTON},
+                {"buttonhover:", MU_STYLE_BUTTONHOVER},
+                {"buttonfocus:", MU_STYLE_BUTTONFOCUS},
+                {"base:", MU_STYLE_BASE},
+                {"basehover:", MU_STYLE_BASEHOVER},
+                {"basefocus:", MU_STYLE_BASEFOCUS},
+                {"scrollbase:", MU_STYLE_SCROLLBASE},
+                {"scrollthumb:", MU_STYLE_SCROLLTHUMB},
                 {NULL}};
 
-  if (mu_begin_window(ctx, "Style Editor", mu_Rect(350, 250, 300, 240),
+  if (mu_begin_window(ctx, "Style Editor", UIRect(350, 250, 300, 240),
                       MU_OPT_NONE)) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
     {
@@ -64,7 +64,7 @@ static void style_window(mu_Context *ctx) {
 }
 
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log Window", mu_Rect(350, 40, 300, 200),
+  if (mu_begin_window(ctx, "Log Window", UIRect(350, 40, 300, 200),
                       MU_OPT_NONE)) {
     /* output text panel */
     {
@@ -109,7 +109,7 @@ static void log_window(mu_Context *ctx) {
 
 static void test_window(mu_Context *ctx, float bg[4]) {
   /* do window */
-  if (mu_begin_window(ctx, "Demo Window", mu_Rect(40, 40, 300, 450),
+  if (mu_begin_window(ctx, "Demo Window", UIRect(40, 40, 300, 450),
                       MU_OPT_NONE)) {
     auto win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
@@ -243,11 +243,11 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       mu_slider(ctx, &bg[2], 0, 255);
       mu_layout_end_column(ctx);
       /* color preview */
-      mu_Rect r = mu_layout_next(ctx);
-      ctx->draw_rect(r, mu_Color(bg[0], bg[1], bg[2], 255));
+      UIRect r = mu_layout_next(ctx);
+      ctx->draw_rect(r, UIColor32(bg[0], bg[1], bg[2], 255));
       char buf[32];
       sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
-      mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
+      mu_draw_control_text(ctx, buf, r, MU_STYLE_TEXT, MU_OPT_ALIGNCENTER);
     }
 
     mu_end_window(ctx);

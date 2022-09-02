@@ -6,10 +6,7 @@
 */
 
 #pragma once
-#include "mu_color.h"
-#include "mu_rect.h"
 #include "mu_types.h"
-#include "mu_vec2.h"
 #include <UIRenderFrame.h>
 #define MU_VERSION "2.01"
 
@@ -60,9 +57,9 @@ struct mu_PoolItem;
 typedef struct mu_Context mu_Context;
 typedef struct mu_Container mu_Container;
 typedef struct mu_PoolItem mu_PoolItem;
-typedef struct mu_Vec2 mu_Vec2;
-typedef struct mu_Rect mu_Rect;
-typedef struct mu_Color mu_Color;
+typedef struct UIVec2 UIVec2;
+typedef struct UIRect UIRect;
+typedef struct UIColor32 UIColor32;
 typedef enum MU_OPT MU_OPT;
 typedef enum MU_RES MU_RES;
 #endif
@@ -103,25 +100,25 @@ EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
 EXPORT_MICROUI void mu_pool_update(int frame, mu_PoolItem *items, int idx);
 
 EXPORT_MICROUI void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str,
-                                 int len, mu_Vec2 pos, mu_Color color);
-EXPORT_MICROUI void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect,
-                                 mu_Color color);
+                                 int len, UIVec2 pos, UIColor32 color);
+EXPORT_MICROUI void mu_draw_icon(mu_Context *ctx, int id, UIRect rect,
+                                 UIColor32 color);
 
 EXPORT_MICROUI void mu_layout_width(mu_Context *ctx, int width);
 EXPORT_MICROUI void mu_layout_height(mu_Context *ctx, int height);
 EXPORT_MICROUI void mu_layout_begin_column(mu_Context *ctx);
 EXPORT_MICROUI void mu_layout_end_column(mu_Context *ctx);
-EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, mu_Rect r,
+EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, UIRect r,
                                        int relative);
-EXPORT_MICROUI mu_Rect mu_layout_next(mu_Context *ctx);
+EXPORT_MICROUI UIRect mu_layout_next(mu_Context *ctx);
 
 EXPORT_MICROUI void mu_draw_control_frame(mu_Context *ctx, mu_Id id,
-                                          mu_Rect rect, int colorid,
+                                          UIRect rect, int colorid,
                                           MU_OPT opt);
 EXPORT_MICROUI void mu_draw_control_text(mu_Context *ctx, const char *str,
-                                         mu_Rect rect, int colorid, MU_OPT opt);
-EXPORT_MICROUI int mu_mouse_over(mu_Context *ctx, mu_Rect rect);
-EXPORT_MICROUI void mu_update_control(mu_Context *ctx, mu_Id id, mu_Rect rect,
+                                         UIRect rect, int colorid, MU_OPT opt);
+EXPORT_MICROUI int mu_mouse_over(mu_Context *ctx, UIRect rect);
+EXPORT_MICROUI void mu_update_control(mu_Context *ctx, mu_Id id, UIRect rect,
                                       MU_OPT opt);
 
 #define mu_button(ctx, label) mu_button_ex(ctx, label, 0, MU_OPT_ALIGNCENTER)
@@ -142,7 +139,7 @@ EXPORT_MICROUI MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon,
 EXPORT_MICROUI MU_RES mu_checkbox(mu_Context *ctx, const char *label,
                                   int *state);
 EXPORT_MICROUI MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz,
-                                     mu_Id id, mu_Rect r, MU_OPT opt);
+                                     mu_Id id, UIRect r, MU_OPT opt);
 EXPORT_MICROUI MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz,
                                     MU_OPT opt);
 EXPORT_MICROUI MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low,
@@ -156,7 +153,7 @@ EXPORT_MICROUI MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label,
                                            MU_OPT opt);
 EXPORT_MICROUI void mu_end_treenode(mu_Context *ctx);
 EXPORT_MICROUI MU_RES mu_begin_window(mu_Context *ctx, const char *title,
-                                      mu_Rect rect, MU_OPT opt);
+                                      UIRect rect, MU_OPT opt);
 EXPORT_MICROUI void mu_end_window(mu_Context *ctx);
 EXPORT_MICROUI void mu_open_popup(mu_Context *ctx, const char *name);
 EXPORT_MICROUI MU_RES mu_begin_popup(mu_Context *ctx, const char *name);

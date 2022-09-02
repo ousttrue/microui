@@ -1,5 +1,5 @@
 #pragma once
-#include "mu_vec2.h"
+#include <UIRenderFrame.h>
 
 enum MU_MOUSE {
   MU_MOUSE_NONE,
@@ -37,10 +37,10 @@ inline MU_KEY operator&(MU_KEY L, MU_KEY R) {
       static_cast<std::underlying_type<MU_KEY>::type>(R));
 }
 class mu_Input {
-  mu_Vec2 _mouse_pos;
-  mu_Vec2 last_mouse_pos;
-  mu_Vec2 _mouse_delta;
-  mu_Vec2 _scroll_delta;
+  UIVec2 _mouse_pos;
+  UIVec2 last_mouse_pos;
+  UIVec2 _mouse_delta;
+  UIVec2 _scroll_delta;
   MU_MOUSE _mouse_down = MU_MOUSE_NONE;
   MU_MOUSE _mouse_pressed = MU_MOUSE_NONE;
   MU_KEY _key_down = MU_KEY_NONE;
@@ -48,16 +48,16 @@ class mu_Input {
   char _input_text[32] = {0};
 
 public:
-  mu_Vec2 mouse_pos() const { return _mouse_pos; }
-  mu_Vec2 mouse_delta() const { return _mouse_delta; }
-  mu_Vec2 scroll_delta() const { return _scroll_delta; }
+  UIVec2 mouse_pos() const { return _mouse_pos; }
+  UIVec2 mouse_delta() const { return _mouse_delta; }
+  UIVec2 scroll_delta() const { return _scroll_delta; }
   MU_MOUSE mouse_down() const { return _mouse_down; }
   MU_MOUSE mouse_pressed() const { return _mouse_pressed; }
   const char *input_text() const { return _input_text; }
   MU_KEY key_down() const { return _key_down; }
   MU_KEY key_pressed() const { return _key_pressed; }
 
-  void mousemove(int x, int y) { this->_mouse_pos = mu_Vec2(x, y); }
+  void mousemove(int x, int y) { this->_mouse_pos = UIVec2(x, y); }
 
   void mousedown(MU_MOUSE btn) {
     this->_mouse_down = this->_mouse_down | btn;
@@ -99,7 +99,7 @@ public:
     this->_key_pressed = MU_KEY::MU_KEY_NONE;
     this->_input_text[0] = 0;
     this->_mouse_pressed = MU_MOUSE::MU_MOUSE_NONE;
-    this->_scroll_delta = mu_Vec2(0, 0);
+    this->_scroll_delta = UIVec2(0, 0);
     this->last_mouse_pos = this->_mouse_pos;
   }
 };

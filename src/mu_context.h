@@ -3,7 +3,6 @@
 #include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
-#include "mu_rect.h"
 #include "mu_style.h"
 #include <assert.h>
 
@@ -20,30 +19,30 @@ enum class MU_CLIP : unsigned int { NONE, PART, ALL };
 
 using text_width_callback = int (*)(mu_Font font, const char *str, int len);
 using text_height_callback = int (*)(mu_Font font);
-using draw_frame_callback = void (*)(struct mu_Context *ctx, mu_Rect rect,
+using draw_frame_callback = void (*)(struct mu_Context *ctx, UIRect rect,
                                      int colorid);
 
 struct mu_Context {
   mu_Context(const mu_Context &) = delete;
   mu_Context &operator=(const mu_Context &) = delete;
 
-  void draw_box(mu_Rect rect, mu_Color color) {
-    this->draw_rect(mu_Rect(rect.x + 1, rect.y, rect.w - 2, 1), color);
-    this->draw_rect(mu_Rect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
+  void draw_box(UIRect rect, UIColor32 color) {
+    this->draw_rect(UIRect(rect.x + 1, rect.y, rect.w - 2, 1), color);
+    this->draw_rect(UIRect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
                     color);
-    this->draw_rect(mu_Rect(rect.x, rect.y, 1, rect.h), color);
-    this->draw_rect(mu_Rect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
+    this->draw_rect(UIRect(rect.x, rect.y, 1, rect.h), color);
+    this->draw_rect(UIRect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
   }
 
-  static void default_draw_frame(mu_Context *ctx, mu_Rect rect, int colorid) {
+  static void default_draw_frame(mu_Context *ctx, UIRect rect, int colorid) {
     ctx->draw_rect(rect, ctx->style->colors[colorid]);
-    if (colorid == MU_COLOR_SCROLLBASE || colorid == MU_COLOR_SCROLLTHUMB ||
-        colorid == MU_COLOR_TITLEBG) {
+    if (colorid == MU_STYLE_SCROLLBASE || colorid == MU_STYLE_SCROLLTHUMB ||
+        colorid == MU_STYLE_TITLEBG) {
       return;
     }
     // draw border
-    if (ctx->style->colors[MU_COLOR_BORDER].a) {
-      ctx->draw_box(rect.expand(1), ctx->style->colors[MU_COLOR_BORDER]);
+    if (ctx->style->colors[MU_STYLE_BORDER].a) {
+      ctx->draw_box(rect.expand(1), ctx->style->colors[MU_STYLE_BORDER]);
     }
   }
 
@@ -63,7 +62,7 @@ struct mu_Context {
   mu_Style *style = nullptr;
   mu_Id hover = 0;
   mu_Id last_id = 0;
-  mu_Rect last_rect;
+  UIRect last_rect;
   int last_zindex = 0;
   int frame = 0;
   mu_Container *hover_root = nullptr;
@@ -79,7 +78,7 @@ struct mu_Context {
   mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
   UICommandRange root_window_ranges[MU_ROOTLIST_SIZE];
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
-  mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
+  mu_Stack<UIRect, MU_CLIPSTACK_SIZE> clip_stack;
 
   mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
@@ -93,22 +92,22 @@ struct mu_Context {
   mu_Input _input;
 
 public:
-  void draw_rect(mu_Rect rect, mu_Color color) {
+  void draw_rect(UIRect rect, const UIColor32 &color) {
     rect = rect.intersect(this->clip_stack.back());
     if (rect.w > 0 && rect.h > 0) {
       _command_stack.push_rect(rect, color);
     }
   }
 
-  void push_clip_rect(mu_Rect rect) {
-    mu_Rect last = this->clip_stack.back();
+  void push_clip_rect(UIRect rect) {
+    UIRect last = this->clip_stack.back();
     this->clip_stack.push(rect.intersect(last));
   }
 
   void pop_clip_rect() { this->clip_stack.pop(); }
 
-  MU_CLIP check_clip(mu_Rect r) {
-    mu_Rect cr = this->clip_stack.back();
+  MU_CLIP check_clip(UIRect r) {
+    UIRect cr = this->clip_stack.back();
     if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
         r.y + r.h < cr.y) {
       return MU_CLIP::ALL;

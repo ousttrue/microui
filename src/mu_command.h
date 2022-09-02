@@ -1,42 +1,7 @@
 #pragma once
-#include "mu_color.h"
-#include "mu_rect.h"
 #include "mu_stack.h"
 #include "mu_types.h"
-#include "mu_vec2.h"
 #include <string.h>
-
-enum class MU_COMMAND : unsigned int { CLIP, RECT, TEXT, ICON };
-
-struct mu_ClipCommand {
-  mu_Rect rect;
-};
-struct mu_RectCommand {
-  mu_Rect rect;
-  mu_Color color;
-};
-struct mu_TextCommand {
-  mu_Font font;
-  mu_Vec2 pos;
-  mu_Color color;
-  char str[1];
-};
-struct mu_IconCommand {
-  mu_Rect rect;
-  int id;
-  mu_Color color;
-};
-
-struct mu_Command {
-  MU_COMMAND type;
-  int size;
-  union {
-    mu_ClipCommand clip;
-    mu_RectCommand rect;
-    mu_TextCommand text;
-    mu_IconCommand icon;
-  };
-};
 
 const size_t MU_COMMANDLIST_SIZE = (256 * 1024);
 
@@ -49,42 +14,39 @@ public:
 
   void begin_frame() { _command_list.clear(); }
 
-  mu_Command *push_command(MU_COMMAND type, int size) {
-    auto cmd = (mu_Command *)(this->_command_list.end());
-    cmd->type = type;
-    cmd->size = size + 8;
-    this->_command_list.grow(size + 8);
+  UICommand *push_command(UI_COMMAND type, size_t text_length = 0) {
+    auto cmd = reinterpret_cast<UICommand *>(this->_command_list.end());
+    this->_command_list.grow(cmd->set_type(type, text_length));
     return cmd;
   }
 
-  void set_clip(mu_Rect rect) {
-    auto cmd = push_command(MU_COMMAND::CLIP, sizeof(mu_ClipCommand));
-    cmd->clip.rect = rect;
+  void set_clip(const UIRect &rect) {
+    auto cmd = push_command(UI_COMMAND_CLIP);
+    cmd->clip()->rect = rect;
   }
 
-  void push_text(const char *str, int len, const mu_Vec2 &pos,
-                 const mu_Color &color, const mu_Font &font) {
+  void push_text(const char *str, int len, const UIVec2 &pos,
+                 const UIColor32 &color, const void *font) {
     if (len < 0) {
       len = strlen(str);
     }
-    auto cmd = push_command(MU_COMMAND::TEXT, sizeof(mu_TextCommand) + len);
-    memcpy(cmd->text.str, str, len);
-    cmd->text.str[len] = '\0';
-    cmd->text.pos = pos;
-    cmd->text.color = color;
-    cmd->text.font = font;
+    auto cmd = push_command(UI_COMMAND_TEXT, len);
+    memcpy((char *)cmd->text()->begin(), str, len);
+    cmd->text()->pos = pos;
+    cmd->text()->color = color;
+    cmd->text()->font = font;
   }
 
-  void push_icon(int id, const mu_Rect &rect, const mu_Color &color) {
-    auto cmd = push_command(MU_COMMAND::ICON, sizeof(mu_IconCommand));
-    cmd->icon.id = id;
-    cmd->icon.rect = rect;
-    cmd->icon.color = color;
+  void push_icon(int id, const UIRect &rect, const UIColor32 &color) {
+    auto cmd = push_command(UI_COMMAND_ICON);
+    cmd->icon()->id = id;
+    cmd->icon()->rect = rect;
+    cmd->icon()->color = color;
   }
 
-  void push_rect(const mu_Rect &rect, const mu_Color &color) {
-    auto cmd = push_command(MU_COMMAND::RECT, sizeof(mu_RectCommand));
-    cmd->rect.rect = rect;
-    cmd->rect.color = color;
+  void push_rect(const UIRect &rect, const UIColor32 &color) {
+    auto cmd = push_command(UI_COMMAND_RECT);
+    cmd->rect()->rect = rect;
+    cmd->rect()->color = color;
   }
 };
