@@ -26,21 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define unused(x) ((void)(x))
-
-#define expect(x)                                                              \
-  do {                                                                         \
-    if (!(x)) {                                                                \
-      fprintf(stderr, "Fatal error: %s:%d: assertion '%s' failed\n", __FILE__, \
-              __LINE__, #x);                                                   \
-      abort();                                                                 \
-    }                                                                          \
-  } while (0)
-
-static mu_Rect unclipped_rect = {0, 0, 0x1000000, 0x1000000};
-
 void mu_begin(mu_Context *ctx) {
-  expect(ctx->text_width && ctx->text_height);
+  assert(ctx->text_width && ctx->text_height);
   ctx->_command_stack.begin_frame();
   ctx->root_list.clear();
   ctx->scroll_target = nullptr;
@@ -56,38 +43,17 @@ static int compare_zindex(const void *a, const void *b) {
 }
 
 void mu_end(mu_Context *ctx) {
-  int i, n;
   // check stacks
-  expect(ctx->container_stack.size() == 0);
-  expect(ctx->clip_stack.size() == 0);
-  expect(ctx->id_stack.size() == 0);
-  expect(ctx->layout_stack.size() == 0);
+  assert(ctx->container_stack.size() == 0);
+  assert(ctx->clip_stack.size() == 0);
+  assert(ctx->id_stack.size() == 0);
+  assert(ctx->layout_stack.size() == 0);
 
   // handle scroll input
-  if (ctx->scroll_target) {
-    ctx->scroll_target->scroll.x += ctx->scroll_delta.x;
-    ctx->scroll_target->scroll.y += ctx->scroll_delta.y;
-  }
-
-  // unset focus if focus id was not touched this frame
-  ctx->unset_focus();
-
-  // bring hover root to front if mouse was pressed
-  if (ctx->mouse_pressed && ctx->next_hover_root &&
-      ctx->next_hover_root->zindex < ctx->last_zindex &&
-      ctx->next_hover_root->zindex >= 0) {
-    mu_bring_to_front(ctx, ctx->next_hover_root);
-  }
-
-  // reset input state
-  ctx->key_pressed = 0;
-  ctx->input_text[0] = '\0';
-  ctx->mouse_pressed = 0;
-  ctx->scroll_delta = mu_Vec2(0, 0);
-  ctx->last_mouse_pos = ctx->mouse_pos;
+  ctx->end_input();
 
   // sort root containers by zindex
-  n = ctx->root_list.size();
+  auto n = ctx->root_list.size();
   qsort(ctx->root_list.begin(), n, sizeof(mu_Container *), compare_zindex);
 }
 
@@ -131,33 +97,32 @@ mu_Container *mu_get_current_container(mu_Context *ctx) {
 }
 
 static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
-  mu_Container *cnt;
   // try to get existing container from pool
-  int idx = mu_pool_get(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
-  if (idx >= 0) {
-    if (ctx->containers[idx].open || ~opt & MU_OPT_CLOSED) {
-      mu_pool_update(ctx, ctx->container_pool, idx);
+  {
+    int idx = mu_pool_get(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
+    if (idx >= 0) {
+      if (ctx->containers[idx].open || ~opt & MU_OPT_CLOSED) {
+        mu_pool_update(ctx, ctx->container_pool, idx);
+      }
+      return &ctx->containers[idx];
     }
-    return &ctx->containers[idx];
   }
+
   if (opt & MU_OPT_CLOSED) {
     return nullptr;
   }
+
   // container not found in pool: init new container
-  idx = mu_pool_init(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
-  cnt = &ctx->containers[idx];
+  auto idx = mu_pool_init(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
+  auto cnt = &ctx->containers[idx];
   cnt->init();
-  mu_bring_to_front(ctx, cnt);
+  ctx->bring_to_front(cnt);
   return cnt;
 }
 
 mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
   mu_Id id = mu_get_id(ctx, name, strlen(name));
   return get_container(ctx, id, MU_OPT::MU_OPT_NONE);
-}
-
-void mu_bring_to_front(mu_Context *ctx, mu_Container *cnt) {
-  cnt->zindex = ++ctx->last_zindex;
 }
 
 /*============================================================================
@@ -172,16 +137,14 @@ int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id) {
       n = i;
     }
   }
-  expect(n > -1);
+  assert(n > -1);
   items[n].id = id;
   mu_pool_update(ctx, items, n);
   return n;
 }
 
 int mu_pool_get(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id) {
-  int i;
-  unused(ctx);
-  for (i = 0; i < len; i++) {
+  for (int i = 0; i < len; i++) {
     if (items[i].id == id) {
       return i;
     }
@@ -227,7 +190,7 @@ void mu_input_keyup(mu_Context *ctx, int key) { ctx->key_down &= ~key; }
 void mu_input_text(mu_Context *ctx, const char *text) {
   int len = strlen(ctx->input_text);
   int size = strlen(text) + 1;
-  expect(len + size <= (int)sizeof(ctx->input_text));
+  assert(len + size <= (int)sizeof(ctx->input_text));
   memcpy(ctx->input_text + len, text, size);
 }
 
@@ -251,7 +214,7 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
   ctx->_command_stack.push_text(str, len, pos, color, font);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->_command_stack.set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(mu_Rect::unclipped_rect);
   }
 }
 
@@ -268,7 +231,7 @@ void mu_draw_icon(mu_Context *ctx, int id, mu_Rect rect, mu_Color color) {
   ctx->_command_stack.push_icon(id, rect, color);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->_command_stack.set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(mu_Rect::unclipped_rect);
   }
 }
 
@@ -826,7 +789,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   /* clipping is reset here in case a root-container is made within
   ** another root-containers's begin/end block; this prevents the inner
   ** root-container being clipped to the outer */
-  ctx->clip_stack.push(unclipped_rect);
+  ctx->clip_stack.push(mu_Rect::unclipped_rect);
 }
 
 static void end_root_container(mu_Context *ctx) {
@@ -935,7 +898,7 @@ void mu_open_popup(mu_Context *ctx, const char *name) {
   // position at mouse cursor, open and bring-to-front
   cnt->rect = mu_Rect(ctx->mouse_pos.x, ctx->mouse_pos.y, 1, 1);
   cnt->open = 1;
-  mu_bring_to_front(ctx, cnt);
+  ctx->bring_to_front(cnt);
 }
 
 MU_RES mu_begin_popup(mu_Context *ctx, const char *name) {

@@ -103,7 +103,6 @@ void mu_pop_id(mu_Context *ctx);
 
 mu_Container *mu_get_current_container(mu_Context *ctx);
 mu_Container *mu_get_container(mu_Context *ctx, const char *name);
-void mu_bring_to_front(mu_Context *ctx, mu_Container *cnt);
 
 int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id);
 int mu_pool_get(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id);

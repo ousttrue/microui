@@ -6,6 +6,8 @@ struct mu_Rect {
   mu_Rect() : x(0), y(0), w(0), h(0) {}
   mu_Rect(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
 
+  static const mu_Rect unclipped_rect;
+
   mu_Rect expand(int n) const {
     return mu_Rect(x - n, y - n, w + n * 2, h + n * 2);
   }
@@ -29,3 +31,5 @@ struct mu_Rect {
            p.y < this->y + this->h;
   }
 };
+
+inline const mu_Rect mu_Rect::unclipped_rect = mu_Rect(0, 0, 0x1000000, 0x1000000);

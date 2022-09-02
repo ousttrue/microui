@@ -137,4 +137,32 @@ public:
       updated_focus = true;
     }
   }
+
+  void bring_to_front(mu_Container *cnt) {
+    cnt->zindex = ++this->last_zindex;
+  }
+
+  void end_input() {
+    if (this->scroll_target) {
+      this->scroll_target->scroll.x += this->scroll_delta.x;
+      this->scroll_target->scroll.y += this->scroll_delta.y;
+    }
+
+    // unset focus if focus id was not touched this frame
+    this->unset_focus();
+
+    // bring hover root to front if mouse was pressed
+    if (this->mouse_pressed && this->next_hover_root &&
+        this->next_hover_root->zindex < this->last_zindex &&
+        this->next_hover_root->zindex >= 0) {
+      this->bring_to_front(this->next_hover_root);
+    }
+
+    // reset input state
+    this->key_pressed = 0;
+    this->input_text[0] = '\0';
+    this->mouse_pressed = 0;
+    this->scroll_delta = mu_Vec2(0, 0);
+    this->last_mouse_pos = this->mouse_pos;
+  }
 };
