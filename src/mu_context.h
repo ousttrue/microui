@@ -1,9 +1,9 @@
 #pragma once
 #include "mu_container.h"
 #include "mu_layout.h"
+#include "mu_pool.h"
 #include "mu_rect.h"
 #include "mu_style.h"
-#include "mu_pool.h"
 #include <assert.h>
 
 #define MU_ROOTLIST_SIZE 32
@@ -15,6 +15,11 @@
 #define MU_TREENODEPOOL_SIZE 48
 
 enum class MU_CLIP : unsigned int { NONE, PART, ALL };
+
+using text_width_callback = int (*)(mu_Font font, const char *str, int len);
+using text_height_callback = int (*)(mu_Font font);
+using draw_frame_callback = void (*)(struct mu_Context *ctx, mu_Rect rect,
+                                     int colorid);
 
 struct mu_Context {
   mu_Context(const mu_Context &) = delete;
@@ -46,64 +51,40 @@ struct mu_Context {
     this->style = &this->_style;
   }
 
-  /* callbacks */
-  int (*text_width)(mu_Font font, const char *str, int len) = nullptr;
-  int (*text_height)(mu_Font font) = nullptr;
-  void (*draw_frame)(mu_Context *ctx, mu_Rect rect, int colorid) = nullptr;
-  /* core state */
+  // callbacks
+  text_width_callback text_width = nullptr;
+  text_height_callback text_height = nullptr;
+  draw_frame_callback draw_frame = nullptr;
+
+  // core state
   mu_Style _style = {};
   mu_Style *style = nullptr;
   mu_Id hover = 0;
   mu_Id last_id = 0;
   mu_Rect last_rect;
   int last_zindex = 0;
-
-public:
   int frame = 0;
   mu_Container *hover_root = nullptr;
   mu_Container *next_hover_root = nullptr;
   mu_Container *scroll_target = nullptr;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
-  /* stacks */
+
+  // stacks
   CommandStack _command_stack;
-
-  void draw_rect(mu_Rect rect, mu_Color color) {
-    rect = rect.intersect(this->clip_stack.back());
-    if (rect.w > 0 && rect.h > 0) {
-      _command_stack.push_rect(rect, color);
-    }
-  }
-
   mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
-
   mu_Stack<mu_Rect, MU_CLIPSTACK_SIZE> clip_stack;
-  void push_clip_rect(mu_Rect rect) {
-    mu_Rect last = this->clip_stack.back();
-    this->clip_stack.push(rect.intersect(last));
-  }
-  void pop_clip_rect() { this->clip_stack.pop(); }
-  MU_CLIP check_clip(mu_Rect r) {
-    mu_Rect cr = this->clip_stack.back();
-    if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
-        r.y + r.h < cr.y) {
-      return MU_CLIP::ALL;
-    }
-    if (r.x >= cr.x && r.x + r.w <= cr.x + cr.w && r.y >= cr.y &&
-        r.y + r.h <= cr.y + cr.h) {
-      return MU_CLIP::NONE;
-    }
-    return MU_CLIP::PART;
-  }
 
   mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
-  /* retained state pools */
+
+  // retained state pools
   mu_Pool<MU_CONTAINERPOOL_SIZE> container_pool;
   mu_Container containers[MU_CONTAINERPOOL_SIZE] = {0};
   mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
-  /* input state */
+
+  // input state
   mu_Vec2 mouse_pos;
   mu_Vec2 last_mouse_pos;
   mu_Vec2 mouse_delta;
@@ -119,6 +100,33 @@ private:
   bool updated_focus = false;
 
 public:
+  void draw_rect(mu_Rect rect, mu_Color color) {
+    rect = rect.intersect(this->clip_stack.back());
+    if (rect.w > 0 && rect.h > 0) {
+      _command_stack.push_rect(rect, color);
+    }
+  }
+
+  void push_clip_rect(mu_Rect rect) {
+    mu_Rect last = this->clip_stack.back();
+    this->clip_stack.push(rect.intersect(last));
+  }
+
+  void pop_clip_rect() { this->clip_stack.pop(); }
+
+  MU_CLIP check_clip(mu_Rect r) {
+    mu_Rect cr = this->clip_stack.back();
+    if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
+        r.y + r.h < cr.y) {
+      return MU_CLIP::ALL;
+    }
+    if (r.x >= cr.x && r.x + r.w <= cr.x + cr.w && r.y >= cr.y &&
+        r.y + r.h <= cr.y + cr.h) {
+      return MU_CLIP::NONE;
+    }
+    return MU_CLIP::PART;
+  }
+
   void set_focus(mu_Id id) {
     focus = id;
     updated_focus = 1;
@@ -139,9 +147,7 @@ public:
     }
   }
 
-  void bring_to_front(mu_Container *cnt) {
-    cnt->zindex = ++this->last_zindex;
-  }
+  void bring_to_front(mu_Container *cnt) { cnt->zindex = ++this->last_zindex; }
 
   void end_input() {
     if (this->scroll_target) {
