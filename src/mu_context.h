@@ -3,6 +3,7 @@
 #include "mu_layout.h"
 #include "mu_rect.h"
 #include "mu_style.h"
+#include "mu_pool.h"
 #include <assert.h>
 
 #define MU_ROOTLIST_SIZE 32
@@ -99,9 +100,9 @@ public:
   mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
   /* retained state pools */
-  mu_PoolItem container_pool[MU_CONTAINERPOOL_SIZE] = {0};
+  mu_Pool<MU_CONTAINERPOOL_SIZE> container_pool;
   mu_Container containers[MU_CONTAINERPOOL_SIZE] = {0};
-  mu_PoolItem treenode_pool[MU_TREENODEPOOL_SIZE] = {0};
+  mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
   /* input state */
   mu_Vec2 mouse_pos;
   mu_Vec2 last_mouse_pos;

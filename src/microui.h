@@ -84,14 +84,6 @@ enum {
   MU_KEY_RETURN = (1 << 4)
 };
 
-typedef unsigned mu_Id;
-typedef MU_REAL mu_Real;
-
-struct mu_PoolItem {
-  mu_Id id;
-  int last_update;
-};
-
 #include "mu_context.h"
 
 void mu_begin(mu_Context *ctx);
@@ -105,8 +97,8 @@ mu_Container *mu_get_current_container(mu_Context *ctx);
 mu_Container *mu_get_container(mu_Context *ctx, const char *name);
 
 int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id);
-int mu_pool_get(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id);
-void mu_pool_update(mu_Context *ctx, mu_PoolItem *items, int idx);
+int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
+void mu_pool_update(int frame, mu_PoolItem *items, int idx);
 
 void mu_input_mousemove(mu_Context *ctx, int x, int y);
 void mu_input_mousedown(mu_Context *ctx, int x, int y, int btn);

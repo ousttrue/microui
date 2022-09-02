@@ -99,10 +99,10 @@ mu_Container *mu_get_current_container(mu_Context *ctx) {
 static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
   // try to get existing container from pool
   {
-    int idx = mu_pool_get(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
+    int idx = ctx->container_pool.get_index(id);
     if (idx >= 0) {
       if (ctx->containers[idx].open || ~opt & MU_OPT_CLOSED) {
-        mu_pool_update(ctx, ctx->container_pool, idx);
+        ctx->container_pool.update(ctx->frame, idx);
       }
       return &ctx->containers[idx];
     }
@@ -113,7 +113,7 @@ static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
   }
 
   // container not found in pool: init new container
-  auto idx = mu_pool_init(ctx, ctx->container_pool, MU_CONTAINERPOOL_SIZE, id);
+  auto idx = ctx->container_pool.init(ctx->frame, id);
   auto cnt = &ctx->containers[idx];
   cnt->init();
   ctx->bring_to_front(cnt);
@@ -123,37 +123,6 @@ static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
 mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
   mu_Id id = mu_get_id(ctx, name, strlen(name));
   return get_container(ctx, id, MU_OPT::MU_OPT_NONE);
-}
-
-/*============================================================================
-** pool
-**============================================================================*/
-
-int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id) {
-  int i, n = -1, f = ctx->frame;
-  for (i = 0; i < len; i++) {
-    if (items[i].last_update < f) {
-      f = items[i].last_update;
-      n = i;
-    }
-  }
-  assert(n > -1);
-  items[n].id = id;
-  mu_pool_update(ctx, items, n);
-  return n;
-}
-
-int mu_pool_get(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id) {
-  for (int i = 0; i < len; i++) {
-    if (items[i].id == id) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-void mu_pool_update(mu_Context *ctx, mu_PoolItem *items, int idx) {
-  items[idx].last_update = ctx->frame;
 }
 
 /*============================================================================
@@ -648,7 +617,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   mu_Rect r;
   int active, expanded;
   mu_Id id = mu_get_id(ctx, label, strlen(label));
-  int idx = mu_pool_get(ctx, ctx->treenode_pool, MU_TREENODEPOOL_SIZE, id);
+  int idx = ctx->treenode_pool.get_index(id);
   int width = -1;
   ctx->layout_stack.back().row(1, &width, 0);
 
@@ -663,12 +632,12 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   // update pool ref
   if (idx >= 0) {
     if (active) {
-      mu_pool_update(ctx, ctx->treenode_pool, idx);
+      ctx->treenode_pool.update(ctx->frame, idx);
     } else {
-      memset(&ctx->treenode_pool[idx], 0, sizeof(mu_PoolItem));
+      ctx->treenode_pool.clear(idx);
     }
   } else if (active) {
-    mu_pool_init(ctx, ctx->treenode_pool, MU_TREENODEPOOL_SIZE, id);
+    ctx->treenode_pool.init(ctx->frame, id);
   }
 
   // draw
