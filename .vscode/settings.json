@@ -1,4 +1,10 @@
 {
+    "cmake.configureArgs": [
+        "-DBUILD_SHARED_LIBS=ON",
+        "-DGLFW_BUILD_EXAMPLES=OFF",
+        "-DGLFW_BUILD_TESTS=OFF",
+        "-DGLFW_BUILD_DOCS=OFF",
+    ],
     "files.associations": {
         "cstdlib": "c",
         "renderer.h": "c",
