@@ -1,6 +1,6 @@
-#include <microui.h>
 #include "renderer.h"
 #include <GLFW/glfw3.h>
+#include <microui.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -263,7 +263,7 @@ static void process_frame(mu_Context *ctx) {
   mu_end(ctx);
 }
 
-static const char button_map[256] = {
+static MU_MOUSE button_map[256] = {
     MU_MOUSE_LEFT,
     MU_MOUSE_RIGHT,
     MU_MOUSE_MIDDLE,
@@ -293,27 +293,26 @@ int mouse_x = 0;
 int mouse_y = 0;
 static void cursor_position_callback(GLFWwindow *window, double xpos,
                                      double ypos) {
-  mu_input_mousemove((mu_Context *)glfwGetWindowUserPointer(window), xpos,
-                     ypos);
+  auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
+  ctx->_input.mousemove(xpos, ypos);
   mouse_x = xpos;
   mouse_y = ypos;
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action,
                            int mods) {
-  int b = button_map[button];
+  auto b = button_map[button];
+  auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
   if (action == GLFW_PRESS) {
-    mu_input_mousedown((mu_Context *)glfwGetWindowUserPointer(window), mouse_x,
-                       mouse_y, b);
+    ctx->_input.mousedown(b);
   } else if (action == GLFW_RELEASE) {
-    mu_input_mouseup((mu_Context *)glfwGetWindowUserPointer(window), mouse_x,
-                     mouse_y, b);
+    ctx->_input.mouseup(b);
   }
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  mu_input_scroll((mu_Context *)glfwGetWindowUserPointer(window), xoffset,
-                  yoffset);
+  auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
+  ctx->_input.scroll(xoffset, yoffset);
 }
 
 int main(int argc, char **argv) {

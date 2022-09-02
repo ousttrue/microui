@@ -70,19 +70,6 @@ inline MU_OPT operator&(MU_OPT L, MU_OPT R) {
       static_cast<std::underlying_type<MU_OPT>::type>(R));
 }
 
-enum {
-  MU_MOUSE_LEFT = (1 << 0),
-  MU_MOUSE_RIGHT = (1 << 1),
-  MU_MOUSE_MIDDLE = (1 << 2)
-};
-
-enum {
-  MU_KEY_SHIFT = (1 << 0),
-  MU_KEY_CTRL = (1 << 1),
-  MU_KEY_ALT = (1 << 2),
-  MU_KEY_BACKSPACE = (1 << 3),
-  MU_KEY_RETURN = (1 << 4)
-};
 
 #include "mu_context.h"
 
@@ -99,14 +86,6 @@ mu_Container *mu_get_container(mu_Context *ctx, const char *name);
 int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len, mu_Id id);
 int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
 void mu_pool_update(int frame, mu_PoolItem *items, int idx);
-
-void mu_input_mousemove(mu_Context *ctx, int x, int y);
-void mu_input_mousedown(mu_Context *ctx, int x, int y, int btn);
-void mu_input_mouseup(mu_Context *ctx, int x, int y, int btn);
-void mu_input_scroll(mu_Context *ctx, int x, int y);
-void mu_input_keydown(mu_Context *ctx, int key);
-void mu_input_keyup(mu_Context *ctx, int key);
-void mu_input_text(mu_Context *ctx, const char *text);
 
 void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
                   mu_Vec2 pos, mu_Color color);

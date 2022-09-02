@@ -4,6 +4,7 @@
 #include "mu_pool.h"
 #include "mu_rect.h"
 #include "mu_style.h"
+#include "mu_input.h"
 #include <assert.h>
 
 #define MU_ROOTLIST_SIZE 32
@@ -85,15 +86,7 @@ struct mu_Context {
   mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
 
   // input state
-  mu_Vec2 mouse_pos;
-  mu_Vec2 last_mouse_pos;
-  mu_Vec2 mouse_delta;
-  mu_Vec2 scroll_delta;
-  int mouse_down = 0;
-  int mouse_pressed = 0;
-  int key_down = 0;
-  int key_pressed = 0;
-  char input_text[32] = {0};
+  mu_Input _input;
 
 private:
   mu_Id focus = 0;
@@ -151,25 +144,20 @@ public:
 
   void end_input() {
     if (this->scroll_target) {
-      this->scroll_target->scroll.x += this->scroll_delta.x;
-      this->scroll_target->scroll.y += this->scroll_delta.y;
+      this->scroll_target->scroll += this->_input.scroll_delta();
     }
 
     // unset focus if focus id was not touched this frame
     this->unset_focus();
 
     // bring hover root to front if mouse was pressed
-    if (this->mouse_pressed && this->next_hover_root &&
+    if (this->_input.mouse_pressed() && this->next_hover_root &&
         this->next_hover_root->zindex < this->last_zindex &&
         this->next_hover_root->zindex >= 0) {
       this->bring_to_front(this->next_hover_root);
     }
 
     // reset input state
-    this->key_pressed = 0;
-    this->input_text[0] = '\0';
-    this->mouse_pressed = 0;
-    this->scroll_delta = mu_Vec2(0, 0);
-    this->last_mouse_pos = this->mouse_pos;
+    this->_input.end();
   }
 };

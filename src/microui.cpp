@@ -33,8 +33,7 @@ void mu_begin(mu_Context *ctx) {
   ctx->scroll_target = nullptr;
   ctx->hover_root = ctx->next_hover_root;
   ctx->next_hover_root = nullptr;
-  ctx->mouse_delta.x = ctx->mouse_pos.x - ctx->last_mouse_pos.x;
-  ctx->mouse_delta.y = ctx->mouse_pos.y - ctx->last_mouse_pos.y;
+  ctx->_input.begin();
   ctx->frame++;
 }
 
@@ -126,50 +125,11 @@ mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
 }
 
 /*============================================================================
-** input handlers
-**============================================================================*/
-
-void mu_input_mousemove(mu_Context *ctx, int x, int y) {
-  ctx->mouse_pos = mu_Vec2(x, y);
-}
-
-void mu_input_mousedown(mu_Context *ctx, int x, int y, int btn) {
-  mu_input_mousemove(ctx, x, y);
-  ctx->mouse_down |= btn;
-  ctx->mouse_pressed |= btn;
-}
-
-void mu_input_mouseup(mu_Context *ctx, int x, int y, int btn) {
-  mu_input_mousemove(ctx, x, y);
-  ctx->mouse_down &= ~btn;
-}
-
-void mu_input_scroll(mu_Context *ctx, int x, int y) {
-  ctx->scroll_delta.x += x;
-  ctx->scroll_delta.y += y;
-}
-
-void mu_input_keydown(mu_Context *ctx, int key) {
-  ctx->key_pressed |= key;
-  ctx->key_down |= key;
-}
-
-void mu_input_keyup(mu_Context *ctx, int key) { ctx->key_down &= ~key; }
-
-void mu_input_text(mu_Context *ctx, const char *text) {
-  int len = strlen(ctx->input_text);
-  int size = strlen(text) + 1;
-  assert(len + size <= (int)sizeof(ctx->input_text));
-  memcpy(ctx->input_text + len, text, size);
-}
-
-/*============================================================================
 ** commandlist
 **============================================================================*/
 
 void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
                   mu_Vec2 pos, mu_Color color) {
-  mu_Command *cmd;
   mu_Rect rect = mu_Rect(pos.x, pos.y, ctx->text_width(font, str, len),
                          ctx->text_height(font));
   auto clipped = ctx->check_clip(rect);
@@ -345,8 +305,8 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, mu_Rect rect,
 }
 
 int mu_mouse_over(mu_Context *ctx, mu_Rect rect) {
-  return rect.overlaps_vec2(ctx->mouse_pos) &&
-         ctx->clip_stack.back().overlaps_vec2(ctx->mouse_pos) &&
+  return rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
+         ctx->clip_stack.back().overlaps_vec2(ctx->_input.mouse_pos()) &&
          in_hover_root(ctx);
 }
 
@@ -356,21 +316,21 @@ void mu_update_control(mu_Context *ctx, mu_Id id, mu_Rect rect, MU_OPT opt) {
   if (opt & MU_OPT_NOINTERACT) {
     return;
   }
-  if (mouseover && !ctx->mouse_down) {
+  if (mouseover && !ctx->_input.mouse_down()) {
     ctx->hover = id;
   }
 
   if (ctx->has_focus(id)) {
-    if (ctx->mouse_pressed && !mouseover) {
+    if (ctx->_input.mouse_pressed() && !mouseover) {
       ctx->set_focus(0);
     }
-    if (!ctx->mouse_down && ~opt & MU_OPT_HOLDFOCUS) {
+    if (!ctx->_input.mouse_down() && ~opt & MU_OPT_HOLDFOCUS) {
       ctx->set_focus(0);
     }
   }
 
   if (ctx->hover == id) {
-    if (ctx->mouse_pressed) {
+    if (ctx->_input.mouse_pressed()) {
       ctx->set_focus(id);
     } else if (!mouseover) {
       ctx->hover = 0;
@@ -419,7 +379,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   mu_Rect r = mu_layout_next(ctx);
   mu_update_control(ctx, id, r, opt);
   // handle click
-  if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id)) {
+  if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id)) {
     res = res | MU_RES_SUBMIT;
   }
   // draw
@@ -440,7 +400,7 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
   mu_Rect box = mu_Rect(r.x, r.y, r.h, r.h);
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
   // handle click
-  if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id)) {
+  if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id)) {
     res = res | MU_RES_CHANGE;
     *state = !*state;
   }
@@ -462,15 +422,15 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
   if (ctx->has_focus(id)) {
     // handle text input
     int len = strlen(buf);
-    int n = mu_min(bufsz - len - 1, (int)strlen(ctx->input_text));
+    int n = mu_min(bufsz - len - 1, (int)strlen(ctx->_input.input_text()));
     if (n > 0) {
-      memcpy(buf + len, ctx->input_text, n);
+      memcpy(buf + len, ctx->_input.input_text(), n);
       len += n;
       buf[len] = '\0';
       res = res | MU_RES_CHANGE;
     }
     // handle backspace
-    if (ctx->key_pressed & MU_KEY_BACKSPACE && len > 0) {
+    if (ctx->_input.key_pressed() & MU_KEY_BACKSPACE && len > 0) {
       // skip utf-8 continuation bytes
       while ((buf[--len] & 0xc0) == 0x80 && len > 0)
         ;
@@ -478,7 +438,7 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
       res = res | MU_RES_CHANGE;
     }
     // handle return
-    if (ctx->key_pressed & MU_KEY_RETURN) {
+    if (ctx->_input.key_pressed() & MU_KEY_RETURN) {
       ctx->set_focus(0);
       res = res | MU_RES_SUBMIT;
     }
@@ -507,7 +467,7 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
 
 static bool number_textbox(mu_Context *ctx, mu_Real *value, mu_Rect r,
                            mu_Id id) {
-  if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->key_down & MU_KEY_SHIFT &&
+  if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->_input.key_down() & MU_KEY_SHIFT &&
       ctx->hover == id) {
     ctx->number_edit = id;
     sprintf(ctx->number_edit_buf, MU_REAL_FMT, *value);
@@ -552,8 +512,8 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
 
   // handle input
   if (ctx->has_focus(id) &&
-      (ctx->mouse_down | ctx->mouse_pressed) == MU_MOUSE_LEFT) {
-    v = low + (ctx->mouse_pos.x - base.x) * (high - low) / base.w;
+      (ctx->_input.mouse_down() | ctx->_input.mouse_pressed()) == MU_MOUSE_LEFT) {
+    v = low + (ctx->_input.mouse_pos().x - base.x) * (high - low) / base.w;
     if (step) {
       v = (((v + step / 2) / step)) * step;
     }
@@ -595,8 +555,8 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
   mu_update_control(ctx, id, base, opt);
 
   // handle input
-  if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {
-    *value += ctx->mouse_delta.x * step;
+  if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
+    *value += ctx->_input.mouse_delta().x * step;
   }
   // set flag if value changed
   if (*value != last) {
@@ -627,7 +587,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
 
   // handle click
-  active ^= (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id));
+  active ^= (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id));
 
   // update pool ref
   if (idx >= 0) {
@@ -691,8 +651,8 @@ void mu_end_treenode(mu_Context *ctx) {
                                                                                \
       /* handle input */                                                       \
       mu_update_control(ctx, id, base, MU_OPT_NONE);                           \
-      if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {            \
-        cnt->scroll.y += ctx->mouse_delta.y * cs.y / base.h;                   \
+      if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {            \
+        cnt->scroll.y += ctx->_input.mouse_delta().y * cs.y / base.h;                   \
       }                                                                        \
       /* clamp scroll to limits */                                             \
       cnt->scroll.y = mu_clamp(cnt->scroll.y, 0, maxscroll);                   \
@@ -751,7 +711,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
   cnt->head = ctx->_command_stack.size();
   /* set as hover root if the mouse is overlapping this container and it has a
   ** higher zindex than the current hover root */
-  if (cnt->rect.overlaps_vec2(ctx->mouse_pos) &&
+  if (cnt->rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
       (!ctx->next_hover_root || cnt->zindex > ctx->next_hover_root->zindex)) {
     ctx->next_hover_root = cnt;
   }
@@ -803,9 +763,9 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
       mu_Id id = mu_get_id(ctx, "!title", 6);
       mu_update_control(ctx, id, tr, opt);
       mu_draw_control_text(ctx, title, tr, MU_COLOR_TITLETEXT, opt);
-      if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {
-        cnt->rect.x += ctx->mouse_delta.x;
-        cnt->rect.y += ctx->mouse_delta.y;
+      if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
+        cnt->rect.x += ctx->_input.mouse_delta().x;
+        cnt->rect.y += ctx->_input.mouse_delta().y;
       }
       body.y += tr.h;
       body.h -= tr.h;
@@ -819,7 +779,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
       mu_draw_icon(ctx, MU_ICON_CLOSE, r,
                    ctx->style->colors[MU_COLOR_TITLETEXT]);
       mu_update_control(ctx, id, r, opt);
-      if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id)) {
+      if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id)) {
         cnt->open = 0;
       }
     }
@@ -833,9 +793,9 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
     mu_Id id = mu_get_id(ctx, "!resize", 7);
     mu_Rect r = mu_Rect(rect.x + rect.w - sz, rect.y + rect.h - sz, sz, sz);
     mu_update_control(ctx, id, r, opt);
-    if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {
-      cnt->rect.w = mu_max(96, cnt->rect.w + ctx->mouse_delta.x);
-      cnt->rect.h = mu_max(64, cnt->rect.h + ctx->mouse_delta.y);
+    if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
+      cnt->rect.w = mu_max(96, cnt->rect.w + ctx->_input.mouse_delta().x);
+      cnt->rect.h = mu_max(64, cnt->rect.h + ctx->_input.mouse_delta().y);
     }
   }
 
@@ -847,7 +807,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
   }
 
   // close if this is a popup window and elsewhere was clicked
-  if (opt & MU_OPT_POPUP && ctx->mouse_pressed && ctx->hover_root != cnt) {
+  if (opt & MU_OPT_POPUP && ctx->_input.mouse_pressed() && ctx->hover_root != cnt) {
     cnt->open = 0;
   }
 
@@ -865,7 +825,7 @@ void mu_open_popup(mu_Context *ctx, const char *name) {
   // set as hover root so popup isn't closed in begin_window_ex()
   ctx->hover_root = ctx->next_hover_root = cnt;
   // position at mouse cursor, open and bring-to-front
-  cnt->rect = mu_Rect(ctx->mouse_pos.x, ctx->mouse_pos.y, 1, 1);
+  cnt->rect = mu_Rect(ctx->_input.mouse_pos().x, ctx->_input.mouse_pos().y, 1, 1);
   cnt->open = 1;
   ctx->bring_to_front(cnt);
 }
