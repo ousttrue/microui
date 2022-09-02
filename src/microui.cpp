@@ -781,7 +781,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
                    ctx->style->colors[MU_COLOR_TITLETEXT]);
       mu_update_control(ctx, id, r, opt);
       if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id)) {
-        cnt->open = 0;
+        cnt->open = false;
       }
     }
   }

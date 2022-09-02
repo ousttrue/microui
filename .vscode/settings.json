@@ -47,6 +47,8 @@
         "RCTRL",
         "RSHIFT",
         "scrollbars",
+        "scrollbarx",
+        "scrollbary",
         "scrollbase",
         "scrollthumb",
         "SDLK",

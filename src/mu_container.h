@@ -11,7 +11,7 @@ struct mu_Container {
   mu_Vec2 content_size;
   mu_Vec2 scroll;
   int zindex;
-  int open;
+  bool open;
 
   void init() {
     head = 0;
@@ -21,6 +21,6 @@ struct mu_Container {
     content_size = {};
     scroll = {};
     zindex = 0;
-    open = 1;
+    open = true;
   }
 };
