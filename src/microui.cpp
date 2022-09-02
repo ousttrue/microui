@@ -394,12 +394,12 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
 }
 
 MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
-  auto res = MU_RES::MU_RES_NONE;
   mu_Id id = mu_get_id(ctx, &state, sizeof(state));
   mu_Rect r = mu_layout_next(ctx);
   mu_Rect box = mu_Rect(r.x, r.y, r.h, r.h);
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
   // handle click
+  auto res = MU_RES::MU_RES_NONE;
   if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id)) {
     res = res | MU_RES_CHANGE;
     *state = !*state;
@@ -467,8 +467,8 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
 
 static bool number_textbox(mu_Context *ctx, mu_Real *value, mu_Rect r,
                            mu_Id id) {
-  if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->_input.key_down() & MU_KEY_SHIFT &&
-      ctx->hover == id) {
+  if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT &&
+      ctx->_input.key_down() & MU_KEY_SHIFT && ctx->hover == id) {
     ctx->number_edit = id;
     sprintf(ctx->number_edit_buf, MU_REAL_FMT, *value);
   }
@@ -511,8 +511,8 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   mu_update_control(ctx, id, base, opt);
 
   // handle input
-  if (ctx->has_focus(id) &&
-      (ctx->_input.mouse_down() | ctx->_input.mouse_pressed()) == MU_MOUSE_LEFT) {
+  if (ctx->has_focus(id) && (ctx->_input.mouse_down() |
+                             ctx->_input.mouse_pressed()) == MU_MOUSE_LEFT) {
     v = low + (ctx->_input.mouse_pos().x - base.x) * (high - low) / base.w;
     if (step) {
       v = (((v + step / 2) / step)) * step;
@@ -587,7 +587,8 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
 
   // handle click
-  active ^= (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id));
+  active ^=
+      (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT && ctx->has_focus(id));
 
   // update pool ref
   if (idx >= 0) {
@@ -635,44 +636,44 @@ void mu_end_treenode(mu_Context *ctx) {
   mu_pop_id(ctx);
 }
 
-#define scrollbar(ctx, cnt, b, cs, x, y, w, h)                                 \
-  do {                                                                         \
-    /* only add scrollbar if content size is larger than body */               \
-    int maxscroll = cs.y - b->h;                                               \
-                                                                               \
-    if (maxscroll > 0 && b->h > 0) {                                           \
-      mu_Rect base, thumb;                                                     \
-      mu_Id id = mu_get_id(ctx, "!scrollbar" #y, 11);                          \
-                                                                               \
-      /* get sizing / positioning */                                           \
-      base = *b;                                                               \
-      base.x = b->x + b->w;                                                    \
-      base.w = ctx->style->scrollbar_size;                                     \
-                                                                               \
-      /* handle input */                                                       \
-      mu_update_control(ctx, id, base, MU_OPT_NONE);                           \
-      if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {            \
-        cnt->scroll.y += ctx->_input.mouse_delta().y * cs.y / base.h;                   \
-      }                                                                        \
-      /* clamp scroll to limits */                                             \
-      cnt->scroll.y = mu_clamp(cnt->scroll.y, 0, maxscroll);                   \
-                                                                               \
-      /* draw base and thumb */                                                \
-      ctx->draw_frame(ctx, base, MU_COLOR_SCROLLBASE);                         \
-      thumb = base;                                                            \
-      thumb.h = mu_max(ctx->style->thumb_size, base.h * b->h / cs.y);          \
-      thumb.y += cnt->scroll.y * (base.h - thumb.h) / maxscroll;               \
-      ctx->draw_frame(ctx, thumb, MU_COLOR_SCROLLTHUMB);                       \
-                                                                               \
-      /* set this as the scroll_target (will get scrolled on mousewheel) */    \
-      /* if the mouse is over it */                                            \
-      if (mu_mouse_over(ctx, *b)) {                                            \
-        ctx->scroll_target = cnt;                                              \
-      }                                                                        \
-    } else {                                                                   \
-      cnt->scroll.y = 0;                                                       \
-    }                                                                          \
-  } while (0)
+static void scrollbar(mu_Context *ctx, mu_Container *cnt, mu_Rect *b, mu_Vec2 cs,
+                      const char *key) {
+  // only add scrollbar if content size is larger than body
+  int maxscroll = cs.y - b->h;
+
+  if (maxscroll > 0 && b->h > 0) {
+    mu_Rect base, thumb;
+    mu_Id id = mu_get_id(ctx, key, 11);
+
+    // get sizing / positioning
+    base = *b;
+    base.x = b->x + b->w;
+    base.w = ctx->style->scrollbar_size;
+
+    // handle input
+    mu_update_control(ctx, id, base, MU_OPT_NONE);
+    if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
+      cnt->scroll.y += ctx->_input.mouse_delta().y * cs.y / base.h;
+    }
+    // clamp scroll to limits
+    cnt->scroll.y = mu_clamp(cnt->scroll.y, 0, maxscroll);
+
+    // draw base and thumb
+    ctx->draw_frame(ctx, base, MU_COLOR_SCROLLBASE);
+    thumb = base;
+    thumb.h = mu_max(ctx->style->thumb_size, base.h * b->h / cs.y);
+    thumb.y += cnt->scroll.y * (base.h - thumb.h) / maxscroll;
+    ctx->draw_frame(ctx, thumb, MU_COLOR_SCROLLTHUMB);
+
+    // set this as the scroll_target (will get scrolled on mousewheel)
+    // if the mouse is over it
+    if (mu_mouse_over(ctx, *b)) {
+      ctx->scroll_target = cnt;
+    }
+  } else {
+    cnt->scroll.y = 0;
+  }
+}
 
 static void scrollbars(mu_Context *ctx, mu_Container *cnt, mu_Rect *body) {
   int sz = ctx->style->scrollbar_size;
@@ -689,8 +690,8 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, mu_Rect *body) {
   }
   /* to create a horizontal or vertical scrollbar almost-identical code is
   ** used; only the references to `x|y` `w|h` need to be switched */
-  scrollbar(ctx, cnt, body, cs, x, y, w, h);
-  scrollbar(ctx, cnt, body, cs, y, x, h, w);
+  scrollbar(ctx, cnt, body, cs, "!scrollbary"); // x, y, w, h);
+  // scrollbar(ctx, cnt, body, cs, "!scrollbarx"); // y, x, h, w);
   ctx->pop_clip_rect();
 }
 
@@ -807,7 +808,8 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
   }
 
   // close if this is a popup window and elsewhere was clicked
-  if (opt & MU_OPT_POPUP && ctx->_input.mouse_pressed() && ctx->hover_root != cnt) {
+  if (opt & MU_OPT_POPUP && ctx->_input.mouse_pressed() &&
+      ctx->hover_root != cnt) {
     cnt->open = 0;
   }
 
@@ -825,7 +827,8 @@ void mu_open_popup(mu_Context *ctx, const char *name) {
   // set as hover root so popup isn't closed in begin_window_ex()
   ctx->hover_root = ctx->next_hover_root = cnt;
   // position at mouse cursor, open and bring-to-front
-  cnt->rect = mu_Rect(ctx->_input.mouse_pos().x, ctx->_input.mouse_pos().y, 1, 1);
+  cnt->rect =
+      mu_Rect(ctx->_input.mouse_pos().x, ctx->_input.mouse_pos().y, 1, 1);
   cnt->open = 1;
   ctx->bring_to_front(cnt);
 }

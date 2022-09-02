@@ -70,6 +70,8 @@ struct mu_Context {
   mu_Container *scroll_target = nullptr;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
+  mu_Id focus = 0;
+  bool updated_focus = false;
 
   // stacks
   CommandStack _command_stack;
@@ -87,10 +89,6 @@ struct mu_Context {
 
   // input state
   mu_Input _input;
-
-private:
-  mu_Id focus = 0;
-  bool updated_focus = false;
 
 public:
   void draw_rect(mu_Rect rect, mu_Color color) {
@@ -122,14 +120,14 @@ public:
 
   void set_focus(mu_Id id) {
     focus = id;
-    updated_focus = 1;
+    updated_focus = true;
   }
 
   void unset_focus() {
     if (!updated_focus) {
       focus = 0;
     }
-    updated_focus = 0;
+    updated_focus = false;
   }
 
   bool has_focus(mu_Id id) const { return focus == id; }

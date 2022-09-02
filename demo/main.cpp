@@ -312,7 +312,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
-  ctx->_input.scroll(xoffset, yoffset);
+  ctx->_input.scroll(xoffset, yoffset * -30);
 }
 
 int main(int argc, char **argv) {
