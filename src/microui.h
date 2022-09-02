@@ -32,6 +32,16 @@ enum MU_RES {
   MU_RES_SUBMIT = (1 << 1),
   MU_RES_CHANGE = (1 << 2)
 };
+inline MU_RES operator|(MU_RES L, MU_RES R) {
+  return static_cast<MU_RES>(
+      static_cast<std::underlying_type<MU_RES>::type>(L) |
+      static_cast<std::underlying_type<MU_RES>::type>(R));
+}
+inline MU_RES operator&(MU_RES L, MU_RES R) {
+  return static_cast<MU_RES>(
+      static_cast<std::underlying_type<MU_RES>::type>(L) &
+      static_cast<std::underlying_type<MU_RES>::type>(R));
+}
 
 enum MU_OPT {
   MU_OPT_NONE = 0,
@@ -132,28 +142,29 @@ void mu_update_control(mu_Context *ctx, mu_Id id, mu_Rect rect, MU_OPT opt);
 #define mu_number(ctx, value, step)                                            \
   mu_number_ex(ctx, value, step, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER)
 #define mu_header(ctx, label) mu_header_ex(ctx, label, MU_OPT_NONE)
-#define mu_begin_treenode(ctx, label) mu_begin_treenode_ex(ctx, label, MU_OPT_NONE)
+#define mu_begin_treenode(ctx, label)                                          \
+  mu_begin_treenode_ex(ctx, label, MU_OPT_NONE)
 #define mu_begin_panel(ctx, name) mu_begin_panel_ex(ctx, name, MU_OPT_NONE)
 
 void mu_text(mu_Context *ctx, const char *text);
 void mu_label(mu_Context *ctx, const char *text);
-int mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt);
-int mu_checkbox(mu_Context *ctx, const char *label, int *state);
-int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
-                   MU_OPT opt);
-int mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt);
-int mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
-                 mu_Real step, const char *fmt, MU_OPT opt);
-int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
-                 MU_OPT opt);
-int mu_header_ex(mu_Context *ctx, const char *label, MU_OPT opt);
-int mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt);
+MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt);
+MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state);
+MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
+                      mu_Rect r, MU_OPT opt);
+MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt);
+MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
+                    mu_Real step, const char *fmt, MU_OPT opt);
+MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
+                    const char *fmt, MU_OPT opt);
+MU_RES mu_header_ex(mu_Context *ctx, const char *label, MU_OPT opt);
+MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt);
 void mu_end_treenode(mu_Context *ctx);
-int mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
-                    MU_OPT opt = MU_OPT_NONE);
+MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
+                       MU_OPT opt = MU_OPT_NONE);
 void mu_end_window(mu_Context *ctx);
 void mu_open_popup(mu_Context *ctx, const char *name);
-int mu_begin_popup(mu_Context *ctx, const char *name);
+MU_RES mu_begin_popup(mu_Context *ctx, const char *name);
 void mu_end_popup(mu_Context *ctx);
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt);
 void mu_end_panel(mu_Context *ctx);

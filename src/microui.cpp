@@ -476,18 +476,19 @@ void mu_text(mu_Context *ctx, const char *text) {
 }
 
 void mu_label(mu_Context *ctx, const char *text) {
-  mu_draw_control_text(ctx, text, mu_layout_next(ctx), MU_COLOR_TEXT, MU_OPT::MU_OPT_NONE);
+  mu_draw_control_text(ctx, text, mu_layout_next(ctx), MU_COLOR_TEXT,
+                       MU_OPT::MU_OPT_NONE);
 }
 
-int mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
-  int res = 0;
+MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
+  auto res = MU_RES::MU_RES_NONE;
   mu_Id id = label ? mu_get_id(ctx, label, strlen(label))
                    : mu_get_id(ctx, &icon, sizeof(icon));
   mu_Rect r = mu_layout_next(ctx);
   mu_update_control(ctx, id, r, opt);
   // handle click
   if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id)) {
-    res |= MU_RES_SUBMIT;
+    res = res | MU_RES_SUBMIT;
   }
   // draw
   mu_draw_control_frame(ctx, id, r, MU_COLOR_BUTTON, opt);
@@ -500,15 +501,15 @@ int mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   return res;
 }
 
-int mu_checkbox(mu_Context *ctx, const char *label, int *state) {
-  int res = 0;
+MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
+  auto res = MU_RES::MU_RES_NONE;
   mu_Id id = mu_get_id(ctx, &state, sizeof(state));
   mu_Rect r = mu_layout_next(ctx);
   mu_Rect box = mu_Rect(r.x, r.y, r.h, r.h);
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
   // handle click
   if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->has_focus(id)) {
-    res |= MU_RES_CHANGE;
+    res = res | MU_RES_CHANGE;
     *state = !*state;
   }
   // draw
@@ -521,10 +522,10 @@ int mu_checkbox(mu_Context *ctx, const char *label, int *state) {
   return res;
 }
 
-int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
-                   MU_OPT opt) {
-  int res = 0;
-  mu_update_control(ctx, id, r,  opt | MU_OPT_HOLDFOCUS);
+MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id,
+                      mu_Rect r, MU_OPT opt) {
+  auto res = MU_RES::MU_RES_NONE;
+  mu_update_control(ctx, id, r, opt | MU_OPT_HOLDFOCUS);
 
   if (ctx->has_focus(id)) {
     // handle text input
@@ -534,7 +535,7 @@ int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
       memcpy(buf + len, ctx->input_text, n);
       len += n;
       buf[len] = '\0';
-      res |= MU_RES_CHANGE;
+      res = res | MU_RES_CHANGE;
     }
     // handle backspace
     if (ctx->key_pressed & MU_KEY_BACKSPACE && len > 0) {
@@ -542,12 +543,12 @@ int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
       while ((buf[--len] & 0xc0) == 0x80 && len > 0)
         ;
       buf[len] = '\0';
-      res |= MU_RES_CHANGE;
+      res = res | MU_RES_CHANGE;
     }
     // handle return
     if (ctx->key_pressed & MU_KEY_RETURN) {
       ctx->set_focus(0);
-      res |= MU_RES_SUBMIT;
+      res = res | MU_RES_SUBMIT;
     }
   }
 
@@ -572,16 +573,17 @@ int mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, mu_Rect r,
   return res;
 }
 
-static int number_textbox(mu_Context *ctx, mu_Real *value, mu_Rect r,
-                          mu_Id id) {
+static bool number_textbox(mu_Context *ctx, mu_Real *value, mu_Rect r,
+                           mu_Id id) {
   if (ctx->mouse_pressed == MU_MOUSE_LEFT && ctx->key_down & MU_KEY_SHIFT &&
       ctx->hover == id) {
     ctx->number_edit = id;
     sprintf(ctx->number_edit_buf, MU_REAL_FMT, *value);
   }
   if (ctx->number_edit == id) {
-    int res = mu_textbox_raw(ctx, ctx->number_edit_buf,
-                             sizeof(ctx->number_edit_buf), id, r, MU_OPT::MU_OPT_NONE);
+    int res =
+        mu_textbox_raw(ctx, ctx->number_edit_buf, sizeof(ctx->number_edit_buf),
+                       id, r, MU_OPT::MU_OPT_NONE);
     if (res & MU_RES_SUBMIT || !ctx->has_focus(id)) {
       *value = strtod(ctx->number_edit_buf, nullptr);
       ctx->number_edit = 0;
@@ -592,22 +594,23 @@ static int number_textbox(mu_Context *ctx, mu_Real *value, mu_Rect r,
   return 0;
 }
 
-int mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt) {
+MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt) {
   mu_Id id = mu_get_id(ctx, &buf, sizeof(buf));
   mu_Rect r = mu_layout_next(ctx);
   return mu_textbox_raw(ctx, buf, bufsz, id, r, opt);
 }
 
-int mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
-                 mu_Real step, const char *fmt, MU_OPT opt) {
+MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
+                    mu_Real step, const char *fmt, MU_OPT opt) {
   char buf[MU_MAX_FMT + 1];
   mu_Rect thumb;
-  int x, w, res = 0;
+  int x, w = 0;
   mu_Real last = *value, v = last;
   mu_Id id = mu_get_id(ctx, &value, sizeof(value));
   mu_Rect base = mu_layout_next(ctx);
 
   // handle text input mode
+  auto res = MU_RES_NONE;
   if (number_textbox(ctx, &v, base, id)) {
     return res;
   }
@@ -626,7 +629,7 @@ int mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   // clamp and store value, update res
   *value = v = mu_clamp(v, low, high);
   if (last != v) {
-    res |= MU_RES_CHANGE;
+    res = res | MU_RES_CHANGE;
   }
 
   // draw base
@@ -643,10 +646,10 @@ int mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   return res;
 }
 
-int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
-                 MU_OPT opt) {
+MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
+                    const char *fmt, MU_OPT opt) {
   char buf[MU_MAX_FMT + 1];
-  int res = 0;
+  auto res = MU_RES::MU_RES_NONE;
   mu_Id id = mu_get_id(ctx, &value, sizeof(value));
   mu_Rect base = mu_layout_next(ctx);
   mu_Real last = *value;
@@ -665,7 +668,7 @@ int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
   }
   // set flag if value changed
   if (*value != last) {
-    res |= MU_RES_CHANGE;
+    res = res | MU_RES_CHANGE;
   }
 
   // draw base
@@ -677,7 +680,8 @@ int mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step, const char *fmt,
   return res;
 }
 
-static int header(mu_Context *ctx, const char *label, int istreenode, MU_OPT opt) {
+static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
+                     MU_OPT opt) {
   mu_Rect r;
   int active, expanded;
   mu_Id id = mu_get_id(ctx, label, strlen(label));
@@ -718,15 +722,15 @@ static int header(mu_Context *ctx, const char *label, int istreenode, MU_OPT opt
   r.w -= r.h - ctx->style->padding;
   mu_draw_control_text(ctx, label, r, MU_COLOR_TEXT, MU_OPT::MU_OPT_NONE);
 
-  return expanded ? MU_RES_ACTIVE : 0;
+  return expanded ? MU_RES_ACTIVE : MU_RES_NONE;
 }
 
-int mu_header_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
+MU_RES mu_header_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
   return header(ctx, label, 0, opt);
 }
 
-int mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
-  int res = header(ctx, label, 1, opt);
+MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
+  auto res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
     ctx->layout_stack.back().indent += ctx->style->indent;
     ctx->id_stack.push(ctx->last_id);
@@ -754,7 +758,7 @@ void mu_end_treenode(mu_Context *ctx) {
       base.w = ctx->style->scrollbar_size;                                     \
                                                                                \
       /* handle input */                                                       \
-      mu_update_control(ctx, id, base, MU_OPT_NONE);                                     \
+      mu_update_control(ctx, id, base, MU_OPT_NONE);                           \
       if (ctx->has_focus(id) && ctx->mouse_down == MU_MOUSE_LEFT) {            \
         cnt->scroll.y += ctx->mouse_delta.y * cs.y / base.h;                   \
       }                                                                        \
@@ -835,12 +839,12 @@ static void end_root_container(mu_Context *ctx) {
   pop_container(ctx);
 }
 
-int mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
-                    MU_OPT opt) {
+MU_RES mu_begin_window(mu_Context *ctx, const char *title, mu_Rect rect,
+                       MU_OPT opt) {
   mu_Id id = mu_get_id(ctx, title, strlen(title));
   mu_Container *cnt = get_container(ctx, id, opt);
   if (!cnt || !cnt->open) {
-    return 0;
+    return MU_RES_NONE;
   }
   ctx->id_stack.push(id);
 
@@ -934,9 +938,10 @@ void mu_open_popup(mu_Context *ctx, const char *name) {
   mu_bring_to_front(ctx, cnt);
 }
 
-int mu_begin_popup(mu_Context *ctx, const char *name) {
-  auto opt = (MU_OPT)(MU_OPT_POPUP | MU_OPT_AUTOSIZE | MU_OPT_NORESIZE |
-                      MU_OPT_NOSCROLL | MU_OPT_NOTITLE | MU_OPT_CLOSED);
+MU_RES mu_begin_popup(mu_Context *ctx, const char *name) {
+  auto opt =
+      static_cast<MU_OPT>(MU_OPT_POPUP | MU_OPT_AUTOSIZE | MU_OPT_NORESIZE |
+                          MU_OPT_NOSCROLL | MU_OPT_NOTITLE | MU_OPT_CLOSED);
   return mu_begin_window(ctx, name, mu_Rect(0, 0, 0, 0), opt);
 }
 
