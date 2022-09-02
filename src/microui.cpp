@@ -21,10 +21,58 @@
 */
 
 #include "microui.h"
+#include "mu_context.h"
 #include "mu_layout.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <type_traits>
+
+inline MU_RES operator|(MU_RES L, MU_RES R) {
+  return static_cast<MU_RES>(
+      static_cast<std::underlying_type<MU_RES>::type>(L) |
+      static_cast<std::underlying_type<MU_RES>::type>(R));
+}
+inline MU_RES operator&(MU_RES L, MU_RES R) {
+  return static_cast<MU_RES>(
+      static_cast<std::underlying_type<MU_RES>::type>(L) &
+      static_cast<std::underlying_type<MU_RES>::type>(R));
+}
+inline MU_OPT operator|(MU_OPT L, MU_OPT R) {
+  return static_cast<MU_OPT>(
+      static_cast<std::underlying_type<MU_OPT>::type>(L) |
+      static_cast<std::underlying_type<MU_OPT>::type>(R));
+}
+inline MU_OPT operator&(MU_OPT L, MU_OPT R) {
+  return static_cast<MU_OPT>(
+      static_cast<std::underlying_type<MU_OPT>::type>(L) &
+      static_cast<std::underlying_type<MU_OPT>::type>(R));
+}
+
+mu_Context *mu_new(text_width_callback text_width,
+                   text_height_callback text_height) {
+  auto ctx = new mu_Context;
+  ctx->text_width = (text_width_callback)text_width;
+  ctx->text_height = (text_height_callback)text_height;
+  return ctx;
+}
+void mu_delete(mu_Context *ctx) { delete ctx; }
+
+void mu_input_mousemove(mu_Context *ctx, int x, int y) {
+  ctx->_input.mousemove(x, y);
+}
+
+void mu_input_mousedown(mu_Context *ctx, int button) {
+  ctx->_input.mousedown(static_cast<MU_MOUSE>(button));
+}
+
+void mu_input_mouseup(mu_Context *ctx, int button) {
+  ctx->_input.mouseup(static_cast<MU_MOUSE>(button));
+}
+
+void mu_input_scroll(mu_Context *ctx, int x, int y) {
+  ctx->_input.scroll(x, y);
+}
 
 void mu_begin(mu_Context *ctx) {
   assert(ctx->text_width && ctx->text_height);
@@ -636,8 +684,8 @@ void mu_end_treenode(mu_Context *ctx) {
   mu_pop_id(ctx);
 }
 
-static void scrollbar(mu_Context *ctx, mu_Container *cnt, mu_Rect *b, mu_Vec2 cs,
-                      const char *key) {
+static void scrollbar(mu_Context *ctx, mu_Container *cnt, mu_Rect *b,
+                      mu_Vec2 cs, const char *key) {
   // only add scrollbar if content size is larger than body
   int maxscroll = cs.y - b->h;
 

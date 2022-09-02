@@ -6,42 +6,36 @@
 #include "mu_vec2.h"
 #include <string.h>
 
-enum class MU_COMMAND { CLIP, RECT, TEXT, ICON };
+enum class MU_COMMAND : unsigned int { CLIP, RECT, TEXT, ICON };
 
-struct mu_BaseCommand {
-  MU_COMMAND type;
-  int size;
-};
 struct mu_ClipCommand {
-  mu_BaseCommand base;
   mu_Rect rect;
 };
 struct mu_RectCommand {
-  mu_BaseCommand base;
   mu_Rect rect;
   mu_Color color;
 };
 struct mu_TextCommand {
-  mu_BaseCommand base;
   mu_Font font;
   mu_Vec2 pos;
   mu_Color color;
   char str[1];
 };
 struct mu_IconCommand {
-  mu_BaseCommand base;
   mu_Rect rect;
   int id;
   mu_Color color;
 };
 
-union mu_Command {
+struct mu_Command {
   MU_COMMAND type;
-  mu_BaseCommand base;
-  mu_ClipCommand clip;
-  mu_RectCommand rect;
-  mu_TextCommand text;
-  mu_IconCommand icon;
+  int size;
+  union {
+    mu_ClipCommand clip;
+    mu_RectCommand rect;
+    mu_TextCommand text;
+    mu_IconCommand icon;
+  };
 };
 
 const size_t MU_COMMANDLIST_SIZE = (256 * 1024);
@@ -56,10 +50,10 @@ public:
   void begin_frame() { _command_list.clear(); }
 
   mu_Command *push_command(MU_COMMAND type, int size) {
-    mu_Command *cmd = (mu_Command *)(this->_command_list.end());
-    cmd->base.type = type;
-    cmd->base.size = size;
-    this->_command_list.grow(size);
+    auto cmd = (mu_Command *)(this->_command_list.end());
+    cmd->type = type;
+    cmd->size = size + 8;
+    this->_command_list.grow(size + 8);
     return cmd;
   }
 

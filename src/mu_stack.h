@@ -2,7 +2,7 @@
 #include <assert.h>
 
 template <typename T, size_t N> class mu_Stack {
-  T items[N];
+  T items[N] = {};
   int idx = 0;
 
 public:

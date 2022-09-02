@@ -2,6 +2,7 @@
 #include "mu_rect.h"
 #include "mu_vec2.h"
 #include <assert.h>
+#include <string.h>
 const int MU_MAX_WIDTHS = 16;
 
 struct mu_Layout {

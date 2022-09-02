@@ -20,6 +20,9 @@ enum {
 
 struct mu_Color {
   unsigned char r, g, b, a;
+
+#ifdef __cplusplus  
   mu_Color() : r(0), g(0), b(0), a(0) {}
   mu_Color(int r, int g, int b, int a) : r(r), g(g), b(b), a(a) {}
+#endif
 };

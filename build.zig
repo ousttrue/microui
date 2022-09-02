@@ -18,10 +18,22 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
     exe.addPackage(c_pkg);
     exe.addIncludePath(GLFW_BASE ++ "/include");
+    exe.addIncludePath("src");
+    // exe.addCSourceFiles(&.{
+    //     "src/microui.cpp",
+    //     "src/renderer.cpp",
+    //     "src/atlas.c",
+    // }, &.{
+    //     "-DBUILD_MICROUI",
+    // });
+    exe.addLibraryPath("build/src/Debug");
+    exe.linkSystemLibrary("microui");
     exe.linkLibC();
     exe.linkLibCpp();
     exe.addLibraryPath("build/_external/glfw/src/Debug");
     exe.linkSystemLibrary("glfw3dll");
+    exe.linkSystemLibrary("OpenGL32");
+    exe.addLibraryPath("build/src/Debug");
     exe.install();
 
     const run_cmd = exe.run();
