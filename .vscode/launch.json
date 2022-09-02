@@ -19,6 +19,22 @@
                 }
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "zig",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/zig-out/bin/microui.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
+                }
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }

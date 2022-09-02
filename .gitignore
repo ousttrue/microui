@@ -1,2 +1,5 @@
 build
 _external/SDL2-2.24.0
+c.lib
+zig-cache
+zig-out

@@ -1,6 +1,14 @@
 {
     "tasks": [
         {
+            "label": "build",
+            "type": "shell",
+            "command": "zig build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+        },
+        {
             "type": "cppbuild",
             "label": "C/C++: cl.exe アクティブなファイルのビルド",
             "command": "cl.exe",
@@ -17,10 +25,6 @@
             "problemMatcher": [
                 "$msCompile"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
             "detail": "デバッガーによって生成されたタスク。"
         }
     ],
