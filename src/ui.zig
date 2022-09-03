@@ -22,8 +22,8 @@ const colors = [_]struct {
     .{ "scrollthumb:", c.MU_COLOR_SCROLLTHUMB },
 };
 
-fn style_window(ctx: *c.mu_Context) void {
-    if (c.mu_begin_window(ctx, "Style Editor", c.UIRect{ .x = 350, .y = 250, .w = 300, .h = 240 }, c.MU_OPT_NONE) != 0) {
+fn style_window(ctx: *zigmui.Context) void {
+    if (ctx.begin_window("Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) |_| {
         //     int sw = mu_get_current_container(ctx)->body.w * 0.14;
         //     {
         //       int widths[] = {80, sw, sw, sw, sw, -1};
@@ -37,12 +37,13 @@ fn style_window(ctx: *c.mu_Context) void {
         //       uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
         //       ctx->draw_rect(mu_layout_next(ctx), ctx->style->colors[i]);
         //     }
-        c.mu_end_window(ctx);
+        ctx.end_window();
     }
 }
 
-fn log_window(ctx: *c.mu_Context) void {
-    if (c.mu_begin_window(ctx, "Log Window", c.UIRect{ .x = 350, .y = 40, .w = 300, .h = 200 }, c.MU_OPT_NONE) != 0) {
+fn log_window(ctx: *zigmui.Context) void {
+    if (ctx.begin_window("Log Window", .{ .x = 350, .y = 40, .w = 300, .h = 200 }, .NONE)) |_| {
+
         //     /* output text panel */
         //     {
         //       int widths[] = {-1};
@@ -80,13 +81,13 @@ fn log_window(ctx: *c.mu_Context) void {
         //       buf[0] = '\0';
         //     }
 
-        c.mu_end_window(ctx);
+        ctx.end_window();
     }
 }
 
-fn test_window(ctx: *c.mu_Context, bg: [*]f32) void {
+fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
     _ = bg;
-    if (c.mu_begin_window(ctx, "Demo Window", c.UIRect{ .x = 40, .y = 40, .w = 300, .h = 450 }, c.MU_OPT_NONE) != 0) {
+    if (ctx.begin_window("Demo Window", .{ .x = 40, .y = 40, .w = 300, .h = 450 }, .NONE)) |_| {
         // auto win = mu_get_current_container(ctx);
         // win->rect.w = mu_max(win->rect.w, 240);
         // win->rect.h = mu_max(win->rect.h, 300);
@@ -226,7 +227,7 @@ fn test_window(ctx: *c.mu_Context, bg: [*]f32) void {
         //   mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
         // }
 
-        c.mu_end_window(ctx);
+        ctx.end_window();
     }
 }
 
@@ -238,9 +239,9 @@ pub fn process_frame(ctx: *zigmui.Context, bg: [*]f32, frame: *c.UIRenderFrame) 
 
     ctx.begin();
 
-    // style_window(ctx);
-    // log_window(ctx);
-    // test_window(ctx, bg);
+    style_window(ctx);
+    log_window(ctx);
+    test_window(ctx, bg);
 
     try ctx.end(frame);
 }

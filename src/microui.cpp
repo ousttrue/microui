@@ -95,7 +95,7 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   // check stacks
   assert(ctx->container_stack.size() == 0);
   assert(ctx->clip_stack.size() == 0);
-  assert(ctx->id_stack.size() == 0);
+  ctx->_hash.validate_empty();
   assert(ctx->layout_stack.size() == 0);
 
   // handle scroll input
@@ -116,30 +116,15 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
 }
 
-// 32bit fnv-1a hash
-#define HASH_INITIAL 2166136261
-
-static void hash(mu_Id *hash, const void *data, int size) {
-  auto p = (const unsigned char *)data;
-  while (size--) {
-    *hash = (*hash ^ *p++) * 16777619;
-  }
-}
-
 mu_Id mu_get_id(mu_Context *ctx, const void *data, int size) {
-  int idx = ctx->id_stack.size();
-  mu_Id res = (idx > 0) ? ctx->id_stack.back() : HASH_INITIAL;
-  hash(&res, data, size);
-  ctx->last_id = res;
-  return res;
+  return ctx->_hash.create(data, size);
 }
 
 void mu_push_id(mu_Context *ctx, const void *data, int size) {
-  ctx->id_stack.push(mu_get_id(ctx, data, size));
+  ctx->_hash.create_push(data, size);
 }
 
-void mu_pop_id(mu_Context *ctx) { ctx->id_stack.pop(); }
-
+void mu_pop_id(mu_Context *ctx) { ctx->_hash.pop(); }
 static void pop_container(mu_Context *ctx) {
   mu_Container *cnt = mu_get_current_container(ctx);
   mu_Layout *layout = &ctx->layout_stack.back();
@@ -148,7 +133,7 @@ static void pop_container(mu_Context *ctx) {
   // pop container, layout and id
   ctx->container_stack.pop();
   ctx->layout_stack.pop();
-  mu_pop_id(ctx);
+  ctx->_hash.pop();
 }
 
 mu_Container *mu_get_current_container(mu_Context *ctx) {
@@ -180,7 +165,7 @@ static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
 }
 
 mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
-  mu_Id id = mu_get_id(ctx, name, strlen(name));
+  mu_Id id = ctx->_hash.create(name, strlen(name));
   return get_container(ctx, id, MU_OPT::MU_OPT_NONE);
 }
 
@@ -434,8 +419,8 @@ void mu_label(mu_Context *ctx, const char *text) {
 
 MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   auto res = MU_RES::MU_RES_NONE;
-  mu_Id id = label ? mu_get_id(ctx, label, strlen(label))
-                   : mu_get_id(ctx, &icon, sizeof(icon));
+  mu_Id id = label ? ctx->_hash.create(label, strlen(label))
+                   : ctx->_hash.create(&icon, sizeof(icon));
   UIRect r = mu_layout_next(ctx);
   mu_update_control(ctx, id, r, opt);
   // handle click
@@ -454,7 +439,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
 }
 
 MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
-  mu_Id id = mu_get_id(ctx, &state, sizeof(state));
+  mu_Id id = ctx->_hash.create(&state, sizeof(state));
   UIRect r = mu_layout_next(ctx);
   UIRect box = UIRect(r.x, r.y, r.h, r.h);
   mu_update_control(ctx, id, r, MU_OPT::MU_OPT_NONE);
@@ -547,7 +532,7 @@ static bool number_textbox(mu_Context *ctx, mu_Real *value, UIRect r,
 }
 
 MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt) {
-  mu_Id id = mu_get_id(ctx, &buf, sizeof(buf));
+  mu_Id id = ctx->_hash.create(&buf, sizeof(buf));
   UIRect r = mu_layout_next(ctx);
   return mu_textbox_raw(ctx, buf, bufsz, id, r, opt);
 }
@@ -558,7 +543,7 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   UIRect thumb;
   int x, w = 0;
   mu_Real last = *value, v = last;
-  mu_Id id = mu_get_id(ctx, &value, sizeof(value));
+  mu_Id id = ctx->_hash.create(&value, sizeof(value));
   UIRect base = mu_layout_next(ctx);
 
   // handle text input mode
@@ -602,7 +587,7 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
                     const char *fmt, MU_OPT opt) {
   char buf[MU_MAX_FMT + 1];
   auto res = MU_RES::MU_RES_NONE;
-  mu_Id id = mu_get_id(ctx, &value, sizeof(value));
+  mu_Id id = ctx->_hash.create(&value, sizeof(value));
   UIRect base = mu_layout_next(ctx);
   mu_Real last = *value;
 
@@ -636,7 +621,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
                      MU_OPT opt) {
   UIRect r;
   int active, expanded;
-  mu_Id id = mu_get_id(ctx, label, strlen(label));
+  mu_Id id = ctx->_hash.create(label, strlen(label));
   int idx = ctx->treenode_pool.get_index(id);
   int width = -1;
   ctx->layout_stack.back().row(1, &width, 0);
@@ -686,14 +671,14 @@ MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
   auto res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
     ctx->layout_stack.back().indent += ctx->style->indent;
-    ctx->id_stack.push(ctx->last_id);
+    ctx->_hash.push_last();
   }
   return res;
 }
 
 void mu_end_treenode(mu_Context *ctx) {
   ctx->layout_stack.back().indent -= ctx->style->indent;
-  mu_pop_id(ctx);
+  ctx->_hash.pop();
 }
 
 static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
@@ -703,7 +688,7 @@ static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
 
   if (maxscroll > 0 && b->h > 0) {
     UIRect base, thumb;
-    mu_Id id = mu_get_id(ctx, key, 11);
+    mu_Id id = ctx->_hash.create(key, 11);
 
     // get sizing / positioning
     base = *b;
@@ -794,12 +779,12 @@ static void end_root_container(mu_Context *ctx) {
 
 MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
                        MU_OPT opt) {
-  mu_Id id = mu_get_id(ctx, title, strlen(title));
+  mu_Id id = ctx->_hash.create(title, strlen(title));
   mu_Container *cnt = get_container(ctx, id, opt);
   if (!cnt || !cnt->open) {
     return MU_RES_NONE;
   }
-  ctx->id_stack.push(id);
+  ctx->_hash.push(id);
 
   if (cnt->rect.w == 0) {
     cnt->rect = rect;
@@ -821,7 +806,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
     // do title text
     if (~opt & MU_OPT_NOTITLE) {
-      mu_Id id = mu_get_id(ctx, "!title", 6);
+      mu_Id id = ctx->_hash.create("!title", 6);
       mu_update_control(ctx, id, tr, opt);
       mu_draw_control_text(ctx, title, tr, MU_STYLE_TITLETEXT, opt);
       if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
@@ -834,7 +819,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
     // do `close` button
     if (~opt & MU_OPT_NOCLOSE) {
-      mu_Id id = mu_get_id(ctx, "!close", 6);
+      mu_Id id = ctx->_hash.create("!close", 6);
       UIRect r = UIRect(tr.x + tr.w - tr.h, tr.y, tr.h, tr.h);
       tr.w -= r.w;
       mu_draw_icon(ctx, MU_ICON_CLOSE, r,
@@ -851,7 +836,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
   // do `resize` handle
   if (~opt & MU_OPT_NORESIZE) {
     int sz = ctx->style->title_height;
-    mu_Id id = mu_get_id(ctx, "!resize", 7);
+    mu_Id id = ctx->_hash.create("!resize", 7);
     UIRect r = UIRect(rect.x + rect.w - sz, rect.y + rect.h - sz, sz, sz);
     mu_update_control(ctx, id, r, opt);
     if (ctx->has_focus(id) && ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
@@ -903,8 +888,8 @@ MU_RES mu_begin_popup(mu_Context *ctx, const char *name) {
 void mu_end_popup(mu_Context *ctx) { mu_end_window(ctx); }
 
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
-  mu_push_id(ctx, name, strlen(name));
-  auto cnt = get_container(ctx, ctx->last_id, opt);
+  auto last_id = ctx->_hash.create_push(name, strlen(name));
+  auto cnt = get_container(ctx, last_id, opt);
   cnt->rect = mu_layout_next(ctx);
   if (~opt & MU_OPT_NOFRAME) {
     ctx->draw_frame(ctx, cnt->rect, MU_STYLE_PANELBG);

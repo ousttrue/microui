@@ -9,7 +9,8 @@
         "cstdlib": "c",
         "renderer.h": "c",
         "microui.h": "c",
-        "utility": "cpp"
+        "utility": "cpp",
+        "xmemory": "cpp"
     },
     "cSpell.words": [
         "adipiscing",

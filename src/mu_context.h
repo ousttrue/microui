@@ -4,13 +4,13 @@
 #include "mu_layout.h"
 #include "mu_pool.h"
 #include "mu_style.h"
+#include "mu_hash.h"
 #include <assert.h>
 
 #define MU_MAX_FMT 127
 #define MU_ROOTLIST_SIZE 32
 #define MU_CONTAINERSTACK_SIZE 32
 #define MU_CLIPSTACK_SIZE 32
-#define MU_IDSTACK_SIZE 32
 #define MU_LAYOUTSTACK_SIZE 16
 #define MU_CONTAINERPOOL_SIZE 48
 #define MU_TREENODEPOOL_SIZE 48
@@ -58,10 +58,10 @@ struct mu_Context {
   draw_frame_callback draw_frame = nullptr;
 
   // core state
+  MuHash _hash;
   mu_Style _style = {};
   mu_Style *style = nullptr;
   mu_Id hover = 0;
-  mu_Id last_id = 0;
   UIRect last_rect;
   int last_zindex = 0;
   int frame = 0;
@@ -79,8 +79,6 @@ struct mu_Context {
   UICommandRange root_window_ranges[MU_ROOTLIST_SIZE];
   mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
   mu_Stack<UIRect, MU_CLIPSTACK_SIZE> clip_stack;
-
-  mu_Stack<mu_Id, MU_IDSTACK_SIZE> id_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
 
   // retained state pools
@@ -122,6 +120,11 @@ public:
   void set_focus(mu_Id id) {
     focus = id;
     updated_focus = true;
+  }
+
+  void focus_last()
+  {
+    set_focus(_hash.last());
   }
 
   void unset_focus() {
