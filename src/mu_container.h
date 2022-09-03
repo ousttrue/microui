@@ -59,10 +59,12 @@ public:
     assert(_container_stack.size() == 0);
 
     // bring hover root to front if mouse was pressed
-    if (mouse_pressed && this->_next_hover_root &&
-        // this->next_hover_root->zindex < this->last_zindex &&
-        this->_next_hover_root->zindex >= 0) {
-      bring_to_front(this->_next_hover_root);
+    if (mouse_pressed) {
+      if (this->_next_hover_root &&
+          // this->next_hover_root->zindex < this->last_zindex &&
+          this->_next_hover_root->zindex >= 0) {
+        bring_to_front(this->_next_hover_root);
+      }
     }
 
     // sort root containers by zindex
@@ -108,10 +110,7 @@ public:
     return cnt;
   }
 
-  void push(mu_Container *cnt)
-  {
-    _container_stack.push(cnt);    
-  }
+  void push(mu_Container *cnt) { _container_stack.push(cnt); }
 
   mu_Container *current_container() { return _container_stack.back(); }
 

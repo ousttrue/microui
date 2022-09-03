@@ -92,9 +92,10 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   assert(ctx->layout_stack.size() == 0);
 
   // handle scroll input
+  auto mouse_pressed = ctx->_input.mouse_pressed();
   ctx->end_input();
 
-  ctx->_container.end(ctx->_input.mouse_pressed(), command);
+  ctx->_container.end(mouse_pressed, command);
   command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
 }
 
@@ -691,16 +692,6 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
   cnt->body = body;
 }
 
-static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
-
-  ctx->_container.begin_root_container(cnt, ctx->_command_stack.size(),
-                                       ctx->_input.mouse_pos());
-  /* clipping is reset here in case a root-container is made within
-  ** another root-containers's begin/end block; this prevents the inner
-  ** root-container being clipped to the outer */
-  ctx->clip_stack.push(unclipped_rect);
-}
-
 static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
@@ -723,7 +714,14 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
   if (cnt->rect.w == 0) {
     cnt->rect = rect;
   }
-  begin_root_container(ctx, cnt);
+
+  ctx->_container.begin_root_container(cnt, ctx->_command_stack.size(),
+                                       ctx->_input.mouse_pos());
+  /* clipping is reset here in case a root-container is made within
+  ** another root-containers's begin/end block; this prevents the inner
+  ** root-container being clipped to the outer */
+  ctx->clip_stack.push(unclipped_rect);
+
   auto body = cnt->rect;
   rect = body;
 
