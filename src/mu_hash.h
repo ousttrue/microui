@@ -1,8 +1,7 @@
 #pragma once
+#include "mu_types.h"
 #include "mu_stack.h"
 #include <assert.h>
-
-using mu_Id = unsigned int;
 
 // 32bit fnv-1a hash
 const mu_Id HASH_INITIAL = 2166136261;
@@ -20,7 +19,7 @@ class MuHash {
   }
 
 public:
-  void validate_empty() { assert(_stack.size() == 0); }
+  void end() const { assert(_stack.size() == 0); }
 
   mu_Id create(const void *data, int size) {
     int idx = _stack.size();

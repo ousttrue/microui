@@ -17,7 +17,7 @@
 #define mu_max(a, b) ((a) > (b) ? (a) : (b))
 #define mu_clamp(x, a, b) mu_min(b, mu_max(a, x))
 
-enum {
+enum MU_ICON {
   MU_ICON_CLOSE = 1,
   MU_ICON_CHECK,
   MU_ICON_COLLAPSED,
@@ -32,22 +32,6 @@ enum MU_RES {
   MU_RES_CHANGE = (1 << 2)
 };
 
-enum MU_OPT {
-  MU_OPT_NONE = 0,
-  MU_OPT_ALIGNCENTER = (1 << 0),
-  MU_OPT_ALIGNRIGHT = (1 << 1),
-  MU_OPT_NOINTERACT = (1 << 2),
-  MU_OPT_NOFRAME = (1 << 3),
-  MU_OPT_NORESIZE = (1 << 4),
-  MU_OPT_NOSCROLL = (1 << 5),
-  MU_OPT_NOCLOSE = (1 << 6),
-  MU_OPT_NOTITLE = (1 << 7),
-  MU_OPT_HOLDFOCUS = (1 << 8),
-  MU_OPT_AUTOSIZE = (1 << 9),
-  MU_OPT_POPUP = (1 << 10),
-  MU_OPT_CLOSED = (1 << 11),
-  MU_OPT_EXPANDED = (1 << 12)
-};
 
 struct mu_Context;
 struct mu_Container;

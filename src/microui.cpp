@@ -79,40 +79,22 @@ void mu_input_scroll(mu_Context *ctx, int x, int y) {
 void mu_begin(mu_Context *ctx) {
   assert(ctx->text_width && ctx->text_height);
   ctx->_command_stack.begin_frame();
-  ctx->root_list.clear();
   ctx->scroll_target = nullptr;
-  ctx->hover_root = ctx->next_hover_root;
-  ctx->next_hover_root = nullptr;
+  ctx->_container.begin();
   ctx->_input.begin();
   ctx->frame++;
 }
 
-static int compare_zindex(const void *a, const void *b) {
-  return (*(mu_Container **)a)->zindex - (*(mu_Container **)b)->zindex;
-}
-
 void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   // check stacks
-  assert(ctx->container_stack.size() == 0);
   assert(ctx->clip_stack.size() == 0);
-  ctx->_hash.validate_empty();
+  ctx->_hash.end();
   assert(ctx->layout_stack.size() == 0);
 
   // handle scroll input
   ctx->end_input();
 
-  // sort root containers by zindex
-  auto n = ctx->root_list.size();
-  qsort(ctx->root_list.begin(), n, sizeof(mu_Container *), compare_zindex);
-
-  auto end = ctx->root_list.end();
-  auto p = &ctx->root_window_ranges[0];
-  for (auto it = ctx->root_list.begin(); it != end; ++it, ++p) {
-    *p = (*it)->range;
-  }
-
-  command->command_groups = &ctx->root_window_ranges[0];
-  command->command_group_count = ctx->root_list.size();
+  ctx->_container.end(ctx->_input.mouse_pressed(), command);
   command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
 }
 
@@ -126,47 +108,22 @@ void mu_push_id(mu_Context *ctx, const void *data, int size) {
 
 void mu_pop_id(mu_Context *ctx) { ctx->_hash.pop(); }
 static void pop_container(mu_Context *ctx) {
-  mu_Container *cnt = mu_get_current_container(ctx);
   mu_Layout *layout = &ctx->layout_stack.back();
+  mu_Container *cnt = ctx->_container.current_container();
   cnt->content_size.x = layout->max.x - layout->body.x;
   cnt->content_size.y = layout->max.y - layout->body.y;
-  // pop container, layout and id
-  ctx->container_stack.pop();
+  ctx->_container.pop();
   ctx->layout_stack.pop();
   ctx->_hash.pop();
 }
 
 mu_Container *mu_get_current_container(mu_Context *ctx) {
-  return ctx->container_stack.back();
-}
-
-static mu_Container *get_container(mu_Context *ctx, mu_Id id, MU_OPT opt) {
-  // try to get existing container from pool
-  {
-    int idx = ctx->container_pool.get_index(id);
-    if (idx >= 0) {
-      if (ctx->containers[idx].open || ~opt & MU_OPT_CLOSED) {
-        ctx->container_pool.update(ctx->frame, idx);
-      }
-      return &ctx->containers[idx];
-    }
-  }
-
-  if (opt & MU_OPT_CLOSED) {
-    return nullptr;
-  }
-
-  // container not found in pool: init new container
-  auto idx = ctx->container_pool.init(ctx->frame, id);
-  auto cnt = &ctx->containers[idx];
-  cnt->init();
-  ctx->bring_to_front(cnt);
-  return cnt;
+  return ctx->_container.current_container();
 }
 
 mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
   mu_Id id = ctx->_hash.create(name, strlen(name));
-  return get_container(ctx, id, MU_OPT::MU_OPT_NONE);
+  return ctx->_container.get_container(id, MU_OPT::MU_OPT_NONE, ctx->frame);
 }
 
 /*============================================================================
@@ -306,22 +263,6 @@ UIRect mu_layout_next(mu_Context *ctx) {
 /*============================================================================
 ** controls
 **============================================================================*/
-
-static int in_hover_root(mu_Context *ctx) {
-  int i = ctx->container_stack.size();
-  while (i--) {
-    if (ctx->container_stack.get(i) == ctx->hover_root) {
-      return 1;
-    }
-    /* only root containers have their `head` field set; stop searching if we've
-    ** reached the current root container */
-    if (ctx->container_stack.get(i)->range.head) {
-      break;
-    }
-  }
-  return 0;
-}
-
 void mu_draw_control_frame(mu_Context *ctx, mu_Id id, UIRect rect, int colorid,
                            MU_OPT opt) {
   if (opt & MU_OPT_NOFRAME) {
@@ -352,7 +293,7 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
 int mu_mouse_over(mu_Context *ctx, UIRect rect) {
   return rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
          ctx->clip_stack.back().overlaps_vec2(ctx->_input.mouse_pos()) &&
-         in_hover_root(ctx);
+         ctx->_container.in_hover_root();
 }
 
 void mu_update_control(mu_Context *ctx, mu_Id id, UIRect rect, MU_OPT opt) {
@@ -751,16 +692,9 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
 }
 
 static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
-  ctx->container_stack.push(cnt);
-  // push container to roots list and push head command
-  ctx->root_list.push(cnt);
-  cnt->range.head = ctx->_command_stack.size();
-  /* set as hover root if the mouse is overlapping this container and it has a
-  ** higher zindex than the current hover root */
-  if (cnt->rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
-      (!ctx->next_hover_root || cnt->zindex > ctx->next_hover_root->zindex)) {
-    ctx->next_hover_root = cnt;
-  }
+
+  ctx->_container.begin_root_container(cnt, ctx->_command_stack.size(),
+                                       ctx->_input.mouse_pos());
   /* clipping is reset here in case a root-container is made within
   ** another root-containers's begin/end block; this prevents the inner
   ** root-container being clipped to the outer */
@@ -770,7 +704,7 @@ static void begin_root_container(mu_Context *ctx, mu_Container *cnt) {
 static void end_root_container(mu_Context *ctx) {
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
-  mu_Container *cnt = mu_get_current_container(ctx);
+  mu_Container *cnt = ctx->_container.current_container();
   cnt->range.tail = ctx->_command_stack.size();
   // pop base clip rect and container
   ctx->pop_clip_rect();
@@ -780,7 +714,7 @@ static void end_root_container(mu_Context *ctx) {
 MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
                        MU_OPT opt) {
   mu_Id id = ctx->_hash.create(title, strlen(title));
-  mu_Container *cnt = get_container(ctx, id, opt);
+  mu_Container *cnt = ctx->_container.get_container(id, opt, ctx->frame);
   if (!cnt || !cnt->open) {
     return MU_RES_NONE;
   }
@@ -853,9 +787,10 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
   }
 
   // close if this is a popup window and elsewhere was clicked
-  if (opt & MU_OPT_POPUP && ctx->_input.mouse_pressed() &&
-      ctx->hover_root != cnt) {
-    cnt->open = 0;
+  if (opt & MU_OPT_POPUP && ctx->_input.mouse_pressed()) {
+    if (!ctx->_container.is_hover_root(cnt)) {
+      cnt->open = false;
+    }
   }
 
   ctx->push_clip_rect(cnt->body);
@@ -868,14 +803,8 @@ void mu_end_window(mu_Context *ctx) {
 }
 
 void mu_open_popup(mu_Context *ctx, const char *name) {
-  mu_Container *cnt = mu_get_container(ctx, name);
-  // set as hover root so popup isn't closed in begin_window_ex()
-  ctx->hover_root = ctx->next_hover_root = cnt;
-  // position at mouse cursor, open and bring-to-front
-  cnt->rect =
-      UIRect(ctx->_input.mouse_pos().x, ctx->_input.mouse_pos().y, 1, 1);
-  cnt->open = 1;
-  ctx->bring_to_front(cnt);
+  mu_Id id = ctx->_hash.create(name, strlen(name));
+  ctx->_container.open_popup(id, ctx->_input.mouse_pos(), ctx->frame);
 }
 
 MU_RES mu_begin_popup(mu_Context *ctx, const char *name) {
@@ -889,12 +818,12 @@ void mu_end_popup(mu_Context *ctx) { mu_end_window(ctx); }
 
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
   auto last_id = ctx->_hash.create_push(name, strlen(name));
-  auto cnt = get_container(ctx, last_id, opt);
+  auto cnt = ctx->_container.get_container(last_id, opt, ctx->frame);
   cnt->rect = mu_layout_next(ctx);
   if (~opt & MU_OPT_NOFRAME) {
     ctx->draw_frame(ctx, cnt->rect, MU_STYLE_PANELBG);
   }
-  ctx->container_stack.push(cnt);
+  ctx->_container.push(cnt);
   push_container_body(ctx, cnt, cnt->rect, opt);
   ctx->push_clip_rect(cnt->body);
 }

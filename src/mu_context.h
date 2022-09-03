@@ -5,14 +5,12 @@
 #include "mu_pool.h"
 #include "mu_style.h"
 #include "mu_hash.h"
+#include "mu_command.h"
 #include <assert.h>
 
 #define MU_MAX_FMT 127
-#define MU_ROOTLIST_SIZE 32
-#define MU_CONTAINERSTACK_SIZE 32
 #define MU_CLIPSTACK_SIZE 32
 #define MU_LAYOUTSTACK_SIZE 16
-#define MU_CONTAINERPOOL_SIZE 48
 #define MU_TREENODEPOOL_SIZE 48
 
 enum class MU_CLIP : unsigned int { NONE, PART, ALL };
@@ -63,10 +61,7 @@ struct mu_Context {
   mu_Style *style = nullptr;
   mu_Id hover = 0;
   UIRect last_rect;
-  int last_zindex = 0;
   int frame = 0;
-  mu_Container *hover_root = nullptr;
-  mu_Container *next_hover_root = nullptr;
   mu_Container *scroll_target = nullptr;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
@@ -74,16 +69,12 @@ struct mu_Context {
   bool updated_focus = false;
 
   // stacks
+  ContainerManager _container;
   CommandStack _command_stack;
-  mu_Stack<mu_Container *, MU_ROOTLIST_SIZE> root_list;
-  UICommandRange root_window_ranges[MU_ROOTLIST_SIZE];
-  mu_Stack<mu_Container *, MU_CONTAINERSTACK_SIZE> container_stack;
   mu_Stack<UIRect, MU_CLIPSTACK_SIZE> clip_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
 
   // retained state pools
-  mu_Pool<MU_CONTAINERPOOL_SIZE> container_pool;
-  mu_Container containers[MU_CONTAINERPOOL_SIZE] = {0};
   mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
 
   // input state
@@ -142,8 +133,6 @@ public:
     }
   }
 
-  void bring_to_front(mu_Container *cnt) { cnt->zindex = ++this->last_zindex; }
-
   void end_input() {
     if (this->scroll_target) {
       this->scroll_target->scroll += this->_input.scroll_delta();
@@ -151,13 +140,6 @@ public:
 
     // unset focus if focus id was not touched this frame
     this->unset_focus();
-
-    // bring hover root to front if mouse was pressed
-    if (this->_input.mouse_pressed() && this->next_hover_root &&
-        this->next_hover_root->zindex < this->last_zindex &&
-        this->next_hover_root->zindex >= 0) {
-      this->bring_to_front(this->next_hover_root);
-    }
 
     // reset input state
     this->_input.end();
