@@ -28,8 +28,6 @@
 #include <string.h>
 #include <type_traits>
 
-const UIRect unclipped_rect(0, 0, 0x1000000, 0x1000000);
-
 inline MU_RES operator|(MU_RES L, MU_RES R) {
   return static_cast<MU_RES>(
       static_cast<std::underlying_type<MU_RES>::type>(L) |
@@ -87,7 +85,7 @@ void mu_begin(mu_Context *ctx) {
 
 void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   // check stacks
-  assert(ctx->clip_stack.size() == 0);
+  ctx->_clip_stack.end();
   ctx->_hash.end();
   assert(ctx->layout_stack.size() == 0);
 
@@ -135,35 +133,35 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
                   UIVec2 pos, UIColor32 color) {
   UIRect rect = UIRect(pos.x, pos.y, ctx->text_width(font, str, len),
                        ctx->text_height(font));
-  auto clipped = ctx->check_clip(rect);
+  auto clipped = ctx->_clip_stack.check_clip(rect);
   if (clipped == MU_CLIP::ALL) {
     return;
   }
   if (clipped == MU_CLIP::PART) {
-    ctx->_command_stack.set_clip(ctx->clip_stack.back());
+    ctx->_command_stack.set_clip(ctx->_clip_stack.back());
   }
   // add command
   ctx->_command_stack.push_text(str, len, pos, color, font);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->_command_stack.set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(ctx->_clip_stack.unclipped_rect());
   }
 }
 
 void mu_draw_icon(mu_Context *ctx, int id, UIRect rect, UIColor32 color) {
   // do clip command if the rect isn't fully contained within the cliprect
-  auto clipped = ctx->check_clip(rect);
+  auto clipped = ctx->_clip_stack.check_clip(rect);
   if (clipped == MU_CLIP::ALL) {
     return;
   }
   if (clipped == MU_CLIP::PART) {
-    ctx->_command_stack.set_clip(ctx->clip_stack.back());
+    ctx->_command_stack.set_clip(ctx->_clip_stack.back());
   }
   // do icon command
   ctx->_command_stack.push_icon(id, rect, color);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
-    ctx->_command_stack.set_clip(unclipped_rect);
+    ctx->_command_stack.set_clip(ClipStack::unclipped_rect());
   }
 }
 
@@ -277,7 +275,7 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
                           int colorid, MU_OPT opt) {
   mu_Font font = ctx->style->font;
   int tw = ctx->text_width(font, str, -1);
-  ctx->push_clip_rect(rect);
+  ctx->_clip_stack.push(rect);
   UIVec2 pos;
   pos.y = rect.y + (rect.h - ctx->text_height(font)) / 2;
   if (opt & MU_OPT_ALIGNCENTER) {
@@ -288,12 +286,12 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
     pos.x = rect.x + ctx->style->padding;
   }
   mu_draw_text(ctx, font, str, -1, pos, ctx->style->colors[colorid]);
-  ctx->pop_clip_rect();
+  ctx->_clip_stack.pop();
 }
 
 int mu_mouse_over(mu_Context *ctx, UIRect rect) {
   return rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
-         ctx->clip_stack.back().overlaps_vec2(ctx->_input.mouse_pos()) &&
+         ctx->_clip_stack.back().overlaps_vec2(ctx->_input.mouse_pos()) &&
          ctx->_container.in_hover_root();
 }
 
@@ -441,10 +439,10 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
     int ofx = r.w - ctx->style->padding - textw - 1;
     int textx = r.x + mu_min(ofx, ctx->style->padding);
     int texty = r.y + (r.h - texth) / 2;
-    ctx->push_clip_rect(r);
+    ctx->_clip_stack.push(r);
     mu_draw_text(ctx, font, buf, -1, UIVec2(textx, texty), color);
     ctx->draw_rect(UIRect(textx + textw, texty, 1, texth), color);
-    ctx->pop_clip_rect();
+    ctx->_clip_stack.pop();
   } else {
     mu_draw_control_text(ctx, buf, r, MU_STYLE_TEXT, opt);
   }
@@ -667,7 +665,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, UIRect *body) {
   UIVec2 cs = cnt->content_size;
   cs.x += ctx->style->padding * 2;
   cs.y += ctx->style->padding * 2;
-  ctx->push_clip_rect(*body);
+  ctx->_clip_stack.push(*body);
   // resize body to make room for scrollbars
   if (cs.y > cnt->body.h) {
     body->w -= sz;
@@ -679,7 +677,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, UIRect *body) {
   ** used; only the references to `x|y` `w|h` need to be switched */
   scrollbar(ctx, cnt, body, cs, "!scrollbary"); // x, y, w, h);
   // scrollbar(ctx, cnt, body, cs, "!scrollbarx"); // y, x, h, w);
-  ctx->pop_clip_rect();
+  ctx->_clip_stack.pop();
 }
 
 static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
@@ -698,7 +696,7 @@ static void end_root_container(mu_Context *ctx) {
   mu_Container *cnt = ctx->_container.current_container();
   cnt->range.tail = ctx->_command_stack.size();
   // pop base clip rect and container
-  ctx->pop_clip_rect();
+  ctx->_clip_stack.pop();
   pop_container(ctx);
 }
 
@@ -720,7 +718,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
   /* clipping is reset here in case a root-container is made within
   ** another root-containers's begin/end block; this prevents the inner
   ** root-container being clipped to the outer */
-  ctx->clip_stack.push(unclipped_rect);
+  ctx->_clip_stack.push_unclipped_rect();
 
   auto body = cnt->rect;
   rect = body;
@@ -791,12 +789,12 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     }
   }
 
-  ctx->push_clip_rect(cnt->body);
+  ctx->_clip_stack.push(cnt->body);
   return MU_RES_ACTIVE;
 }
 
 void mu_end_window(mu_Context *ctx) {
-  ctx->pop_clip_rect();
+  ctx->_clip_stack.pop();
   end_root_container(ctx);
 }
 
@@ -823,10 +821,10 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
   }
   ctx->_container.push(cnt);
   push_container_body(ctx, cnt, cnt->rect, opt);
-  ctx->push_clip_rect(cnt->body);
+  ctx->_clip_stack.push(cnt->body);
 }
 
 void mu_end_panel(mu_Context *ctx) {
-  ctx->pop_clip_rect();
+  ctx->_clip_stack.pop();
   pop_container(ctx);
 }

@@ -6,14 +6,12 @@
 #include "mu_style.h"
 #include "mu_hash.h"
 #include "mu_command.h"
+#include "mu_clip.h"
 #include <assert.h>
 
 #define MU_MAX_FMT 127
-#define MU_CLIPSTACK_SIZE 32
 #define MU_LAYOUTSTACK_SIZE 16
 #define MU_TREENODEPOOL_SIZE 48
-
-enum class MU_CLIP : unsigned int { NONE, PART, ALL };
 
 using text_width_callback = int (*)(mu_Font font, const char *str, int len);
 using text_height_callback = int (*)(mu_Font font);
@@ -71,7 +69,7 @@ struct mu_Context {
   // stacks
   ContainerManager _container;
   CommandStack _command_stack;
-  mu_Stack<UIRect, MU_CLIPSTACK_SIZE> clip_stack;
+  ClipStack _clip_stack;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
 
   // retained state pools
@@ -82,30 +80,10 @@ struct mu_Context {
 
 public:
   void draw_rect(UIRect rect, const UIColor32 &color) {
-    rect = rect.intersect(this->clip_stack.back());
+    rect = _clip_stack.intersect(rect);
     if (rect.w > 0 && rect.h > 0) {
       _command_stack.push_rect(rect, color);
     }
-  }
-
-  void push_clip_rect(UIRect rect) {
-    UIRect last = this->clip_stack.back();
-    this->clip_stack.push(rect.intersect(last));
-  }
-
-  void pop_clip_rect() { this->clip_stack.pop(); }
-
-  MU_CLIP check_clip(UIRect r) {
-    UIRect cr = this->clip_stack.back();
-    if (r.x > cr.x + cr.w || r.x + r.w < cr.x || r.y > cr.y + cr.h ||
-        r.y + r.h < cr.y) {
-      return MU_CLIP::ALL;
-    }
-    if (r.x >= cr.x && r.x + r.w <= cr.x + cr.w && r.y >= cr.y &&
-        r.y + r.h <= cr.y + cr.h) {
-      return MU_CLIP::NONE;
-    }
-    return MU_CLIP::PART;
   }
 
   void set_focus(mu_Id id) {
