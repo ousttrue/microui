@@ -21,7 +21,7 @@ const colors = [_]struct {
 };
 
 fn style_window(ctx: *c.mu_Context) void {
-    if (c.mu_begin_window(ctx, "Style Editor", c.mu_Rect{ .x = 350, .y = 250, .w = 300, .h = 240 }, c.MU_OPT_NONE) != 0) {
+    if (c.mu_begin_window(ctx, "Style Editor", c.UIRect{ .x = 350, .y = 250, .w = 300, .h = 240 }, c.MU_OPT_NONE) != 0) {
         //     int sw = mu_get_current_container(ctx)->body.w * 0.14;
         //     {
         //       int widths[] = {80, sw, sw, sw, sw, -1};
@@ -40,7 +40,7 @@ fn style_window(ctx: *c.mu_Context) void {
 }
 
 fn log_window(ctx: *c.mu_Context) void {
-    if (c.mu_begin_window(ctx, "Log Window", c.mu_Rect{ .x = 350, .y = 40, .w = 300, .h = 200 }, c.MU_OPT_NONE) != 0) {
+    if (c.mu_begin_window(ctx, "Log Window", c.UIRect{ .x = 350, .y = 40, .w = 300, .h = 200 }, c.MU_OPT_NONE) != 0) {
         //     /* output text panel */
         //     {
         //       int widths[] = {-1};
@@ -84,7 +84,7 @@ fn log_window(ctx: *c.mu_Context) void {
 
 fn test_window(ctx: *c.mu_Context, bg: [*]f32) void {
     _ = bg;
-    if (c.mu_begin_window(ctx, "Demo Window", c.mu_Rect{ .x = 40, .y = 40, .w = 300, .h = 450 }, c.MU_OPT_NONE) != 0) {
+    if (c.mu_begin_window(ctx, "Demo Window", c.UIRect{ .x = 40, .y = 40, .w = 300, .h = 450 }, c.MU_OPT_NONE) != 0) {
         // auto win = mu_get_current_container(ctx);
         // win->rect.w = mu_max(win->rect.w, 240);
         // win->rect.h = mu_max(win->rect.h, 300);
@@ -217,7 +217,7 @@ fn test_window(ctx: *c.mu_Context, bg: [*]f32) void {
         //   mu_slider(ctx, &bg[2], 0, 255);
         //   mu_layout_end_column(ctx);
         //   /* color preview */
-        //   mu_Rect r = mu_layout_next(ctx);
+        //   UIRect r = mu_layout_next(ctx);
         //   ctx->draw_rect(r, mu_Color(bg[0], bg[1], bg[2], 255));
         //   char buf[32];
         //   sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);

@@ -1,9 +1,10 @@
 #define GLFW_INCLUDE_NONE
-#include "renderer.h"
-#include "ui.h"
 #include <GLFW/glfw3.h>
+
+#include "ui.h"
 #include <microui.h>
 #include <mu_context.h>
+#include <renderer.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

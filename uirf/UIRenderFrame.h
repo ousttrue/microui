@@ -77,19 +77,19 @@ enum UI_COMMAND {
 };
 
 struct UIClipCommand {
-  UIRect rect;
+  struct UIRect rect;
 };
-static_assert(sizeof(UIClipCommand) == 16);
+static_assert(sizeof(struct UIClipCommand) == 16);
 
 struct UIRectCommand {
-  UIRect rect;
-  UIColor32 color;
+  struct UIRect rect;
+  struct UIColor32 color;
 };
-static_assert(sizeof(UIRectCommand) == 20);
+static_assert(sizeof(struct UIRectCommand) == 20);
 
 struct UITextCommand {
-  UIVec2 pos;
-  UIColor32 color;
+  struct UIVec2 pos;
+  struct UIColor32 color;
   uint32_t length;
   const void *font;
 
@@ -102,13 +102,13 @@ struct UITextCommand {
 };
 
 struct UIIconCommand {
-  UIRect rect;
+  struct UIRect rect;
   int32_t id;
-  UIColor32 color;
+  struct UIColor32 color;
 };
 
 struct UICommand {
-  UI_COMMAND command;
+  enum UI_COMMAND command;
 
 #ifdef __cplusplus
   UICommand(const UICommand &) = delete;

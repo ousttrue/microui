@@ -20,6 +20,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludePath(GLFW_BASE ++ "/include");
     exe.addIncludePath("src");
     exe.addIncludePath("uirf");
+    exe.addIncludePath("gl_renderer");
     // exe.addCSourceFiles(&.{
     //     "src/microui.cpp",
     //     "src/renderer.cpp",
@@ -27,13 +28,19 @@ pub fn build(b: *std.build.Builder) void {
     // }, &.{
     //     "-DBUILD_MICROUI",
     // });
-    exe.addLibraryPath("build/src/Debug");
-    exe.linkSystemLibrary("microui");
+
     exe.linkLibC();
     exe.linkLibCpp();
+
+    exe.addLibraryPath("build/src/Debug");
+    exe.linkSystemLibrary("microui");
+
+    exe.addLibraryPath("build/gl_renderer/Debug");
+    exe.linkSystemLibrary("gl_renderer");
+
     exe.addLibraryPath("build/_external/glfw/src/Debug");
     exe.linkSystemLibrary("glfw3dll");
-    exe.linkSystemLibrary("OpenGL32");
+
     exe.addLibraryPath("build/src/Debug");
     exe.install();
 
