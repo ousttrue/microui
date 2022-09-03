@@ -2,6 +2,12 @@ const std = @import("std");
 const c_pkg = std.build.Pkg{ .name = "c", .source = .{ .path = "c.zig" } };
 const GLFW_BASE = "_external/glfw";
 
+const zigmui_pkg = std.build.Pkg{
+    .name = "zigmui",
+    .source = .{ .path = "pkgs/zigmui/main.zig" },
+    .dependencies = &.{c_pkg},
+};
+
 pub fn build(b: *std.build.Builder) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -17,6 +23,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.addPackage(c_pkg);
+    exe.addPackage(zigmui_pkg);
     exe.addIncludePath(GLFW_BASE ++ "/include");
     exe.addIncludePath("src");
     exe.addIncludePath("uirf");

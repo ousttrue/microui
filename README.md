@@ -13,19 +13,19 @@ A *tiny*, portable, immediate-mode UI library written in ANSI C
 ## Modification memo
 
 ```
-+-------+
++-------+ mouse/keyboard input
 |microui|<----------+
 +-------+           |
- |build             |
+ |build commands    |
  v                  |
-+---------------+  +----+
-|UIRenderFrame.h|  |main|
-+---------------+  +----+
- |render            |
++---------------+  +-----------+
+|UIRenderFrame.h|  |main       |
++---------------+  |glfw window|
+ |render commands  +-----------+
  v                  |
 +-----------+       |
-|gl_renderer|<------+
-|font atlas |
+|gl_renderer|<------+ main loop
+|font atlas |render
 +-----------+
 ```
 
