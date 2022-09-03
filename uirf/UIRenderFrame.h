@@ -100,19 +100,21 @@ struct UITextCommand {
   const uint8_t *end() const { return begin() + length; }
 #endif
 };
+static_assert(sizeof(struct UITextCommand) == 24);
 
 struct UIIconCommand {
   struct UIRect rect;
   int32_t id;
   struct UIColor32 color;
 };
+static_assert(sizeof(struct UIIconCommand) == 24);
 
-struct UICommand {
+struct UICommandHeader {
   enum UI_COMMAND command;
 
 #ifdef __cplusplus
-  UICommand(const UICommand &) = delete;
-  UICommand &operator=(const UICommand &) = delete;
+  UICommandHeader(const UICommandHeader &) = delete;
+  UICommandHeader &operator=(const UICommandHeader &) = delete;
 
   uint32_t size() const {
     switch (this->command) {
@@ -180,6 +182,7 @@ struct UICommand {
   }
 #endif
 };
+static_assert(sizeof(struct UICommandHeader) == 4);
 
 struct UICommandRange {
   uint32_t head;

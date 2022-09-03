@@ -190,10 +190,10 @@ void render(int width, int height, float bg[4], const UIRenderFrame *command) {
   auto end = command->end();
   for (auto it = command->begin(); it != end; ++it) {
     auto tail = command->command_buffer + it->tail;
-    UICommand *cmd = nullptr;
+    UICommandHeader *cmd = nullptr;
     for (auto p = command->command_buffer + it->head; p != tail;
          p = p + cmd->size()) {
-      cmd = (UICommand *)p;
+      cmd = (UICommandHeader *)p;
       switch (cmd->command) {
       case UI_COMMAND_TEXT:
         r_draw_text(cmd->text()->begin(), cmd->text()->end(), cmd->text()->pos,

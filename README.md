@@ -10,6 +10,35 @@ A *tiny*, portable, immediate-mode UI library written in ANSI C
 * Designed to allow the user to easily add custom controls
 * Simple layout system
 
+## Modification memo
+
+```
++-------+
+|microui|<----------+
++-------+           |
+ |build             |
+ v                  |
++---------------+  +----+
+|UIRenderFrame.h|  |main|
++---------------+  +----+
+ |render            |
+ v                  |
++-----------+       |
+|gl_renderer|<------+
+|font atlas |
++-----------+
+```
+
+### command
+
+command byte layout.
+
+```
+enum UI_COMMAND 4byte
+struct UIXXXCommand sizeof(UIXXXCommand)
+text payload N byte(UITextCommand.length)
+```
+
 ## Example
 ![example](https://user-images.githubusercontent.com/3920290/75187058-2b598800-5741-11ea-9358-38caf59f8791.png)
 ```c

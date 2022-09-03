@@ -14,8 +14,8 @@ public:
 
   void begin_frame() { _command_list.clear(); }
 
-  UICommand *push_command(UI_COMMAND type, size_t text_length = 0) {
-    auto cmd = reinterpret_cast<UICommand *>(this->_command_list.end());
+  UICommandHeader *push_command(UI_COMMAND type, size_t text_length = 0) {
+    auto cmd = reinterpret_cast<UICommandHeader *>(this->_command_list.end());
     this->_command_list.grow(cmd->set_type(type, text_length));
     return cmd;
   }
