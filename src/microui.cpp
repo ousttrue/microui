@@ -91,7 +91,19 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
 
   // handle scroll input
   auto mouse_pressed = ctx->_input.mouse_pressed();
-  ctx->end_input();
+
+  if (ctx->scroll_target) {
+    ctx->scroll_target->scroll += ctx->_input.scroll_delta();
+  }
+
+  // unset focus if focus id was not touched this frame
+  if (!ctx->updated_focus) {
+    ctx->focus = 0;
+  }
+  ctx->updated_focus = false;
+
+  // reset input state
+  ctx->_input.end();
 
   ctx->_container.end(mouse_pressed, command);
   command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
@@ -690,16 +702,6 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
   cnt->body = body;
 }
 
-static void end_root_container(mu_Context *ctx) {
-  /* push tail 'goto' jump command and set head 'skip' command. the final steps
-  ** on initing these are done in mu_end() */
-  mu_Container *cnt = ctx->_container.current_container();
-  cnt->range.tail = ctx->_command_stack.size();
-  // pop base clip rect and container
-  ctx->_clip_stack.pop();
-  pop_container(ctx);
-}
-
 MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
                        MU_OPT opt) {
   mu_Id id = ctx->_hash.create(title, strlen(title));
@@ -795,7 +797,13 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
 void mu_end_window(mu_Context *ctx) {
   ctx->_clip_stack.pop();
-  end_root_container(ctx);
+  /* push tail 'goto' jump command and set head 'skip' command. the final steps
+  ** on initing these are done in mu_end() */
+  mu_Container *cnt = ctx->_container.current_container();
+  cnt->range.tail = ctx->_command_stack.size();
+  // pop base clip rect and container
+  ctx->_clip_stack.pop();
+  pop_container(ctx);
 }
 
 void mu_open_popup(mu_Context *ctx, const char *name) {

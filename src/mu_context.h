@@ -1,12 +1,12 @@
 #pragma once
+#include "mu_clip.h"
+#include "mu_command.h"
 #include "mu_container.h"
+#include "mu_hash.h"
 #include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
 #include "mu_style.h"
-#include "mu_hash.h"
-#include "mu_command.h"
-#include "mu_clip.h"
 #include <assert.h>
 
 #define MU_MAX_FMT 127
@@ -80,10 +80,7 @@ struct mu_Context {
 
 public:
   void draw_rect(UIRect rect, const UIColor32 &color) {
-    rect = _clip_stack.intersect(rect);
-    if (rect.w > 0 && rect.h > 0) {
-      _command_stack.push_rect(rect, color);
-    }
+    _command_stack.push_rect(_clip_stack.intersect(rect), color);
   }
 
   void set_focus(mu_Id id) {
@@ -91,17 +88,7 @@ public:
     updated_focus = true;
   }
 
-  void focus_last()
-  {
-    set_focus(_hash.last());
-  }
-
-  void unset_focus() {
-    if (!updated_focus) {
-      focus = 0;
-    }
-    updated_focus = false;
-  }
+  void focus_last() { set_focus(_hash.last()); }
 
   bool has_focus(mu_Id id) const { return focus == id; }
 
@@ -109,17 +96,5 @@ public:
     if (focus == id) {
       updated_focus = true;
     }
-  }
-
-  void end_input() {
-    if (this->scroll_target) {
-      this->scroll_target->scroll += this->_input.scroll_delta();
-    }
-
-    // unset focus if focus id was not touched this frame
-    this->unset_focus();
-
-    // reset input state
-    this->_input.end();
   }
 };

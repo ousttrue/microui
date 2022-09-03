@@ -4,4 +4,5 @@ pub usingnamespace @cImport({
     @cInclude("microui.h");
     @cInclude("renderer.h");
     @cInclude("string.h");
+    @cInclude("stdlib.h");
 });

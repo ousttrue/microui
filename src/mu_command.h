@@ -45,6 +45,9 @@ public:
   }
 
   void push_rect(const UIRect &rect, const UIColor32 &color) {
+    if (!rect.visible()) {
+      return;
+    }
     auto cmd = push_command(UI_COMMAND_RECT);
     cmd->rect()->rect = rect;
     cmd->rect()->color = color;

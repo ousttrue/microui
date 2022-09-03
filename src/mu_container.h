@@ -14,7 +14,7 @@ struct mu_Container {
   int zindex;
   bool open;
 
-  void init() {
+  void reset() {
     range.head = 0;
     range.tail = 0;
     rect = {};
@@ -105,7 +105,7 @@ public:
     // container not found in pool: init new container
     auto idx = _container_pool.init(frame, id);
     auto cnt = &_containers[idx];
-    cnt->init();
+    cnt->reset();
     bring_to_front(cnt);
     return cnt;
   }

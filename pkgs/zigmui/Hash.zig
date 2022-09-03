@@ -5,11 +5,13 @@ const IDSTACK_SIZE = 32;
 // 32bit fnv-1a hash
 const HASH_INITIAL = 2166136261;
 
-const Id = u32;
+pub const Id = u32;
 fn calc_hash(src: Id, data: []const u8) Id {
     var p = @ptrCast([*]const u8, &data[0]);
-    var size = data.len;
+    var size = @intCast(i32, data.len);
     var hash = src;
+
+    @setRuntimeSafety(false);
     while (size >= 0) : ({
         size -= 1;
         p += 1;
@@ -23,7 +25,7 @@ const Self = @This();
 stack: Stack(Id, IDSTACK_SIZE) = .{},
 last: Id = 0,
 
-pub fn validate_empty(self: Self) void {
+pub fn end(self: Self) void {
     std.debug.assert(self.stack.size() == 0);
 }
 

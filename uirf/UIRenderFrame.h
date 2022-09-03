@@ -53,6 +53,8 @@ struct UIRect {
     return p.x >= this->x && p.x < this->x + this->w && p.y >= this->y &&
            p.y < this->y + this->h;
   }
+
+  bool visible() const { return w > 0 && h > 0; }
 #endif
 };
 

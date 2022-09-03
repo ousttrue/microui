@@ -235,8 +235,6 @@ var command_groups: [1]c.struct_UICommandRange = undefined;
 var command_buffer: [1024]u8 = undefined;
 
 pub fn process_frame(ctx: *zigmui.Context, bg: [*]f32, frame: *c.UIRenderFrame) !void {
-    _ = bg;
-
     ctx.begin();
 
     style_window(ctx);
