@@ -64,7 +64,7 @@ fn compare_zindex(a: ?*const anyopaque, b: ?*const anyopaque) callconv(.C) c_int
     return A.*.zindex - B.*.zindex;
 }
 
-pub fn end(self: *Self, mouse_pressed: Input.MOUSE, command: *c.struct_UIRenderFrame) void {
+pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *c.struct_UIRenderFrame) void {
     std.debug.assert(self.container_stack.size() == 0);
 
     // bring hover root to front if mouse was pressed

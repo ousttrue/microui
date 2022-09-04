@@ -55,13 +55,13 @@ class mu_Input {
   bool _keep_focus = false;
   mu_Id _hover = 0;
 
-  mu_Container *scroll_target = nullptr;
+  mu_Container *_scroll_target = nullptr;
 
 public:
   void begin() {
     _mouse_delta.x = _mouse_pos.x - _last_mouse_pos.x;
     _mouse_delta.y = _mouse_pos.y - _last_mouse_pos.y;
-    scroll_target = nullptr;
+    _scroll_target = nullptr;
   }
 
   bool end() {
@@ -74,8 +74,8 @@ public:
 
     // handle scroll input
     auto mouse_pressed = _mouse_pressed;
-    if (scroll_target) {
-      scroll_target->scroll += scroll_delta();
+    if (_scroll_target) {
+      _scroll_target->scroll += scroll_delta();
     }
 
     // reset input state
@@ -85,10 +85,10 @@ public:
     _scroll_delta = UIVec2(0, 0);
     _last_mouse_pos = _mouse_pos;
 
-    return _mouse_pressed;
+    return mouse_pressed;
   }
 
-  void set_scroll_target(mu_Container *cnt) { scroll_target = cnt; }
+  void set_scroll_target(mu_Container *cnt) { _scroll_target = cnt; }
 
   UIVec2 mouse_pos() const { return _mouse_pos; }
   UIVec2 mouse_delta() const { return _mouse_delta; }

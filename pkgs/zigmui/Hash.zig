@@ -44,3 +44,7 @@ pub fn create_push(self: *Self, data: []const u8) Id {
 pub fn push_last(self: Self) void {
     self.stack.push(self.last);
 }
+
+pub fn pop(self: *Self) void {
+    self.stack.pop();
+}
