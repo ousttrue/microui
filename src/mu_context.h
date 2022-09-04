@@ -5,7 +5,6 @@
 #include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
-#include "mu_style.h"
 #include <assert.h>
 
 const auto MU_MAX_FMT = 127;
@@ -14,8 +13,6 @@ const auto MU_TREENODEPOOL_SIZE = 48;
 
 struct mu_Context {
   MuHash _hash;
-  mu_Style _style = {};
-  mu_Style *style = nullptr;
   UIRect last_rect;
   int frame = 0;
   mu_Container *scroll_target = nullptr;
@@ -28,11 +25,8 @@ struct mu_Context {
   mu_Input _input;
 
 public:
-  mu_Context() {
-    this->_style = {};
-    this->style = &this->_style;
-  }
   // avoid copy
+  mu_Context() {}
   mu_Context(const mu_Context &) = delete;
   mu_Context &operator=(const mu_Context &) = delete;
 

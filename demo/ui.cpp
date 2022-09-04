@@ -51,13 +51,15 @@ static void style_window(mu_Context *ctx) {
       int widths[] = {80, sw, sw, sw, sw, -1};
       ctx->layout_stack.back().row(6, widths, 0);
     }
+    auto style = ctx->_command_drawer.style();
     for (int i = 0; colors[i].label; i++) {
       mu_label(ctx, colors[i].label);
-      uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-      ctx->_command_drawer.draw_rect(mu_layout_next(ctx), ctx->style->colors[i]);
+      uint8_slider(ctx, &style->colors[i].r, 0, 255);
+      uint8_slider(ctx, &style->colors[i].g, 0, 255);
+      uint8_slider(ctx, &style->colors[i].b, 0, 255);
+      uint8_slider(ctx, &style->colors[i].a, 0, 255);
+      ctx->_command_drawer.draw_rect(mu_layout_next(ctx),
+                                     static_cast<MU_STYLE>(i));
     }
     mu_end_window(ctx);
   }
@@ -244,11 +246,12 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       mu_layout_end_column(ctx);
       /* color preview */
       UIRect r = mu_layout_next(ctx);
-      ctx->_command_drawer.draw_rect(r, UIColor32(bg[0], bg[1], bg[2], 255));
+      ctx->_command_drawer.draw_rect_color(r,
+                                           UIColor32(bg[0], bg[1], bg[2], 255));
       char buf[32];
       sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
-      ctx->_command_drawer.draw_control_text(buf, r, ctx->style, MU_STYLE_TEXT,
-                                            MU_OPT_ALIGNCENTER);
+      ctx->_command_drawer.draw_control_text(buf, r, MU_STYLE_TEXT,
+                                             MU_OPT_ALIGNCENTER);
     }
 
     mu_end_window(ctx);
