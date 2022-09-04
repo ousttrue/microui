@@ -140,4 +140,32 @@ public:
            : _hover == id ? FOCUS_STATE_HOVER
                           : FOCUS_STATE_NONE;
   }
+
+  void update_focus_hover(mu_Id id, UIRect rect, MU_OPT opt, bool mouseover) {
+    this->keep_focus(id);
+    if (opt & MU_OPT_NOINTERACT) {
+      return;
+    }
+
+    if (mouseover && !this->mouse_down()) {
+      this->set_hover(id);
+    }
+
+    if (this->has_focus(id)) {
+      if (this->mouse_pressed() && !mouseover) {
+        this->set_focus(0);
+      }
+      if (!this->mouse_down() && ~opt & MU_OPT_HOLDFOCUS) {
+        this->set_focus(0);
+      }
+    }
+
+    if (this->has_hover(id)) {
+      if (this->mouse_pressed()) {
+        this->set_focus(id);
+      } else if (!mouseover) {
+        this->set_hover(0);
+      }
+    }
+  }
 };
