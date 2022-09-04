@@ -11,7 +11,8 @@
         "microui.h": "c",
         "utility": "cpp",
         "xmemory": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "*.rh": "cpp"
     },
     "cSpell.words": [
         "adipiscing",

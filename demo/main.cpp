@@ -40,7 +40,7 @@ int mouse_y = 0;
 static void cursor_position_callback(GLFWwindow *window, double xpos,
                                      double ypos) {
   auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
-  ctx->_input.mousemove(xpos, ypos);
+  ctx->_input.set_mousemove(xpos, ypos);
   mouse_x = xpos;
   mouse_y = ypos;
 }
@@ -50,15 +50,15 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
   auto b = button_map[button];
   auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
   if (action == GLFW_PRESS) {
-    ctx->_input.mousedown(b);
+    ctx->_input.set_mousedown(b);
   } else if (action == GLFW_RELEASE) {
-    ctx->_input.mouseup(b);
+    ctx->_input.set_mouseup(b);
   }
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
-  ctx->_input.scroll(xoffset, yoffset * -30);
+  ctx->_input.add_scroll_delta(xoffset, yoffset * -30);
 }
 
 int main(int argc, char **argv) {

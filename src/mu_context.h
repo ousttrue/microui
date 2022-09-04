@@ -2,7 +2,6 @@
 #include "mu_clip.h"
 #include "mu_command.h"
 #include "mu_container.h"
-#include "mu_focus.h"
 #include "mu_hash.h"
 #include "mu_input.h"
 #include "mu_layout.h"
@@ -45,7 +44,6 @@ struct mu_Context {
   mu_Container *scroll_target = nullptr;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
-  MuFocus _focus;
   ContainerManager _container;
   CommandStack _command_stack;
   ClipStack _clip_stack;
@@ -72,5 +70,5 @@ public:
     this->draw_rect(UIRect(rect.x, rect.y, 1, rect.h), color);
     this->draw_rect(UIRect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
   }
-  void focus_last() { _focus.set_focus(_hash.last()); }
+  void focus_last() { _input.set_focus(_hash.last()); }
 };
