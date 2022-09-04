@@ -76,7 +76,7 @@ void mu_input_scroll(mu_Context *ctx, int x, int y) {
 
 void mu_begin(mu_Context *ctx) {
   assert(ctx->style->text_width_callback && ctx->style->text_height_callback);
-  ctx->_command_stack.begin();
+  ctx->_command_drawer.begin();
   ctx->scroll_target = nullptr;
   ctx->_container.begin();
   ctx->_input.begin();
@@ -85,7 +85,7 @@ void mu_begin(mu_Context *ctx) {
 
 void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   // check stacks
-  ctx->_command_stack.end();
+  ctx->_command_drawer.end();
   ctx->_hash.end();
   assert(ctx->layout_stack.size() == 0);
 
@@ -100,7 +100,7 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   ctx->_input.end();
 
   ctx->_container.end(mouse_pressed, command);
-  command->command_buffer = (const uint8_t *)ctx->_command_stack.get(0);
+  command->command_buffer = (const uint8_t *)ctx->_command_drawer.get(0);
 }
 
 mu_Id mu_get_id(mu_Context *ctx, const void *data, int size) {
@@ -250,7 +250,7 @@ void mu_text(mu_Context *ctx, const char *text) {
       w += ctx->style->text_width(p, 1);
       end = p++;
     } while (*end && *end != '\n');
-    ctx->_command_stack.draw_text(start, end - start, UIVec2(r.x, r.y),
+    ctx->_command_drawer.draw_text(start, end - start, UIVec2(r.x, r.y),
                                   ctx->style, color);
     p = end + 1;
   } while (*end);
@@ -258,7 +258,7 @@ void mu_text(mu_Context *ctx, const char *text) {
 }
 
 void mu_label(mu_Context *ctx, const char *text) {
-  ctx->_command_stack.draw_control_text(text, mu_layout_next(ctx), ctx->style,
+  ctx->_command_drawer.draw_control_text(text, mu_layout_next(ctx), ctx->style,
                                         MU_STYLE_TEXT, MU_OPT::MU_OPT_NONE);
 }
 
@@ -275,14 +275,14 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
     res = res | MU_RES_SUBMIT;
   }
   // draw
-  ctx->_command_stack.draw_control_frame(id, r, ctx->style, MU_STYLE_BUTTON,
+  ctx->_command_drawer.draw_control_frame(id, r, ctx->style, MU_STYLE_BUTTON,
                                          opt, ctx->_input.get_focus_state(id));
   if (label) {
-    ctx->_command_stack.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
+    ctx->_command_drawer.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
                                           opt);
   }
   if (icon) {
-    ctx->_command_stack.draw_icon(ctx, icon, r,
+    ctx->_command_drawer.draw_icon(ctx, icon, r,
                                   ctx->style->colors[MU_STYLE_TEXT]);
   }
   return res;
@@ -302,13 +302,13 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
     *state = !*state;
   }
   // draw
-  ctx->_command_stack.draw_control_frame(id, box, ctx->style, MU_STYLE_BASE, MU_OPT::MU_OPT_NONE, ctx->_input.get_focus_state(id));
+  ctx->_command_drawer.draw_control_frame(id, box, ctx->style, MU_STYLE_BASE, MU_OPT::MU_OPT_NONE, ctx->_input.get_focus_state(id));
   if (*state) {
-    ctx->_command_stack.draw_icon(ctx, MU_ICON_CHECK, box,
+    ctx->_command_drawer.draw_icon(ctx, MU_ICON_CHECK, box,
                                   ctx->style->colors[MU_STYLE_TEXT]);
   }
   r = UIRect(r.x + box.w, r.y, r.w - box.w, r.h);
-  ctx->_command_stack.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
+  ctx->_command_drawer.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
                                         MU_OPT::MU_OPT_NONE);
   return res;
 }
@@ -345,7 +345,7 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
   }
 
   // draw
-  ctx->_command_stack.draw_control_frame(id, r, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
+  ctx->_command_drawer.draw_control_frame(id, r, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
   if (ctx->_input.has_focus(id)) {
     UIColor32 color = ctx->style->colors[MU_STYLE_TEXT];
     int textw = ctx->style->text_width(buf, -1);
@@ -353,14 +353,14 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
     int ofx = r.w - ctx->style->padding - textw - 1;
     int textx = r.x + mu_min(ofx, ctx->style->padding);
     int texty = r.y + (r.h - texth) / 2;
-    ctx->_command_stack.push_clip(r);
-    ctx->_command_stack.draw_text(buf, -1, UIVec2(textx, texty), ctx->style,
+    ctx->_command_drawer.push_clip(r);
+    ctx->_command_drawer.draw_text(buf, -1, UIVec2(textx, texty), ctx->style,
                                   color);
-    ctx->_command_stack.draw_rect(UIRect(textx + textw, texty, 1, texth),
+    ctx->_command_drawer.draw_rect(UIRect(textx + textw, texty, 1, texth),
                                   color);
-    ctx->_command_stack.pop_clip();
+    ctx->_command_drawer.pop_clip();
   } else {
-    ctx->_command_stack.draw_control_text(buf, r, ctx->style, MU_STYLE_TEXT,
+    ctx->_command_drawer.draw_control_text(buf, r, ctx->style, MU_STYLE_TEXT,
                                           opt);
   }
 
@@ -429,15 +429,15 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   }
 
   // draw base
-  ctx->_command_stack.draw_control_frame(id, base, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
+  ctx->_command_drawer.draw_control_frame(id, base, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
   // draw thumb
   w = ctx->style->thumb_size;
   x = (v - low) * (base.w - w) / (high - low);
   thumb = UIRect(base.x + x, base.y, w, base.h);
-  ctx->_command_stack.draw_control_frame(id, thumb, ctx->style, MU_STYLE_BUTTON, opt, ctx->_input.get_focus_state(id));
+  ctx->_command_drawer.draw_control_frame(id, thumb, ctx->style, MU_STYLE_BUTTON, opt, ctx->_input.get_focus_state(id));
   // draw text
   sprintf(buf, fmt, v);
-  ctx->_command_stack.draw_control_text(buf, base, ctx->style, MU_STYLE_TEXT,
+  ctx->_command_drawer.draw_control_text(buf, base, ctx->style, MU_STYLE_TEXT,
                                         opt);
 
   return res;
@@ -470,10 +470,10 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
   }
 
   // draw base
-  ctx->_command_stack.draw_control_frame(id, base, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
+  ctx->_command_drawer.draw_control_frame(id, base, ctx->style, MU_STYLE_BASE, opt, ctx->_input.get_focus_state(id));
   // draw text
   sprintf(buf, fmt, *value);
-  ctx->_command_stack.draw_control_text(buf, base, ctx->style, MU_STYLE_TEXT,
+  ctx->_command_drawer.draw_control_text(buf, base, ctx->style, MU_STYLE_TEXT,
                                         opt);
 
   return res;
@@ -510,17 +510,17 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   // draw
   if (istreenode) {
     if (ctx->_input.has_hover(id)) {
-      ctx->_command_stack.draw_frame(r, ctx->style, MU_STYLE_BUTTONHOVER);
+      ctx->_command_drawer.draw_frame(r, ctx->style, MU_STYLE_BUTTONHOVER);
     }
   } else {
-    ctx->_command_stack.draw_control_frame(id, r, ctx->style, MU_STYLE_BUTTON, MU_OPT::MU_OPT_NONE, ctx->_input.get_focus_state(id));
+    ctx->_command_drawer.draw_control_frame(id, r, ctx->style, MU_STYLE_BUTTON, MU_OPT::MU_OPT_NONE, ctx->_input.get_focus_state(id));
   }
-  ctx->_command_stack.draw_icon(
+  ctx->_command_drawer.draw_icon(
       ctx, expanded ? MU_ICON_EXPANDED : MU_ICON_COLLAPSED,
       UIRect(r.x, r.y, r.h, r.h), ctx->style->colors[MU_STYLE_TEXT]);
   r.x += r.h - ctx->style->padding;
   r.w -= r.h - ctx->style->padding;
-  ctx->_command_stack.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
+  ctx->_command_drawer.draw_control_text(label, r, ctx->style, MU_STYLE_TEXT,
                                         MU_OPT::MU_OPT_NONE);
 
   return expanded ? MU_RES_ACTIVE : MU_RES_NONE;
@@ -569,11 +569,11 @@ static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
     cnt->scroll.y = mu_clamp(cnt->scroll.y, 0, maxscroll);
 
     // draw base and thumb
-    ctx->_command_stack.draw_frame(base, ctx->style, MU_STYLE_SCROLLBASE);
+    ctx->_command_drawer.draw_frame(base, ctx->style, MU_STYLE_SCROLLBASE);
     thumb = base;
     thumb.h = mu_max(ctx->style->thumb_size, base.h * b->h / cs.y);
     thumb.y += cnt->scroll.y * (base.h - thumb.h) / maxscroll;
-    ctx->_command_stack.draw_frame(thumb, ctx->style, MU_STYLE_SCROLLTHUMB);
+    ctx->_command_drawer.draw_frame(thumb, ctx->style, MU_STYLE_SCROLLTHUMB);
 
     // set this as the scroll_target (will get scrolled on mousewheel)
     // if the mouse is over it
@@ -590,7 +590,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, UIRect *body) {
   UIVec2 cs = cnt->content_size;
   cs.x += ctx->style->padding * 2;
   cs.y += ctx->style->padding * 2;
-  ctx->_command_stack.push_clip(*body);
+  ctx->_command_drawer.push_clip(*body);
   // resize body to make room for scrollbars
   if (cs.y > cnt->body.h) {
     body->w -= sz;
@@ -602,7 +602,7 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, UIRect *body) {
   ** used; only the references to `x|y` `w|h` need to be switched */
   scrollbar(ctx, cnt, body, cs, "!scrollbary"); // x, y, w, h);
   // scrollbar(ctx, cnt, body, cs, "!scrollbarx"); // y, x, h, w);
-  ctx->_command_stack.pop_clip();
+  ctx->_command_drawer.pop_clip();
 }
 
 static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
@@ -628,33 +628,33 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     cnt->rect = rect;
   }
 
-  ctx->_container.begin_root_container(cnt, ctx->_command_stack.size(),
+  ctx->_container.begin_root_container(cnt, ctx->_command_drawer.size(),
                                        ctx->_input.mouse_pos());
   /* clipping is reset here in case a root-container is made within
   ** another root-containers's begin/end block; this prevents the inner
   ** root-container being clipped to the outer */
-  ctx->_command_stack.push_unclipped_rect();
+  ctx->_command_drawer.push_unclipped_rect();
 
   auto body = cnt->rect;
   rect = body;
 
   // draw frame
   if (~opt & MU_OPT_NOFRAME) {
-    ctx->_command_stack.draw_frame(rect, ctx->style, MU_STYLE_WINDOWBG);
+    ctx->_command_drawer.draw_frame(rect, ctx->style, MU_STYLE_WINDOWBG);
   }
 
   // do title bar
   if (~opt & MU_OPT_NOTITLE) {
     UIRect tr = rect;
     tr.h = ctx->style->title_height;
-    ctx->_command_stack.draw_frame(tr, ctx->style, MU_STYLE_TITLEBG);
+    ctx->_command_drawer.draw_frame(tr, ctx->style, MU_STYLE_TITLEBG);
 
     // do title text
     if (~opt & MU_OPT_NOTITLE) {
       mu_Id id = ctx->_hash.create("!title", 6);
       auto mouseover = ctx->mouse_over(tr);
       ctx->_input.update_focus_hover(id, tr, opt, mouseover);
-      ctx->_command_stack.draw_control_text(title, tr, ctx->style,
+      ctx->_command_drawer.draw_control_text(title, tr, ctx->style,
                                             MU_STYLE_TITLETEXT, opt);
       if (ctx->_input.has_focus(id) &&
           ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
@@ -670,7 +670,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
       mu_Id id = ctx->_hash.create("!close", 6);
       UIRect r = UIRect(tr.x + tr.w - tr.h, tr.y, tr.h, tr.h);
       tr.w -= r.w;
-      ctx->_command_stack.draw_icon(ctx, MU_ICON_CLOSE, r,
+      ctx->_command_drawer.draw_icon(ctx, MU_ICON_CLOSE, r,
                                     ctx->style->colors[MU_STYLE_TITLETEXT]);
       auto mouseover = ctx->mouse_over(r);
       ctx->_input.update_focus_hover(id, r, opt, mouseover);
@@ -711,18 +711,18 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     }
   }
 
-  ctx->_command_stack.push_clip(cnt->body);
+  ctx->_command_drawer.push_clip(cnt->body);
   return MU_RES_ACTIVE;
 }
 
 void mu_end_window(mu_Context *ctx) {
-  ctx->_command_stack.pop_clip();
+  ctx->_command_drawer.pop_clip();
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
   mu_Container *cnt = ctx->_container.current_container();
-  cnt->range.tail = ctx->_command_stack.size();
+  cnt->range.tail = ctx->_command_drawer.size();
   // pop base clip rect and container
-  ctx->_command_stack.pop_clip();
+  ctx->_command_drawer.pop_clip();
   pop_container(ctx);
 }
 
@@ -745,14 +745,14 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
   auto cnt = ctx->_container.get_container(last_id, opt, ctx->frame);
   cnt->rect = mu_layout_next(ctx);
   if (~opt & MU_OPT_NOFRAME) {
-    ctx->_command_stack.draw_frame(cnt->rect, ctx->style, MU_STYLE_PANELBG);
+    ctx->_command_drawer.draw_frame(cnt->rect, ctx->style, MU_STYLE_PANELBG);
   }
   ctx->_container.push(cnt);
   push_container_body(ctx, cnt, cnt->rect, opt);
-  ctx->_command_stack.push_clip(cnt->body);
+  ctx->_command_drawer.push_clip(cnt->body);
 }
 
 void mu_end_panel(mu_Context *ctx) {
-  ctx->_command_stack.pop_clip();
+  ctx->_command_drawer.pop_clip();
   pop_container(ctx);
 }

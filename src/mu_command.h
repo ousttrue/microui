@@ -7,7 +7,7 @@
 
 const size_t MU_COMMANDLIST_SIZE = (256 * 1024);
 
-class CommandStack {
+class CommandDrawer {
   mu_Stack<char, MU_COMMANDLIST_SIZE> _command_list;
   ClipStack _clip_stack;
 

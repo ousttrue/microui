@@ -22,7 +22,7 @@ struct mu_Context {
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
   ContainerManager _container;
-  CommandStack _command_stack;
+  CommandDrawer _command_drawer;
   mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
   mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
   mu_Input _input;
@@ -40,7 +40,7 @@ public:
     if (!rect.overlaps_vec2(this->_input.mouse_pos())) {
       return false;
     }
-    if (!this->_command_stack.overlaps_clip(this->_input.mouse_pos())) {
+    if (!this->_command_drawer.overlaps_clip(this->_input.mouse_pos())) {
       return false;
     }
     if (!this->_container.in_hover_root()) {
