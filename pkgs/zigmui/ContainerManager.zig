@@ -125,14 +125,16 @@ pub fn pop(self: *Self) void {
 
 pub fn in_hover_root(self: Self) bool {
     if (self.hover_root) |hover_root| {
-        var i = @intCast(i32, self.container_stack.size());
+        const slice = self.container_stack.slice_const();
+        var i = @intCast(i32, slice.len - 1);
         while (i >= 0) : (i -= 1) {
-            if (self.container_stack.get_const(@intCast(u32, i)).* == hover_root) {
+            const cnt = slice[@intCast(usize, i)];
+            if (cnt == hover_root) {
                 return true;
             }
             // only root containers have their `head` field set; stop searching if
             // we've reached the current root container
-            if (self.container_stack.get_const(@intCast(u32, i)).*.head > 0) {
+            if (cnt.head > 0) {
                 break;
             }
         }

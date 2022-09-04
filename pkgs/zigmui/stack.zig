@@ -56,5 +56,9 @@ pub fn Stack(comptime T: type, comptime N: usize) type {
         pub fn slice(self: *Self) []T {
             return self.items[0..self.idx];
         }
+
+        pub fn slice_const(self: Self) []const T {
+            return self.items[0..self.idx];
+        }
     };
 }

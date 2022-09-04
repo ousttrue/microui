@@ -147,7 +147,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
     ctx->_command_drawer.draw_control_text(label, r, MU_STYLE_TEXT, opt);
   }
   if (icon) {
-    ctx->_command_drawer.draw_icon(ctx, icon, r, MU_STYLE_TEXT);
+    ctx->_command_drawer.draw_icon(icon, r, MU_STYLE_TEXT);
   }
   return res;
 }
@@ -171,7 +171,7 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
                                           MU_OPT::MU_OPT_NONE,
                                           ctx->_input.get_focus_state(id));
   if (*state) {
-    ctx->_command_drawer.draw_icon(ctx, MU_ICON_CHECK, box, MU_STYLE_TEXT);
+    ctx->_command_drawer.draw_icon(MU_ICON_CHECK, box, MU_STYLE_TEXT);
   }
   r = UIRect(r.x + box.w, r.y, r.w - box.w, r.h);
   ctx->_command_drawer.draw_control_text(label, r, MU_STYLE_TEXT,
@@ -387,9 +387,9 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
                                             MU_OPT::MU_OPT_NONE,
                                             ctx->_input.get_focus_state(id));
   }
-  ctx->_command_drawer.draw_icon(
-      ctx, expanded ? MU_ICON_EXPANDED : MU_ICON_COLLAPSED,
-      UIRect(r.x, r.y, r.h, r.h), MU_STYLE_TEXT);
+  ctx->_command_drawer.draw_icon(expanded ? MU_ICON_EXPANDED
+                                          : MU_ICON_COLLAPSED,
+                                 UIRect(r.x, r.y, r.h, r.h), MU_STYLE_TEXT);
   r.x += r.h - style->padding;
   r.w -= r.h - style->padding;
   ctx->_command_drawer.draw_control_text(label, r, MU_STYLE_TEXT,
@@ -547,7 +547,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
       mu_Id id = ctx->_hash.create("!close", 6);
       UIRect r = UIRect(tr.x + tr.w - tr.h, tr.y, tr.h, tr.h);
       tr.w -= r.w;
-      ctx->_command_drawer.draw_icon(ctx, MU_ICON_CLOSE, r, MU_STYLE_TITLETEXT);
+      ctx->_command_drawer.draw_icon(MU_ICON_CLOSE, r, MU_STYLE_TITLETEXT);
       auto mouseover = ctx->mouse_over(r);
       ctx->_input.update_focus_hover(id, opt, mouseover);
       if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT &&

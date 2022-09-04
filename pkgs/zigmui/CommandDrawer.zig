@@ -76,12 +76,25 @@ pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font:
     self.write(str);
 }
 
-//   void push_icon(int id, const UIRect &rect, const UIColor32 &color) {
-//     auto cmd = push_command(UI_COMMAND_ICON);
-//     cmd->icon()->id = id;
-//     cmd->icon()->rect = rect;
-//     cmd->icon()->color = color;
-//   }
+pub fn write_icon(self: *Self, id: c_int, rect: Rect, color: Color32) void {
+    self.write_bytes(c.UI_COMMAND_ICON);
+    const value = c.UIIconCommand{
+        .rect = .{
+            .x = rect.x,
+            .y = rect.y,
+            .w = rect.w,
+            .h = rect.h,
+        },
+        .id = id,
+        .color = .{
+            .r = color.r,
+            .g = color.g,
+            .b = color.b,
+            .a = color.a,
+        },
+    };
+    self.write_bytes(value);
+}
 
 pub fn write_rect(self: *Self, rect: Rect, color: Color32) void {
     self.write_bytes(c.UI_COMMAND_RECT);
@@ -126,6 +139,23 @@ pub fn draw_text(self: *Self, str: []const u8, pos: Vec2, colorid: Style.STYLE) 
     }
     // add command
     self.write_text(str, pos, color, self.style.font);
+    // reset clipping if it was set
+    if (clipped != .NONE) {
+        self.write_clip(Rect.UNCLIPPED_RECT);
+    }
+}
+
+pub fn draw_icon(self: *Self, id: c_int, rect: Rect, colorid: Style.STYLE) void {
+    // do clip command if the rect isn't fully contained within the cliprect
+    const clipped = self.clip_stack.check_clip(rect);
+    if (clipped == .ALL) {
+        return;
+    }
+    if (clipped == .PART) {
+        self.write_clip(self.clip_stack.back_const());
+    }
+    // do icon command
+    self.write_icon(id, rect, self.style.colors[@enumToInt(colorid)]);
     // reset clipping if it was set
     if (clipped != .NONE) {
         self.write_clip(Rect.UNCLIPPED_RECT);

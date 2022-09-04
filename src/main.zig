@@ -21,7 +21,7 @@ fn cursor_position_callback(window: ?*c.GLFWwindow, xpos: f64, ypos: f64) callco
     const ctx = @ptrCast(*zigmui.Context, @alignCast(@alignOf(zigmui.Context), c.glfwGetWindowUserPointer(window)));
     mouse_x = @floatToInt(c_int, xpos);
     mouse_y = @floatToInt(c_int, ypos);
-    zigmui.input_mousemove(ctx, mouse_x, mouse_y);
+    ctx.input.input_mousemove(mouse_x, mouse_y);
 }
 
 fn mouse_button_callback(
@@ -32,17 +32,17 @@ fn mouse_button_callback(
 ) callconv(.C) void {
     const ctx = @ptrCast(*zigmui.Context, @alignCast(@alignOf(zigmui.Context), c.glfwGetWindowUserPointer(window)));
     if (action == c.GLFW_PRESS) {
-        zigmui.input_mousedown(ctx, switch (button) {
-            c.GLFW_MOUSE_BUTTON_LEFT => 1,
-            c.GLFW_MOUSE_BUTTON_RIGHT => 2,
-            c.GLFW_MOUSE_BUTTON_MIDDLE => 3,
+        ctx.input.input_mousedown(switch (button) {
+            c.GLFW_MOUSE_BUTTON_LEFT => zigmui.Input.MOUSE_BUTTON.LEFT,
+            c.GLFW_MOUSE_BUTTON_RIGHT => zigmui.Input.MOUSE_BUTTON.RIGHT,
+            c.GLFW_MOUSE_BUTTON_MIDDLE => zigmui.Input.MOUSE_BUTTON.MIDDLE,
             else => return,
         });
     } else if (action == c.GLFW_RELEASE) {
-        zigmui.input_mouseup(ctx, switch (button) {
-            c.GLFW_MOUSE_BUTTON_LEFT => 1,
-            c.GLFW_MOUSE_BUTTON_RIGHT => 2,
-            c.GLFW_MOUSE_BUTTON_MIDDLE => 3,
+        ctx.input.input_mouseup(switch (button) {
+            c.GLFW_MOUSE_BUTTON_LEFT => zigmui.Input.MOUSE_BUTTON.LEFT,
+            c.GLFW_MOUSE_BUTTON_RIGHT => zigmui.Input.MOUSE_BUTTON.RIGHT,
+            c.GLFW_MOUSE_BUTTON_MIDDLE => zigmui.Input.MOUSE_BUTTON.MIDDLE,
             else => return,
         });
     }
@@ -50,7 +50,7 @@ fn mouse_button_callback(
 
 fn scroll_callback(window: ?*c.GLFWwindow, xoffset: f64, yoffset: f64) callconv(.C) void {
     const ctx = @ptrCast(*zigmui.Context, @alignCast(@alignOf(zigmui.Context), c.glfwGetWindowUserPointer(window)));
-    zigmui.input_scroll(ctx, @floatToInt(c_int, xoffset), @floatToInt(c_int, yoffset * -30));
+    ctx.input.input_scroll(@floatToInt(c_int, xoffset), @floatToInt(c_int, yoffset * -30));
 }
 
 pub fn main() anyerror!void {

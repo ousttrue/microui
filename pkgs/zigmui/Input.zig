@@ -8,6 +8,10 @@ pub const MOUSE_BUTTON = enum(u32) {
     LEFT = (1 << 0),
     RIGHT = (1 << 1),
     MIDDLE = (1 << 2),
+
+    pub fn remove(self: *@This(), rhs: @This()) void {
+        self.* = @intToEnum(@This(), @enumToInt(self.*) & ~@enumToInt(rhs));
+    }
 };
 
 pub const KEY = enum(u32) {
@@ -88,21 +92,23 @@ pub fn end(self: *Self) MOUSE_BUTTON {
     return mouse_pressed;
 }
 
-//   void mousemove(int x, int y) { self._mouse_pos = UIVec2(x, y); }
+pub fn input_mousemove(self: *Self, x: i32, y: i32) void {
+    self.mouse_pos = .{ .x = x, .y = y };
+}
 
-//   void mousedown(MU_MOUSE_BUTTON btn) {
-//     self._mouse_down = self._mouse_down | btn;
-//     self._mouse_pressed = self._mouse_pressed | btn;
-//   }
+pub fn input_mousedown(self: *Self, btn: MOUSE_BUTTON) void {
+    self.mouse_down = @intToEnum(MOUSE_BUTTON, @enumToInt(self.mouse_down) | @enumToInt(btn));
+    self.mouse_pressed = @intToEnum(MOUSE_BUTTON, @enumToInt(self.mouse_pressed) | @enumToInt(btn));
+}
 
-//   void mouseup(MU_MOUSE_BUTTON btn) {
-//     self._mouse_down = self._mouse_down & static_cast<MU_MOUSE_BUTTON>(~btn);
-//   }
+pub fn input_mouseup(self: *Self, btn: MOUSE_BUTTON) void {
+    self.mouse_down.remove(btn);
+}
 
-//   void scroll(int x, int y) {
-//     self._scroll_delta.x += x;
-//     self._scroll_delta.y += y;
-//   }
+pub fn input_scroll(self: *Self, x: i32, y: i32) void {
+    self.scroll_delta.x += x;
+    self.scroll_delta.y += y;
+}
 
 //   void keydown(MU_KEY key) {
 //     self._key_pressed = self._key_pressed | key;

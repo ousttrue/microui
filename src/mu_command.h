@@ -106,7 +106,7 @@ public:
     }
   }
 
-  void draw_icon(mu_Context *ctx, int id, UIRect rect, MU_STYLE colorid) {
+  void draw_icon(int id, UIRect rect, MU_STYLE colorid) {
     // do clip command if the rect isn't fully contained within the cliprect
     auto clipped = _clip_stack.check_clip(rect);
     if (clipped == MU_CLIP::ALL) {

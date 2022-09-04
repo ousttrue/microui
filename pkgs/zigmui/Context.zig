@@ -99,6 +99,7 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
             if (self.input.has_focus(title_id) and
                 self.input.mouse_down == .LEFT)
             {
+                // drag
                 cnt.rect.x += self.input.mouse_delta.x;
                 cnt.rect.y += self.input.mouse_delta.y;
             }
@@ -106,19 +107,21 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
             body.h -= tr.h;
         }
 
-        //     // do `close` button
-        //     if (~opt & MU_OPT_NOCLOSE) {
-        //       mu_Id id = self.hash.create("!close", 6);
-        //       UIRect r = UIRect(tr.x + tr.w - tr.h, tr.y, tr.h, tr.h);
-        //       tr.w -= r.w;
-        //       self.command_drawer.draw_icon(ctx, MU_ICON_CLOSE, r, MU_STYLE_TITLETEXT);
-        //       auto mouseover = ctx.mouse_over(r);
-        //       self.input.update_focus_hover(id, r, opt, mouseover);
-        //       if (self.input.mouse_pressed() == MU_MOUSE_LEFT &&
-        //           self.input.has_focus(id)) {
-        //         cnt.open = false;
-        //       }
-        //     }
+        // do `close` button
+        if (!opt.contains(.NOCLOSE)) {
+            const close_id = self.hash.create("!close");
+            const r = Rect{ .x = tr.x + tr.w - tr.h, .y = tr.y, .w = tr.h, .h = tr.h };
+            tr.w -= r.w;
+            self.command_drawer.draw_icon(c.MU_ICON_CLOSE, r, .TITLETEXT);
+            const mouseover = self.mouse_over(r);
+            self.input.update_focus_hover(close_id, opt, mouseover);
+            if (self.input.mouse_pressed == .LEFT and
+                self.input.has_focus(close_id))
+            {
+                // close
+                cnt.open = false;
+            }
+        }
     }
 
     //   push_container_body(ctx, cnt, body, opt);
