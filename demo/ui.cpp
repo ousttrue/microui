@@ -57,7 +57,7 @@ static void style_window(mu_Context *ctx) {
       uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
       uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
       uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-      ctx->draw_rect(mu_layout_next(ctx), ctx->style->colors[i]);
+      ctx->_command_stack.draw_rect(mu_layout_next(ctx), ctx->style->colors[i]);
     }
     mu_end_window(ctx);
   }
@@ -244,10 +244,11 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       mu_layout_end_column(ctx);
       /* color preview */
       UIRect r = mu_layout_next(ctx);
-      ctx->draw_rect(r, UIColor32(bg[0], bg[1], bg[2], 255));
+      ctx->_command_stack.draw_rect(r, UIColor32(bg[0], bg[1], bg[2], 255));
       char buf[32];
       sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
-      mu_draw_control_text(ctx, buf, r, MU_STYLE_TEXT, MU_OPT_ALIGNCENTER);
+      ctx->_command_stack.draw_control_text(buf, r, ctx->style, MU_STYLE_TEXT,
+                                            MU_OPT_ALIGNCENTER);
     }
 
     mu_end_window(ctx);

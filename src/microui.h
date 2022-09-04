@@ -82,22 +82,12 @@ EXPORT_MICROUI int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len,
 EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
 EXPORT_MICROUI void mu_pool_update(int frame, mu_PoolItem *items, int idx);
 
-EXPORT_MICROUI void mu_draw_text(mu_Context *ctx, const char *str, int len,
-                                 UIVec2 pos, UIColor32 color);
-EXPORT_MICROUI void mu_draw_icon(mu_Context *ctx, int id, UIRect rect,
-                                 UIColor32 color);
-
 EXPORT_MICROUI void mu_layout_width(mu_Context *ctx, int width);
 EXPORT_MICROUI void mu_layout_height(mu_Context *ctx, int height);
 EXPORT_MICROUI void mu_layout_begin_column(mu_Context *ctx);
 EXPORT_MICROUI void mu_layout_end_column(mu_Context *ctx);
 EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, UIRect r, int relative);
 EXPORT_MICROUI UIRect mu_layout_next(mu_Context *ctx);
-
-EXPORT_MICROUI void mu_draw_control_frame(mu_Context *ctx, mu_Id id,
-                                          UIRect rect, int colorid, MU_OPT opt);
-EXPORT_MICROUI void mu_draw_control_text(mu_Context *ctx, const char *str,
-                                         UIRect rect, int colorid, MU_OPT opt);
 
 EXPORT_MICROUI void mu_text(mu_Context *ctx, const char *text);
 EXPORT_MICROUI void mu_label(mu_Context *ctx, const char *text);

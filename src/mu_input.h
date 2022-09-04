@@ -1,11 +1,6 @@
 #pragma once
+#include "mu_types.h"
 #include <UIRenderFrame.h>
-
-enum FOCUS_STATE {
-  FOCUS_STATE_NONE,
-  FOCUS_STATE_HOVER,
-  FOCUS_STATE_FOCUS,
-};
 
 enum MU_MOUSE {
   MU_MOUSE_NONE,
