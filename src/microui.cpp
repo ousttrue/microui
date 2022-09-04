@@ -83,10 +83,8 @@ void mu_begin(mu_Context *ctx) {
 }
 
 void mu_end(mu_Context *ctx, UIRenderFrame *command) {
-  // check stacks
-  ctx->_command_drawer.end();
   ctx->_hash.end();
-  assert(ctx->layout_stack.size() == 0);
+  ctx->_layout.end();
 
   // handle scroll input
   auto mouse_pressed = ctx->_input.mouse_pressed();
@@ -99,100 +97,8 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   ctx->_input.end();
 
   ctx->_container.end(mouse_pressed, command);
+  ctx->_command_drawer.end();
   command->command_buffer = (const uint8_t *)ctx->_command_drawer.get(0);
-}
-
-/*============================================================================
-** layout
-**============================================================================*/
-
-enum { RELATIVE = 1, ABSOLUTE = 2 };
-
-void mu_layout_begin_column(mu_Context *ctx) {
-  ctx->layout_stack.push(mu_Layout(mu_layout_next(ctx), UIVec2(0, 0)));
-}
-
-void mu_layout_end_column(mu_Context *ctx) {
-  auto b = &ctx->layout_stack.back();
-  ctx->layout_stack.pop();
-  // inherit position/next_row/max from child layout if they are greater
-  auto a = &ctx->layout_stack.back();
-  a->position.x = mu_max(a->position.x, b->position.x + b->body.x - a->body.x);
-  a->next_row = mu_max(a->next_row, b->next_row + b->body.y - a->body.y);
-  a->max.x = mu_max(a->max.x, b->max.x);
-  a->max.y = mu_max(a->max.y, b->max.y);
-}
-
-void mu_layout_width(mu_Context *ctx, int width) {
-  ctx->layout_stack.back().size.x = width;
-}
-
-void mu_layout_height(mu_Context *ctx, int height) {
-  ctx->layout_stack.back().size.y = height;
-}
-
-void mu_layout_set_next(mu_Context *ctx, UIRect r, int relative) {
-  mu_Layout *layout = &ctx->layout_stack.back();
-  layout->next = r;
-  layout->next_type = relative ? RELATIVE : ABSOLUTE;
-}
-
-UIRect mu_layout_next(mu_Context *ctx) {
-  auto style = ctx->_command_drawer.style();
-  mu_Layout *layout = &ctx->layout_stack.back();
-
-  UIRect res;
-  if (layout->next_type) {
-    // handle rect set by `mu_layout_set_next`
-    int type = layout->next_type;
-    layout->next_type = 0;
-    res = layout->next;
-    if (type == ABSOLUTE) {
-      return (ctx->last_rect = res);
-    }
-  } else {
-    // handle next row
-    if (layout->item_index == layout->items) {
-      ctx->layout_stack.back().row(layout->items, nullptr, layout->size.y);
-    }
-
-    // position
-    res.x = layout->position.x;
-    res.y = layout->position.y;
-
-    // size
-    res.w =
-        layout->items > 0 ? layout->widths[layout->item_index] : layout->size.x;
-    res.h = layout->size.y;
-    if (res.w == 0) {
-      res.w = style->size.x + style->padding * 2;
-    }
-    if (res.h == 0) {
-      res.h = style->size.y + style->padding * 2;
-    }
-    if (res.w < 0) {
-      res.w += layout->body.w - res.x + 1;
-    }
-    if (res.h < 0) {
-      res.h += layout->body.h - res.y + 1;
-    }
-
-    layout->item_index++;
-  }
-
-  // update position
-  layout->position.x += res.w + style->spacing;
-  layout->next_row = mu_max(layout->next_row, res.y + res.h + style->spacing);
-
-  // apply body offset
-  res.x += layout->body.x;
-  res.y += layout->body.y;
-
-  // update max position
-  layout->max.x = mu_max(layout->max.x, res.x + res.w);
-  layout->max.y = mu_max(layout->max.y, res.y + res.h);
-
-  return (ctx->last_rect = res);
 }
 
 /*============================================================================
@@ -202,10 +108,10 @@ void mu_text(mu_Context *ctx, const char *text) {
   auto style = ctx->_command_drawer.style();
   const char *start, *end, *p = text;
   int width = -1;
-  mu_layout_begin_column(ctx);
-  ctx->layout_stack.back().row(1, &width, style->text_height());
+  ctx->_layout.begin_column(style);
+  ctx->_layout.back().row(1, &width, style->text_height());
   do {
-    UIRect r = mu_layout_next(ctx);
+    UIRect r = ctx->_layout.next(style);
     int w = 0;
     start = end = p;
     do {
@@ -224,11 +130,12 @@ void mu_text(mu_Context *ctx, const char *text) {
                                    MU_STYLE_TEXT);
     p = end + 1;
   } while (*end);
-  mu_layout_end_column(ctx);
+  ctx->_layout.end_column();
 }
 
 void mu_label(mu_Context *ctx, const char *text) {
-  ctx->_command_drawer.draw_control_text(text, mu_layout_next(ctx),
+  auto style = ctx->_command_drawer.style();
+  ctx->_command_drawer.draw_control_text(text, ctx->_layout.next(style),
                                          MU_STYLE_TEXT, MU_OPT::MU_OPT_NONE);
 }
 
@@ -236,7 +143,8 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   auto res = MU_RES::MU_RES_NONE;
   mu_Id id = label ? ctx->_hash.create(label, strlen(label))
                    : ctx->_hash.create(&icon, sizeof(icon));
-  UIRect r = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  UIRect r = ctx->_layout.next(style);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, opt, mouseover);
   // handle click
@@ -258,7 +166,8 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
 
 MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
   mu_Id id = ctx->_hash.create(&state, sizeof(state));
-  UIRect r = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  UIRect r = ctx->_layout.next(style);
   UIRect box = UIRect(r.x, r.y, r.h, r.h);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, MU_OPT::MU_OPT_NONE, mouseover);
@@ -359,7 +268,8 @@ static bool number_textbox(mu_Context *ctx, mu_Real *value, UIRect r,
 
 MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt) {
   mu_Id id = ctx->_hash.create(&buf, sizeof(buf));
-  UIRect r = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  UIRect r = ctx->_layout.next(style);
   return mu_textbox_raw(ctx, buf, bufsz, id, r, opt);
 }
 
@@ -369,7 +279,8 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   UIRect thumb;
   mu_Real last = *value, v = last;
   mu_Id id = ctx->_hash.create(&value, sizeof(value));
-  UIRect base = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  UIRect base = ctx->_layout.next(style);
 
   // handle text input mode
   auto res = MU_RES_NONE;
@@ -400,7 +311,6 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   ctx->_command_drawer.draw_control_frame(id, base, MU_STYLE_BASE, opt,
                                           ctx->_input.get_focus_state(id));
   // draw thumb
-  auto style = ctx->_command_drawer.style();
   auto w = style->thumb_size;
   auto x = (v - low) * (base.w - w) / (high - low);
   thumb = UIRect(base.x + x, base.y, w, base.h);
@@ -418,7 +328,8 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
   char buf[MU_MAX_FMT + 1];
   auto res = MU_RES::MU_RES_NONE;
   mu_Id id = ctx->_hash.create(&value, sizeof(value));
-  UIRect base = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  UIRect base = ctx->_layout.next(style);
   mu_Real last = *value;
 
   // handle text input mode
@@ -454,11 +365,12 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   mu_Id id = ctx->_hash.create(label, strlen(label));
   int idx = ctx->treenode_pool.get_index(id);
   int width = -1;
-  ctx->layout_stack.back().row(1, &width, 0);
+  ctx->_layout.back().row(1, &width, 0);
 
   auto active = (idx >= 0);
   auto expanded = (opt & MU_OPT_EXPANDED) ? !active : active;
-  auto r = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  auto r = ctx->_layout.next(style);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, MU_OPT::MU_OPT_NONE, mouseover);
 
@@ -490,7 +402,6 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   ctx->_command_drawer.draw_icon(
       ctx, expanded ? MU_ICON_EXPANDED : MU_ICON_COLLAPSED,
       UIRect(r.x, r.y, r.h, r.h), MU_STYLE_TEXT);
-  auto style = ctx->_command_drawer.style();
   r.x += r.h - style->padding;
   r.w -= r.h - style->padding;
   ctx->_command_drawer.draw_control_text(label, r, MU_STYLE_TEXT,
@@ -507,7 +418,7 @@ MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
   auto res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
     auto style = ctx->_command_drawer.style();
-    ctx->layout_stack.back().indent += style->indent;
+    ctx->_layout.back().indent += style->indent;
     ctx->_hash.push_last();
   }
   return res;
@@ -515,7 +426,7 @@ MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
 
 void mu_end_treenode(mu_Context *ctx) {
   auto style = ctx->_command_drawer.style();
-  ctx->layout_stack.back().indent -= style->indent;
+  ctx->_layout.back().indent -= style->indent;
   ctx->_hash.pop();
 }
 
@@ -588,7 +499,7 @@ static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
     scrollbars(ctx, cnt, &body);
   }
   auto style = ctx->_command_drawer.style();
-  ctx->layout_stack.push(mu_Layout(body.expand(-style->padding), cnt->scroll));
+  ctx->_layout.push(mu_Layout(body.expand(-style->padding), cnt->scroll));
   cnt->body = body;
 }
 
@@ -677,7 +588,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
   // resize to content size
   if (opt & MU_OPT_AUTOSIZE) {
-    UIRect r = ctx->layout_stack.back().body;
+    UIRect r = ctx->_layout.back().body;
     cnt->rect.w = cnt->content_size.x + (cnt->rect.w - r.w);
     cnt->rect.h = cnt->content_size.y + (cnt->rect.h - r.h);
   }
@@ -721,7 +632,8 @@ void mu_end_popup(mu_Context *ctx) { mu_end_window(ctx); }
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
   auto last_id = ctx->_hash.create_push(name, strlen(name));
   auto cnt = ctx->_container.get_container(last_id, opt, ctx->frame);
-  cnt->rect = mu_layout_next(ctx);
+  auto style = ctx->_command_drawer.style();
+  cnt->rect = ctx->_layout.next(style);
   if (~opt & MU_OPT_NOFRAME) {
     ctx->_command_drawer.draw_frame(cnt->rect, MU_STYLE_PANELBG);
   }

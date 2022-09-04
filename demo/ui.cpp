@@ -49,7 +49,7 @@ static void style_window(mu_Context *ctx) {
     int sw = ctx->_container.current_container()->body.w * 0.14;
     {
       int widths[] = {80, sw, sw, sw, sw, -1};
-      ctx->layout_stack.back().row(6, widths, 0);
+      ctx->_layout.back().row(6, widths, 0);
     }
     auto style = ctx->_command_drawer.style();
     for (int i = 0; colors[i].label; i++) {
@@ -58,7 +58,7 @@ static void style_window(mu_Context *ctx) {
       uint8_slider(ctx, &style->colors[i].g, 0, 255);
       uint8_slider(ctx, &style->colors[i].b, 0, 255);
       uint8_slider(ctx, &style->colors[i].a, 0, 255);
-      ctx->_command_drawer.draw_rect(mu_layout_next(ctx),
+      ctx->_command_drawer.draw_rect(ctx->_layout.next(style),
                                      static_cast<MU_STYLE>(i));
     }
     mu_end_window(ctx);
@@ -71,13 +71,13 @@ static void log_window(mu_Context *ctx) {
     /* output text panel */
     {
       int widths[] = {-1};
-      ctx->layout_stack.back().row(1, widths, -25);
+      ctx->_layout.back().row(1, widths, -25);
     }
     mu_begin_panel(ctx, "Log Output");
     auto panel = ctx->_container.current_container();
     {
       int widths[] = {-1};
-      ctx->layout_stack.back().row(1, widths, -1);
+      ctx->_layout.back().row(1, widths, -1);
     }
     mu_text(ctx, logbuf);
     mu_end_panel(ctx);
@@ -91,7 +91,7 @@ static void log_window(mu_Context *ctx) {
     int submitted = 0;
     {
       int widths[] = {-70, -1};
-      ctx->layout_stack.back().row(2, widths, 0);
+      ctx->_layout.back().row(2, widths, 0);
     }
     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
       ctx->focus_last();
@@ -123,7 +123,7 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       char buf[64];
       {
         int widths[] = {54, -1};
-        ctx->layout_stack.back().row(2, widths, 0);
+        ctx->_layout.back().row(2, widths, 0);
       }
       mu_label(ctx, "Position:");
       sprintf(buf, "%d, %d", win->rect.x, win->rect.y);
@@ -137,7 +137,7 @@ static void test_window(mu_Context *ctx, float bg[4]) {
     if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
       {
         int widths[] = {86, -110, -1};
-        ctx->layout_stack.back().row(3, widths, 0);
+        ctx->_layout.back().row(3, widths, 0);
       }
       mu_label(ctx, "Test buttons 1:");
       if (mu_button(ctx, "Button 1")) {
@@ -164,9 +164,10 @@ static void test_window(mu_Context *ctx, float bg[4]) {
     if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
       {
         int widths[] = {140, -1};
-        ctx->layout_stack.back().row(2, widths, 0);
+        ctx->_layout.back().row(2, widths, 0);
       }
-      mu_layout_begin_column(ctx);
+      auto style = ctx->_command_drawer.style();
+      ctx->_layout.begin_column(style);
       if (mu_begin_treenode(ctx, "Test 1")) {
         if (mu_begin_treenode(ctx, "Test 1a")) {
           mu_label(ctx, "Hello");
@@ -187,7 +188,7 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       if (mu_begin_treenode(ctx, "Test 2")) {
         {
           int widths[] = {54, 54};
-          ctx->layout_stack.back().row(2, widths, 0);
+          ctx->_layout.back().row(2, widths, 0);
         }
         if (mu_button(ctx, "Button 3")) {
           write_log("Pressed button 3");
@@ -210,32 +211,33 @@ static void test_window(mu_Context *ctx, float bg[4]) {
         mu_checkbox(ctx, "Checkbox 3", &checks[2]);
         mu_end_treenode(ctx);
       }
-      mu_layout_end_column(ctx);
+      ctx->_layout.end_column();
 
-      mu_layout_begin_column(ctx);
+      ctx->_layout.begin_column(style);
       {
         int widths[] = {-1};
-        ctx->layout_stack.back().row(1, widths, 0);
+        ctx->_layout.back().row(1, widths, 0);
       }
       mu_text(
           ctx,
           "Lorem ipsum dolor sit amet, consectetur adipiscing "
           "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
           "ipsum, eu varius magna felis a nulla.");
-      mu_layout_end_column(ctx);
+      ctx->_layout.end_column();
     }
 
     /* background color sliders */
     if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
       {
         int widths[] = {-78, -1};
-        ctx->layout_stack.back().row(2, widths, 74);
+        ctx->_layout.back().row(2, widths, 74);
       }
       /* sliders */
-      mu_layout_begin_column(ctx);
+      auto style = ctx->_command_drawer.style();
+      ctx->_layout.begin_column(style);
       {
         int widths[] = {46, -1};
-        ctx->layout_stack.back().row(2, widths, 0);
+        ctx->_layout.back().row(2, widths, 0);
       }
       mu_label(ctx, "Red:");
       mu_slider(ctx, &bg[0], 0, 255);
@@ -243,9 +245,9 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       mu_slider(ctx, &bg[1], 0, 255);
       mu_label(ctx, "Blue:");
       mu_slider(ctx, &bg[2], 0, 255);
-      mu_layout_end_column(ctx);
+      ctx->_layout.end_column();
       /* color preview */
-      UIRect r = mu_layout_next(ctx);
+      UIRect r = ctx->_layout.next(style);
       ctx->_command_drawer.draw_rect_color(r,
                                            UIColor32(bg[0], bg[1], bg[2], 255));
       char buf[32];

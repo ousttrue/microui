@@ -74,13 +74,6 @@ EXPORT_MICROUI int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len,
 EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
 EXPORT_MICROUI void mu_pool_update(int frame, mu_PoolItem *items, int idx);
 
-EXPORT_MICROUI void mu_layout_width(mu_Context *ctx, int width);
-EXPORT_MICROUI void mu_layout_height(mu_Context *ctx, int height);
-EXPORT_MICROUI void mu_layout_begin_column(mu_Context *ctx);
-EXPORT_MICROUI void mu_layout_end_column(mu_Context *ctx);
-EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, UIRect r, int relative);
-EXPORT_MICROUI UIRect mu_layout_next(mu_Context *ctx);
-
 EXPORT_MICROUI void mu_text(mu_Context *ctx, const char *text);
 EXPORT_MICROUI void mu_label(mu_Context *ctx, const char *text);
 EXPORT_MICROUI MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon,

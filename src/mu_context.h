@@ -8,19 +8,17 @@
 #include <assert.h>
 
 const auto MU_MAX_FMT = 127;
-const auto MU_LAYOUTSTACK_SIZE = 16;
 const auto MU_TREENODEPOOL_SIZE = 48;
 
 struct mu_Context {
   MuHash _hash;
-  UIRect last_rect;
   int frame = 0;
   mu_Container *scroll_target = nullptr;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
   ContainerManager _container;
   CommandDrawer _command_drawer;
-  mu_Stack<mu_Layout, MU_LAYOUTSTACK_SIZE> layout_stack;
+  MuLayoutManager _layout;
   mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
   mu_Input _input;
 
@@ -46,12 +44,11 @@ public:
   void focus_last() { _input.set_focus(_hash.last()); }
 
   void pop_container() {
-    auto &layout = layout_stack.back();
+    auto layout = _layout.pop();
     auto cnt = _container.current_container();
-    cnt->content_size.x = layout.max.x - layout.body.x;
-    cnt->content_size.y = layout.max.y - layout.body.y;
+    cnt->content_size.x = layout->max.x - layout->body.x;
+    cnt->content_size.y = layout->max.y - layout->body.y;
     _container.pop();
-    layout_stack.pop();
     _hash.pop();
   }
 };
