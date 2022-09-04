@@ -32,7 +32,6 @@ enum MU_RES {
   MU_RES_CHANGE = (1 << 2)
 };
 
-
 struct mu_Context;
 struct mu_Container;
 struct mu_PoolItem;
@@ -92,49 +91,60 @@ EXPORT_MICROUI void mu_layout_width(mu_Context *ctx, int width);
 EXPORT_MICROUI void mu_layout_height(mu_Context *ctx, int height);
 EXPORT_MICROUI void mu_layout_begin_column(mu_Context *ctx);
 EXPORT_MICROUI void mu_layout_end_column(mu_Context *ctx);
-EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, UIRect r,
-                                       int relative);
+EXPORT_MICROUI void mu_layout_set_next(mu_Context *ctx, UIRect r, int relative);
 EXPORT_MICROUI UIRect mu_layout_next(mu_Context *ctx);
 
 EXPORT_MICROUI void mu_draw_control_frame(mu_Context *ctx, mu_Id id,
-                                          UIRect rect, int colorid,
-                                          MU_OPT opt);
+                                          UIRect rect, int colorid, MU_OPT opt);
 EXPORT_MICROUI void mu_draw_control_text(mu_Context *ctx, const char *str,
                                          UIRect rect, int colorid, MU_OPT opt);
 EXPORT_MICROUI int mu_mouse_over(mu_Context *ctx, UIRect rect);
 // EXPORT_MICROUI void mu_update_control(mu_Context *ctx, mu_Id id, UIRect rect,
 //                                       MU_OPT opt);
 
-#define mu_button(ctx, label) mu_button_ex(ctx, label, 0, MU_OPT_ALIGNCENTER)
-#define mu_textbox(ctx, buf, bufsz) mu_textbox_ex(ctx, buf, bufsz, MU_OPT_NONE)
-#define mu_slider(ctx, value, lo, hi)                                          \
-  mu_slider_ex(ctx, value, lo, hi, 0, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER)
-#define mu_number(ctx, value, step)                                            \
-  mu_number_ex(ctx, value, step, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER)
-#define mu_header(ctx, label) mu_header_ex(ctx, label, MU_OPT_NONE)
-#define mu_begin_treenode(ctx, label)                                          \
-  mu_begin_treenode_ex(ctx, label, MU_OPT_NONE)
-#define mu_begin_panel(ctx, name) mu_begin_panel_ex(ctx, name, MU_OPT_NONE)
-
 EXPORT_MICROUI void mu_text(mu_Context *ctx, const char *text);
 EXPORT_MICROUI void mu_label(mu_Context *ctx, const char *text);
 EXPORT_MICROUI MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon,
                                    MU_OPT opt);
+inline MU_RES mu_button(mu_Context *ctx, const char *label) {
+  return mu_button_ex(ctx, label, 0, MU_OPT_ALIGNCENTER);
+}
+
 EXPORT_MICROUI MU_RES mu_checkbox(mu_Context *ctx, const char *label,
                                   int *state);
 EXPORT_MICROUI MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz,
                                      mu_Id id, UIRect r, MU_OPT opt);
 EXPORT_MICROUI MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz,
                                     MU_OPT opt);
+inline MU_RES mu_textbox(mu_Context *ctx, char *buf, int bufsz) {
+  return mu_textbox_ex(ctx, buf, bufsz, MU_OPT_NONE);
+}
+
 EXPORT_MICROUI MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low,
                                    mu_Real high, mu_Real step, const char *fmt,
                                    MU_OPT opt);
+inline MU_RES mu_slider(mu_Context *ctx, float *value, float lo, float hi) {
+  return mu_slider_ex(ctx, value, lo, hi, 0, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER);
+}
+
 EXPORT_MICROUI MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value,
                                    mu_Real step, const char *fmt, MU_OPT opt);
+inline MU_RES mu_number(mu_Context *ctx, mu_Real *value, mu_Real step) {
+  return mu_number_ex(ctx, value, step, MU_SLIDER_FMT, MU_OPT_ALIGNCENTER);
+}
+
 EXPORT_MICROUI MU_RES mu_header_ex(mu_Context *ctx, const char *label,
                                    MU_OPT opt);
+inline MU_RES mu_header(mu_Context *ctx, const char *label) {
+  return mu_header_ex(ctx, label, MU_OPT_NONE);
+}
+
 EXPORT_MICROUI MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label,
                                            MU_OPT opt);
+inline MU_RES mu_begin_treenode(mu_Context *ctx, const char *label) {
+  return mu_begin_treenode_ex(ctx, label, MU_OPT_NONE);
+}
+
 EXPORT_MICROUI void mu_end_treenode(mu_Context *ctx);
 EXPORT_MICROUI MU_RES mu_begin_window(mu_Context *ctx, const char *title,
                                       UIRect rect, MU_OPT opt);
@@ -144,6 +154,10 @@ EXPORT_MICROUI MU_RES mu_begin_popup(mu_Context *ctx, const char *name);
 EXPORT_MICROUI void mu_end_popup(mu_Context *ctx);
 EXPORT_MICROUI void mu_begin_panel_ex(mu_Context *ctx, const char *name,
                                       MU_OPT opt);
+inline void mu_begin_panel(mu_Context *ctx, const char *name) {
+  mu_begin_panel_ex(ctx, name, MU_OPT_NONE);
+}
+
 EXPORT_MICROUI void mu_end_panel(mu_Context *ctx);
 
 #ifdef __cplusplus
