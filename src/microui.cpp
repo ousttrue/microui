@@ -295,12 +295,6 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
   ctx->_clip_stack.pop();
 }
 
-int mu_mouse_over(mu_Context *ctx, UIRect rect) {
-  return rect.overlaps_vec2(ctx->_input.mouse_pos()) &&
-         ctx->_clip_stack.back().overlaps_vec2(ctx->_input.mouse_pos()) &&
-         ctx->_container.in_hover_root();
-}
-
 void mu_text(mu_Context *ctx, const char *text) {
   const char *start, *end, *p = text;
   int width = -1;
@@ -340,7 +334,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   mu_Id id = label ? ctx->_hash.create(label, strlen(label))
                    : ctx->_hash.create(&icon, sizeof(icon));
   UIRect r = mu_layout_next(ctx);
-  auto mouseover = mu_mouse_over(ctx, r);
+  auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, opt, mouseover);
   // handle click
   if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT &&
@@ -362,7 +356,7 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
   mu_Id id = ctx->_hash.create(&state, sizeof(state));
   UIRect r = mu_layout_next(ctx);
   UIRect box = UIRect(r.x, r.y, r.h, r.h);
-  auto mouseover = mu_mouse_over(ctx, r);
+  auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, MU_OPT::MU_OPT_NONE, mouseover);
   // handle click
   auto res = MU_RES::MU_RES_NONE;
@@ -384,7 +378,7 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
 MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
                       MU_OPT opt) {
   auto res = MU_RES::MU_RES_NONE;
-  auto mouseover = mu_mouse_over(ctx, r);
+  auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, opt | MU_OPT_HOLDFOCUS, mouseover);
 
   if (ctx->_input.has_focus(id)) {
@@ -476,7 +470,7 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   }
 
   // handle normal mode
-  auto mouseover = mu_mouse_over(ctx, base);
+  auto mouseover = ctx->mouse_over(base);
   ctx->_input.update_focus_hover(id, base, opt, mouseover);
 
   // handle input
@@ -522,7 +516,7 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
   }
 
   // handle normal mode
-  auto mouseover = mu_mouse_over(ctx, base);
+  auto mouseover = ctx->mouse_over(base);
   ctx->_input.update_focus_hover(id, base, opt, mouseover);
 
   // handle input
@@ -553,7 +547,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   auto active = (idx >= 0);
   auto expanded = (opt & MU_OPT_EXPANDED) ? !active : active;
   auto r = mu_layout_next(ctx);
-  auto mouseover = mu_mouse_over(ctx, r);
+  auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, r, MU_OPT::MU_OPT_NONE, mouseover);
 
   // handle click
@@ -621,7 +615,7 @@ static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
     base.w = ctx->style->scrollbar_size;
 
     // handle input
-    auto mouseover = mu_mouse_over(ctx, base);
+    auto mouseover = ctx->mouse_over(base);
     ctx->_input.update_focus_hover(id, base, MU_OPT_NONE, mouseover);
     if (ctx->_input.has_focus(id) &&
         ctx->_input.mouse_down() == MU_MOUSE_LEFT) {
@@ -639,7 +633,7 @@ static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
 
     // set this as the scroll_target (will get scrolled on mousewheel)
     // if the mouse is over it
-    if (mu_mouse_over(ctx, *b)) {
+    if (ctx->mouse_over(*b)) {
       ctx->scroll_target = cnt;
     }
   } else {
@@ -714,7 +708,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     // do title text
     if (~opt & MU_OPT_NOTITLE) {
       mu_Id id = ctx->_hash.create("!title", 6);
-      auto mouseover = mu_mouse_over(ctx, tr);
+      auto mouseover = ctx->mouse_over(tr);
       ctx->_input.update_focus_hover(id, tr, opt, mouseover);
       mu_draw_control_text(ctx, title, tr, MU_STYLE_TITLETEXT, opt);
       if (ctx->_input.has_focus(id) &&
@@ -733,7 +727,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
       tr.w -= r.w;
       mu_draw_icon(ctx, MU_ICON_CLOSE, r,
                    ctx->style->colors[MU_STYLE_TITLETEXT]);
-      auto mouseover = mu_mouse_over(ctx, r);
+      auto mouseover = ctx->mouse_over(r);
       ctx->_input.update_focus_hover(id, r, opt, mouseover);
       if (ctx->_input.mouse_pressed() == MU_MOUSE_LEFT &&
           ctx->_input.has_focus(id)) {
@@ -749,7 +743,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     int sz = ctx->style->title_height;
     mu_Id id = ctx->_hash.create("!resize", 7);
     UIRect r = UIRect(rect.x + rect.w - sz, rect.y + rect.h - sz, sz, sz);
-    auto mouseover = mu_mouse_over(ctx, r);
+    auto mouseover = ctx->mouse_over(r);
     ctx->_input.update_focus_hover(id, r, opt, mouseover);
     if (ctx->_input.has_focus(id) &&
         ctx->_input.mouse_down() == MU_MOUSE_LEFT) {

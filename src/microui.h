@@ -98,9 +98,6 @@ EXPORT_MICROUI void mu_draw_control_frame(mu_Context *ctx, mu_Id id,
                                           UIRect rect, int colorid, MU_OPT opt);
 EXPORT_MICROUI void mu_draw_control_text(mu_Context *ctx, const char *str,
                                          UIRect rect, int colorid, MU_OPT opt);
-EXPORT_MICROUI int mu_mouse_over(mu_Context *ctx, UIRect rect);
-// EXPORT_MICROUI void mu_update_control(mu_Context *ctx, mu_Id id, UIRect rect,
-//                                       MU_OPT opt);
 
 EXPORT_MICROUI void mu_text(mu_Context *ctx, const char *text);
 EXPORT_MICROUI void mu_label(mu_Context *ctx, const char *text);

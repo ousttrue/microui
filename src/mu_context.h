@@ -60,9 +60,23 @@ public:
   mu_Context(const mu_Context &) = delete;
   mu_Context &operator=(const mu_Context &) = delete;
 
+  bool mouse_over(const UIRect &rect) const {
+    if (!rect.overlaps_vec2(this->_input.mouse_pos())) {
+      return false;
+    }
+    if (!this->_clip_stack.back().overlaps_vec2(this->_input.mouse_pos())) {
+      return false;
+    }
+    if (!this->_container.in_hover_root()) {
+      return false;
+    }
+    return true;
+  }
+
   void draw_rect(UIRect rect, const UIColor32 &color) {
     _command_stack.push_rect(_clip_stack.intersect(rect), color);
   }
+
   void draw_box(UIRect rect, UIColor32 color) {
     this->draw_rect(UIRect(rect.x + 1, rect.y, rect.w - 2, 1), color);
     this->draw_rect(UIRect(rect.x + 1, rect.y + rect.h - 1, rect.w - 2, 1),
@@ -70,5 +84,6 @@ public:
     this->draw_rect(UIRect(rect.x, rect.y, 1, rect.h), color);
     this->draw_rect(UIRect(rect.x + rect.w - 1, rect.y, 1, rect.h), color);
   }
+
   void focus_last() { _input.set_focus(_hash.last()); }
 };
