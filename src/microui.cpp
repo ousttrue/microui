@@ -76,7 +76,6 @@ void mu_input_scroll(mu_Context *ctx, int x, int y) {
 
 void mu_begin(mu_Context *ctx) {
   ctx->_command_drawer.begin();
-  ctx->scroll_target = nullptr;
   ctx->_container.begin();
   ctx->_input.begin();
   ctx->frame++;
@@ -85,20 +84,9 @@ void mu_begin(mu_Context *ctx) {
 void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   ctx->_hash.end();
   ctx->_layout.end();
-
-  // handle scroll input
-  auto mouse_pressed = ctx->_input.mouse_pressed();
-
-  if (ctx->scroll_target) {
-    ctx->scroll_target->scroll += ctx->_input.scroll_delta();
-  }
-
-  // reset input state
-  ctx->_input.end();
-
+  auto mouse_pressed = ctx->_input.end();
   ctx->_container.end(mouse_pressed, command);
-  ctx->_command_drawer.end();
-  command->command_buffer = (const uint8_t *)ctx->_command_drawer.get(0);
+  ctx->_command_drawer.end(command);
 }
 
 /*============================================================================
@@ -465,7 +453,7 @@ static void scrollbar(mu_Context *ctx, mu_Container *cnt, UIRect *b, UIVec2 cs,
     // set this as the scroll_target (will get scrolled on mousewheel)
     // if the mouse is over it
     if (ctx->mouse_over(*b)) {
-      ctx->scroll_target = cnt;
+      ctx->_input.set_scroll_target(cnt);
     }
   } else {
     cnt->scroll.y = 0;
@@ -608,11 +596,16 @@ void mu_end_window(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
   /* push tail 'goto' jump command and set head 'skip' command. the final steps
   ** on initing these are done in mu_end() */
-  mu_Container *cnt = ctx->_container.current_container();
+  auto cnt = ctx->_container.current_container();
   cnt->range.tail = ctx->_command_drawer.size();
   // pop base clip rect and container
   ctx->_command_drawer.pop_clip();
-  ctx->pop_container();
+  auto layout = ctx->_layout.pop();
+  // auto cnt = ctx->_container.current_container();
+  cnt->content_size.x = layout->max.x - layout->body.x;
+  cnt->content_size.y = layout->max.y - layout->body.y;
+  ctx->_container.pop();
+  ctx->_hash.pop();
 }
 
 void mu_open_popup(mu_Context *ctx, const char *name) {
@@ -644,5 +637,10 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
 
 void mu_end_panel(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
-  ctx->pop_container();
+  auto layout = ctx->_layout.pop();
+  auto cnt = ctx->_container.current_container();
+  cnt->content_size.x = layout->max.x - layout->body.x;
+  cnt->content_size.y = layout->max.y - layout->body.y;
+  ctx->_container.pop();
+  ctx->_hash.pop();
 }

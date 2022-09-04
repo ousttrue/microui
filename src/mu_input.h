@@ -39,6 +39,7 @@ inline MU_KEY operator&(MU_KEY L, MU_KEY R) {
 }
 
 /// @brief input, focus, hover
+struct mu_Container;
 class mu_Input {
   UIVec2 _mouse_pos;
   UIVec2 _last_mouse_pos;
@@ -54,13 +55,16 @@ class mu_Input {
   bool _keep_focus = false;
   mu_Id _hover = 0;
 
+  mu_Container *scroll_target = nullptr;
+
 public:
   void begin() {
     _mouse_delta.x = _mouse_pos.x - _last_mouse_pos.x;
     _mouse_delta.y = _mouse_pos.y - _last_mouse_pos.y;
+    scroll_target = nullptr;
   }
 
-  void end() {
+  bool end() {
     // unset focus if focus id was not touched this frame
     if (_keep_focus) {
       _keep_focus = false;
@@ -68,13 +72,23 @@ public:
       _focus = 0;
     }
 
+    // handle scroll input
+    auto mouse_pressed = _mouse_pressed;
+    if (scroll_target) {
+      scroll_target->scroll += scroll_delta();
+    }
+
     // reset input state
-    this->_key_pressed = MU_KEY::MU_KEY_NONE;
-    this->_input_text[0] = 0;
-    this->_mouse_pressed = MU_MOUSE::MU_MOUSE_NONE;
-    this->_scroll_delta = UIVec2(0, 0);
-    this->_last_mouse_pos = this->_mouse_pos;
+    _key_pressed = MU_KEY::MU_KEY_NONE;
+    _input_text[0] = 0;
+    _mouse_pressed = MU_MOUSE::MU_MOUSE_NONE;
+    _scroll_delta = UIVec2(0, 0);
+    _last_mouse_pos = _mouse_pos;
+
+    return _mouse_pressed;
   }
+
+  void set_scroll_target(mu_Container *cnt) { scroll_target = cnt; }
 
   UIVec2 mouse_pos() const { return _mouse_pos; }
   UIVec2 mouse_delta() const { return _mouse_delta; }

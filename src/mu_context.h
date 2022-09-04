@@ -13,14 +13,14 @@ const auto MU_TREENODEPOOL_SIZE = 48;
 struct mu_Context {
   MuHash _hash;
   int frame = 0;
-  mu_Container *scroll_target = nullptr;
-  char number_edit_buf[MU_MAX_FMT] = {0};
-  mu_Id number_edit = 0;
   ContainerManager _container;
   CommandDrawer _command_drawer;
   MuLayoutManager _layout;
-  mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
   mu_Input _input;
+
+  char number_edit_buf[MU_MAX_FMT] = {0};
+  mu_Id number_edit = 0;
+  mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
 
 public:
   // avoid copy
@@ -39,16 +39,5 @@ public:
       return false;
     }
     return true;
-  }
-
-  void focus_last() { _input.set_focus(_hash.last()); }
-
-  void pop_container() {
-    auto layout = _layout.pop();
-    auto cnt = _container.current_container();
-    cnt->content_size.x = layout->max.x - layout->body.x;
-    cnt->content_size.y = layout->max.y - layout->body.y;
-    _container.pop();
-    _hash.pop();
   }
 };

@@ -15,15 +15,16 @@ class CommandDrawer {
 
 public:
   mu_Style *style() { return &_style; }
-
   size_t size() const { return _command_list.size(); }
-  char *get(size_t i) { return &_command_list.get(i); }
 
   void begin() {
     assert(_style.text_width_callback && _style.text_height_callback);
     _command_list.clear();
   }
-  void end() { _clip_stack.end(); }
+  void end(UIRenderFrame *command) {
+    _clip_stack.end();
+    command->command_buffer = (const uint8_t *)&_command_list.get(0);
+  }
 
   void push_clip(const UIRect &r) { _clip_stack.push(r); }
   void push_unclipped_rect() { _clip_stack.push_unclipped_rect(); }

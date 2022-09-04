@@ -94,7 +94,7 @@ static void log_window(mu_Context *ctx) {
       ctx->_layout.back().row(2, widths, 0);
     }
     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-      ctx->focus_last();
+      ctx->_input.set_focus(ctx->_hash.last());
       submitted = 1;
     }
     if (mu_button(ctx, "Submit")) {
