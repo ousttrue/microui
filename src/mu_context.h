@@ -44,4 +44,14 @@ public:
   }
 
   void focus_last() { _input.set_focus(_hash.last()); }
+
+  void pop_container() {
+    auto &layout = layout_stack.back();
+    auto cnt = _container.current_container();
+    cnt->content_size.x = layout.max.x - layout.body.x;
+    cnt->content_size.y = layout.max.y - layout.body.y;
+    _container.pop();
+    layout_stack.pop();
+    _hash.pop();
+  }
 };

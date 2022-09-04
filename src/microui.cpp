@@ -102,34 +102,6 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
   command->command_buffer = (const uint8_t *)ctx->_command_drawer.get(0);
 }
 
-mu_Id mu_get_id(mu_Context *ctx, const void *data, int size) {
-  return ctx->_hash.create(data, size);
-}
-
-void mu_push_id(mu_Context *ctx, const void *data, int size) {
-  ctx->_hash.create_push(data, size);
-}
-
-void mu_pop_id(mu_Context *ctx) { ctx->_hash.pop(); }
-static void pop_container(mu_Context *ctx) {
-  mu_Layout *layout = &ctx->layout_stack.back();
-  mu_Container *cnt = ctx->_container.current_container();
-  cnt->content_size.x = layout->max.x - layout->body.x;
-  cnt->content_size.y = layout->max.y - layout->body.y;
-  ctx->_container.pop();
-  ctx->layout_stack.pop();
-  ctx->_hash.pop();
-}
-
-mu_Container *mu_get_current_container(mu_Context *ctx) {
-  return ctx->_container.current_container();
-}
-
-mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
-  mu_Id id = ctx->_hash.create(name, strlen(name));
-  return ctx->_container.get_container(id, MU_OPT::MU_OPT_NONE, ctx->frame);
-}
-
 /*============================================================================
 ** layout
 **============================================================================*/
@@ -729,7 +701,7 @@ void mu_end_window(mu_Context *ctx) {
   cnt->range.tail = ctx->_command_drawer.size();
   // pop base clip rect and container
   ctx->_command_drawer.pop_clip();
-  pop_container(ctx);
+  ctx->pop_container();
 }
 
 void mu_open_popup(mu_Context *ctx, const char *name) {
@@ -760,5 +732,5 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
 
 void mu_end_panel(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
-  pop_container(ctx);
+  ctx->pop_container();
 }

@@ -16,11 +16,11 @@ static void write_log(const char *text) {
 
 static int uint8_slider(mu_Context *ctx, unsigned char *value, int low,
                         int high) {
-  mu_push_id(ctx, &value, sizeof(value));
+  ctx->_hash.create_push(&value, sizeof(value));
   float tmp = *value;
   int res = mu_slider_ex(ctx, &tmp, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
   *value = tmp;
-  mu_pop_id(ctx);
+  ctx->_hash.pop();
   return res;
 }
 
@@ -46,7 +46,7 @@ static void style_window(mu_Context *ctx) {
 
   if (mu_begin_window(ctx, "Style Editor", UIRect(350, 250, 300, 240),
                       MU_OPT_NONE)) {
-    int sw = mu_get_current_container(ctx)->body.w * 0.14;
+    int sw = ctx->_container.current_container()->body.w * 0.14;
     {
       int widths[] = {80, sw, sw, sw, sw, -1};
       ctx->layout_stack.back().row(6, widths, 0);
@@ -74,7 +74,7 @@ static void log_window(mu_Context *ctx) {
       ctx->layout_stack.back().row(1, widths, -25);
     }
     mu_begin_panel(ctx, "Log Output");
-    auto panel = mu_get_current_container(ctx);
+    auto panel = ctx->_container.current_container();
     {
       int widths[] = {-1};
       ctx->layout_stack.back().row(1, widths, -1);
@@ -113,13 +113,13 @@ static void test_window(mu_Context *ctx, float bg[4]) {
   /* do window */
   if (mu_begin_window(ctx, "Demo Window", UIRect(40, 40, 300, 450),
                       MU_OPT_NONE)) {
-    auto win = mu_get_current_container(ctx);
+    auto win = ctx->_container.current_container();
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 300);
 
     /* window info */
     if (mu_header(ctx, "Window Info")) {
-      auto win = mu_get_current_container(ctx);
+      auto win = ctx->_container.current_container();
       char buf[64];
       {
         int widths[] = {54, -1};

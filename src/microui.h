@@ -69,14 +69,6 @@ EXPORT_MICROUI void mu_input_scroll(mu_Context *ctx, int x, int y);
 EXPORT_MICROUI void mu_begin(mu_Context *ctx);
 EXPORT_MICROUI void mu_end(mu_Context *ctx, struct UIRenderFrame *command);
 
-EXPORT_MICROUI mu_Id mu_get_id(mu_Context *ctx, const void *data, int size);
-EXPORT_MICROUI void mu_push_id(mu_Context *ctx, const void *data, int size);
-EXPORT_MICROUI void mu_pop_id(mu_Context *ctx);
-
-EXPORT_MICROUI mu_Container *mu_get_current_container(mu_Context *ctx);
-EXPORT_MICROUI mu_Container *mu_get_container(mu_Context *ctx,
-                                              const char *name);
-
 EXPORT_MICROUI int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len,
                                 mu_Id id);
 EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
