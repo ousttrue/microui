@@ -82,8 +82,8 @@ EXPORT_MICROUI int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len,
 EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
 EXPORT_MICROUI void mu_pool_update(int frame, mu_PoolItem *items, int idx);
 
-EXPORT_MICROUI void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str,
-                                 int len, UIVec2 pos, UIColor32 color);
+EXPORT_MICROUI void mu_draw_text(mu_Context *ctx, const char *str, int len,
+                                 UIVec2 pos, UIColor32 color);
 EXPORT_MICROUI void mu_draw_icon(mu_Context *ctx, int id, UIRect rect,
                                  UIColor32 color);
 

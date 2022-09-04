@@ -49,11 +49,11 @@ inline MU_OPT operator&(MU_OPT L, MU_OPT R) {
       static_cast<std::underlying_type<MU_OPT>::type>(R));
 }
 
-mu_Context *mu_new(text_width_callback text_width,
-                   text_height_callback text_height) {
+mu_Context *mu_new(text_width_callback text_width_callback,
+                   text_height_callback text_height_callback) {
   auto ctx = new mu_Context;
-  ctx->text_width = (text_width_callback)text_width;
-  ctx->text_height = (text_height_callback)text_height;
+  ctx->style->text_width_callback = text_width_callback;
+  ctx->style->text_height_callback = text_height_callback;
   return ctx;
 }
 void mu_delete(mu_Context *ctx) { delete ctx; }
@@ -75,7 +75,7 @@ void mu_input_scroll(mu_Context *ctx, int x, int y) {
 }
 
 void mu_begin(mu_Context *ctx) {
-  assert(ctx->text_width && ctx->text_height);
+  assert(ctx->style->text_width_callback && ctx->style->text_height_callback);
   ctx->_command_stack.begin_frame();
   ctx->scroll_target = nullptr;
   ctx->_container.begin();
@@ -135,10 +135,10 @@ mu_Container *mu_get_container(mu_Context *ctx, const char *name) {
 ** commandlist
 **============================================================================*/
 
-void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
+void mu_draw_text(mu_Context *ctx, const char *str, int len,
                   UIVec2 pos, UIColor32 color) {
-  UIRect rect = UIRect(pos.x, pos.y, ctx->text_width(font, str, len),
-                       ctx->text_height(font));
+  UIRect rect = UIRect(pos.x, pos.y, ctx->style->text_width(str, len),
+                       ctx->style->text_height());
   auto clipped = ctx->_clip_stack.check_clip(rect);
   if (clipped == MU_CLIP::ALL) {
     return;
@@ -147,7 +147,7 @@ void mu_draw_text(mu_Context *ctx, mu_Font font, const char *str, int len,
     ctx->_command_stack.set_clip(ctx->_clip_stack.back());
   }
   // add command
-  ctx->_command_stack.push_text(str, len, pos, color, font);
+  ctx->_command_stack.push_text(str, len, pos, color, ctx->style->font);
   // reset clipping if it was set
   if (clipped != MU_CLIP::NONE) {
     ctx->_command_stack.set_clip(ctx->_clip_stack.unclipped_rect());
@@ -279,11 +279,10 @@ void mu_draw_control_frame(mu_Context *ctx, mu_Id id, UIRect rect, int colorid,
 
 void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
                           int colorid, MU_OPT opt) {
-  mu_Font font = ctx->style->font;
-  int tw = ctx->text_width(font, str, -1);
+  int tw = ctx->style->text_width(str, -1);
   ctx->_clip_stack.push(rect);
   UIVec2 pos;
-  pos.y = rect.y + (rect.h - ctx->text_height(font)) / 2;
+  pos.y = rect.y + (rect.h - ctx->style->text_height()) / 2;
   if (opt & MU_OPT_ALIGNCENTER) {
     pos.x = rect.x + (rect.w - tw) / 2;
   } else if (opt & MU_OPT_ALIGNRIGHT) {
@@ -291,17 +290,16 @@ void mu_draw_control_text(mu_Context *ctx, const char *str, UIRect rect,
   } else {
     pos.x = rect.x + ctx->style->padding;
   }
-  mu_draw_text(ctx, font, str, -1, pos, ctx->style->colors[colorid]);
+  mu_draw_text(ctx, str, -1, pos, ctx->style->colors[colorid]);
   ctx->_clip_stack.pop();
 }
 
 void mu_text(mu_Context *ctx, const char *text) {
   const char *start, *end, *p = text;
   int width = -1;
-  mu_Font font = ctx->style->font;
   UIColor32 color = ctx->style->colors[MU_STYLE_TEXT];
   mu_layout_begin_column(ctx);
-  ctx->layout_stack.back().row(1, &width, ctx->text_height(font));
+  ctx->layout_stack.back().row(1, &width, ctx->style->text_height());
   do {
     UIRect r = mu_layout_next(ctx);
     int w = 0;
@@ -311,14 +309,14 @@ void mu_text(mu_Context *ctx, const char *text) {
       while (*p && *p != ' ' && *p != '\n') {
         p++;
       }
-      w += ctx->text_width(font, word, p - word);
+      w += ctx->style->text_width(word, p - word);
       if (w > r.w && end != start) {
         break;
       }
-      w += ctx->text_width(font, p, 1);
+      w += ctx->style->text_width(p, 1);
       end = p++;
     } while (*end && *end != '\n');
-    mu_draw_text(ctx, font, start, end - start, UIVec2(r.x, r.y), color);
+    mu_draw_text(ctx, start, end - start, UIVec2(r.x, r.y), color);
     p = end + 1;
   } while (*end);
   mu_layout_end_column(ctx);
@@ -410,14 +408,13 @@ MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
   mu_draw_control_frame(ctx, id, r, MU_STYLE_BASE, opt);
   if (ctx->_input.has_focus(id)) {
     UIColor32 color = ctx->style->colors[MU_STYLE_TEXT];
-    mu_Font font = ctx->style->font;
-    int textw = ctx->text_width(font, buf, -1);
-    int texth = ctx->text_height(font);
+    int textw = ctx->style->text_width(buf, -1);
+    int texth = ctx->style->text_height();
     int ofx = r.w - ctx->style->padding - textw - 1;
     int textx = r.x + mu_min(ofx, ctx->style->padding);
     int texty = r.y + (r.h - texth) / 2;
     ctx->_clip_stack.push(r);
-    mu_draw_text(ctx, font, buf, -1, UIVec2(textx, texty), color);
+    mu_draw_text(ctx, buf, -1, UIVec2(textx, texty), color);
     ctx->draw_rect(UIRect(textx + textw, texty, 1, texth), color);
     ctx->_clip_stack.pop();
   } else {

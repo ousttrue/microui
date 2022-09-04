@@ -13,8 +13,6 @@
 #define MU_LAYOUTSTACK_SIZE 16
 #define MU_TREENODEPOOL_SIZE 48
 
-using text_width_callback = int (*)(mu_Font font, const char *str, int len);
-using text_height_callback = int (*)(mu_Font font);
 using draw_frame_callback = void (*)(struct mu_Context *ctx, UIRect rect,
                                      int colorid);
 
@@ -32,8 +30,6 @@ struct mu_Context {
   }
 
   // callbacks
-  text_width_callback text_width = nullptr;
-  text_height_callback text_height = nullptr;
   draw_frame_callback draw_frame = nullptr;
 
   MuHash _hash;

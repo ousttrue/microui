@@ -19,8 +19,14 @@ enum MU_STYLE {
   MU_STYLE_MAX
 };
 
+using text_width_callback = int (*)(mu_Font font, const char *str, int len);
+using text_height_callback = int (*)(mu_Font font);
+
 struct mu_Style {
   mu_Font font = nullptr;
+  text_width_callback text_width_callback = nullptr;
+  text_height_callback text_height_callback = nullptr;
+
   UIVec2 size = {68, 10};
   int padding = 5;
   int spacing = 4;
@@ -44,4 +50,10 @@ struct mu_Style {
       {43, 43, 43, 255},    /* MU_COLOR_SCROLLBASE */
       {30, 30, 30, 255}     /* MU_COLOR_SCROLLTHUMB */
   };
+
+  int text_width(const char *str, int len) const {
+    return text_width_callback(font, str, len);
+  }
+
+  int text_height() const { return text_height_callback(font); }
 };
