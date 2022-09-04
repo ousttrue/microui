@@ -1,4 +1,5 @@
 const Vec2 = @import("./Vec2.zig");
+const Rect = @import("./Rect.zig");
 const Hash = @import("./Hash.zig");
 const Container = @import("./Container.zig");
 
@@ -16,6 +17,27 @@ pub const KEY = enum(u32) {
     ALT = (1 << 2),
     BACKSPACE = (1 << 3),
     RETURN = (1 << 4),
+};
+
+pub const OPT = enum(u32) {
+    NONE = 0,
+    ALIGNCENTER = (1 << 0),
+    ALIGNRIGHT = (1 << 1),
+    NOINTERACT = (1 << 2),
+    NOFRAME = (1 << 3),
+    NORESIZE = (1 << 4),
+    NOSCROLL = (1 << 5),
+    NOCLOSE = (1 << 6),
+    NOTITLE = (1 << 7),
+    HOLDFOCUS = (1 << 8),
+    AUTOSIZE = (1 << 9),
+    POPUP = (1 << 10),
+    CLOSED = (1 << 11),
+    EXPANDED = (1 << 12),
+
+    pub fn contains(self: OPT, opt: OPT) bool {
+        return (@enumToInt(self) & @enumToInt(opt)) != 0;
+    }
 };
 
 const Self = @This();
@@ -66,34 +88,91 @@ pub fn end(self: *Self) MOUSE_BUTTON {
     return mouse_pressed;
 }
 
-//   void mousemove(int x, int y) { this->_mouse_pos = UIVec2(x, y); }
+//   void mousemove(int x, int y) { self._mouse_pos = UIVec2(x, y); }
 
 //   void mousedown(MU_MOUSE_BUTTON btn) {
-//     this->_mouse_down = this->_mouse_down | btn;
-//     this->_mouse_pressed = this->_mouse_pressed | btn;
+//     self._mouse_down = self._mouse_down | btn;
+//     self._mouse_pressed = self._mouse_pressed | btn;
 //   }
 
 //   void mouseup(MU_MOUSE_BUTTON btn) {
-//     this->_mouse_down = this->_mouse_down & static_cast<MU_MOUSE_BUTTON>(~btn);
+//     self._mouse_down = self._mouse_down & static_cast<MU_MOUSE_BUTTON>(~btn);
 //   }
 
 //   void scroll(int x, int y) {
-//     this->_scroll_delta.x += x;
-//     this->_scroll_delta.y += y;
+//     self._scroll_delta.x += x;
+//     self._scroll_delta.y += y;
 //   }
 
 //   void keydown(MU_KEY key) {
-//     this->_key_pressed = this->_key_pressed | key;
-//     this->_key_down = this->_key_down | key;
+//     self._key_pressed = self._key_pressed | key;
+//     self._key_down = self._key_down | key;
 //   }
 
 //   void keyup(MU_KEY key) {
-//     this->_key_down = this->_key_down & static_cast<MU_KEY>(~key);
+//     self._key_down = self._key_down & static_cast<MU_KEY>(~key);
 //   }
 
 //   void text(const char *text) {
-//     int len = strlen(this->_input_text);
+//     int len = strlen(self._input_text);
 //     int size = strlen(text) + 1;
-//     assert(len + size <= (int)sizeof(this->_input_text));
-//     memcpy(this->_input_text + len, text, size);
+//     assert(len + size <= (int)sizeof(self._input_text));
+//     memcpy(self._input_text + len, text, size);
 //   }
+
+pub fn set_focus(self: *Self, id: Hash.Id) void {
+    self.focus = id;
+    self.keep_focus = true;
+}
+
+pub fn set_keep_focus(self: *Self, id: Hash.Id) void {
+    if (self.focus == id) {
+        self.keep_focus = true;
+    }
+}
+
+pub fn has_focus(self: Self, id: Hash.Id) bool {
+    return self.focus == id;
+}
+
+pub fn set_hover(self: *Self, id: Hash.Id) void {
+    self.hover = id;
+}
+
+pub fn has_hover(self: Self, id: Hash.Id) bool {
+    return self.hover == id;
+}
+
+//   FOCUS_STATE get_focus_state(mu_Id id) const {
+//     return has_focus(id)  ? FOCUS_STATE_FOCUS
+//            : _hover == id ? FOCUS_STATE_HOVER
+//                           : FOCUS_STATE_NONE;
+//   }
+
+pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) void {
+    self.set_keep_focus(id);
+    if (opt.contains(.NOINTERACT)) {
+        return;
+    }
+
+    if (mouseover and self.mouse_down == .NONE) {
+        self.set_hover(id);
+    }
+
+    if (self.has_focus(id)) {
+        if (self.mouse_pressed != .NONE and !mouseover) {
+            self.set_focus(0);
+        }
+        if (self.mouse_down == .NONE and !opt.contains(.HOLDFOCUS)) {
+            self.set_focus(0);
+        }
+    }
+
+    if (self.has_hover(id)) {
+        if (self.mouse_pressed != .NONE) {
+            self.set_focus(id);
+        } else if (!mouseover) {
+            self.set_hover(0);
+        }
+    }
+}

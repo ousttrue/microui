@@ -30,7 +30,7 @@ pub fn end(self: Self) void {
 }
 
 pub fn create(self: *Self, data: []const u8) Id {
-    const res = if (self.stack.size() > 0) self.stack.back() else HASH_INITIAL;
+    const res = if (self.stack.size() > 0) self.stack.back_const() else HASH_INITIAL;
     self.last = calc_hash(res, data);
     return self.last;
 }

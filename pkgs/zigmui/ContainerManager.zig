@@ -11,27 +11,6 @@ const CONTAINERSTACK_SIZE = 32;
 const CONTAINERPOOL_SIZE = 48;
 const ROOTLIST_SIZE = 32;
 
-pub const OPT = enum(u32) {
-    NONE = 0,
-    ALIGNCENTER = (1 << 0),
-    ALIGNRIGHT = (1 << 1),
-    NOINTERACT = (1 << 2),
-    NOFRAME = (1 << 3),
-    NORESIZE = (1 << 4),
-    NOSCROLL = (1 << 5),
-    NOCLOSE = (1 << 6),
-    NOTITLE = (1 << 7),
-    HOLDFOCUS = (1 << 8),
-    AUTOSIZE = (1 << 9),
-    POPUP = (1 << 10),
-    CLOSED = (1 << 11),
-    EXPANDED = (1 << 12),
-
-    pub fn contains(self: OPT, opt: OPT) bool {
-        return (@enumToInt(self) & @enumToInt(opt)) != 0;
-    }
-};
-
 const Self = @This();
 
 // container pool managment
@@ -43,7 +22,7 @@ container_stack: Stack(*Container, CONTAINERSTACK_SIZE) = .{},
 
 // root window management
 last_zindex: i32 = 0,
-hover_root: ?*Container = null,
+hover_root: ?*const Container = null,
 next_hover_root: ?*Container = null,
 root_list: Stack(*Container, ROOTLIST_SIZE) = .{},
 root_window_ranges: [ROOTLIST_SIZE]c.struct_UICommandRange = undefined,
@@ -91,8 +70,7 @@ pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *c.struct_UI
     //     p.*.head = @intCast(u32, it.*.head);
     //     p.*.tail = @intCast(u32, it.*.tail);
     // }
-    for(self.root_list.slice())|root, i|
-    {
+    for (self.root_list.slice()) |root, i| {
         self.root_window_ranges[i].head = @intCast(u32, root.head);
         self.root_window_ranges[i].tail = @intCast(u32, root.tail);
     }
@@ -111,7 +89,7 @@ pub fn is_hover_root(self: Self, cnt: *Container) bool {
 }
 
 /// try to get existing container from pool
-pub fn get_container(self: *Self, id: Hash.Id, opt: OPT, frame: u32) ?*Container {
+pub fn get_container(self: *Self, id: Hash.Id, opt: Input.OPT, frame: u32) ?*Container {
     if (self.container_pool.get_index(id)) |idx| {
         if (self.containers[idx].open or !opt.contains(.CLOSED)) {
             self.container_pool.update(frame, idx);
@@ -137,7 +115,7 @@ pub fn get_container(self: *Self, id: Hash.Id, opt: OPT, frame: u32) ?*Container
 //   }
 
 pub fn current_container(self: *Self) *Container {
-    return self.container_stack.back();
+    return self.container_stack.back().*;
 }
 
 pub fn pop(self: *Self) void {
@@ -145,21 +123,22 @@ pub fn pop(self: *Self) void {
     self.container_stack.pop();
 }
 
-//   bool in_hover_root() const {
-//     int i = _container_stack.size();
-//     while (i--) {
-//       if (_container_stack.get(i) == _hover_root) {
-//         return true;
-//       }
-//       /* only root containers have their `head` field set; stop searching if
-//        *we've
-//        ** reached the current root container */
-//       if (_container_stack.get(i).range.head) {
-//         break;
-//       }
-//     }
-//     return false;
-//   }
+pub fn in_hover_root(self: Self) bool {
+    if (self.hover_root) |hover_root| {
+        var i = @intCast(i32, self.container_stack.size());
+        while (i >= 0) : (i -= 1) {
+            if (self.container_stack.get_const(@intCast(u32, i)).* == hover_root) {
+                return true;
+            }
+            // only root containers have their `head` field set; stop searching if
+            // we've reached the current root container
+            if (self.container_stack.get_const(@intCast(u32, i)).*.head > 0) {
+                break;
+            }
+        }
+    }
+    return false;
+}
 
 pub fn begin_root_container(self: *Self, cnt: *Container, command_head: usize, mouse_pos: Vec2) void {
     self.container_stack.push(cnt);

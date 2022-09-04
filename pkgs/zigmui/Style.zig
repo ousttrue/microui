@@ -18,7 +18,13 @@ pub const STYLE = enum(u32) {
     MAX,
 };
 
+pub const text_width_callback = fn (_: ?*anyopaque, text: [*c]const u8, _len: c_int) callconv(.C) c_int;
+pub const text_height_callback = fn (_: ?*anyopaque) callconv(.C) c_int;
+
 const Self = @This();
+text_width_callback: ?*const text_width_callback = null,
+text_height_callback: ?*const text_height_callback = null,
+
 font: ?*anyopaque = null,
 size: Vec2 = .{ .x = 68, .y = 10 },
 padding: c_int = 5,
@@ -43,3 +49,19 @@ colors: [@enumToInt(STYLE.MAX)]Color32 = .{
     .{ .r = 43, .g = 43, .b = 43, .a = 255 }, // MU_COLOR_SCROLLBASE
     .{ .r = 30, .g = 30, .b = 30, .a = 255 }, // MU_COLOR_SCROLLTHUMB
 },
+
+pub fn text_width(self: Self, str: []const u8) c_int {
+    if (self.text_width_callback) |callback| {
+        return callback.*(self.font, &str[0], @intCast(c_int, str.len));
+    } else {
+        unreachable;
+    }
+}
+
+pub fn text_height(self: Self) c_int {
+    if (self.text_height_callback) |callback| {
+        return callback.*(self.font);
+    } else {
+        unreachable;
+    }
+}

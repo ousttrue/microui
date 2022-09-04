@@ -72,10 +72,12 @@ pub fn main() anyerror!void {
     c.r_init();
 
     // init microui
-    const ctx = try allocator.create(zigmui.Context);
+    var ctx = try allocator.create(zigmui.Context);
     defer allocator.destroy(ctx);
-    ctx.* = zigmui.Context.init(&text_width, &text_height);
-    defer ctx.deinit();
+    ctx.* = zigmui.Context{};
+    var style = &ctx.command_drawer.style;
+    style.text_width_callback = &text_width;
+    style.text_height_callback = &text_height;
     c.glfwSetWindowUserPointer(window, ctx);
 
     _ = c.glfwSetCursorPosCallback(window, cursor_position_callback);

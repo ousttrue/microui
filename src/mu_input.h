@@ -150,7 +150,7 @@ public:
                           : FOCUS_STATE_NONE;
   }
 
-  void update_focus_hover(mu_Id id, UIRect rect, MU_OPT opt, bool mouseover) {
+  void update_focus_hover(mu_Id id, MU_OPT opt, bool mouseover) {
     this->keep_focus(id);
     if (opt & MU_OPT_NOINTERACT) {
       return;

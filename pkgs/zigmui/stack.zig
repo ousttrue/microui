@@ -22,17 +22,20 @@ pub fn Stack(comptime T: type, comptime N: usize) type {
             return &self.items[i];
         }
 
-        // T &back() {
-        //     assert(idx > 0);
-        //     return items[idx - 1];
-        // }
+        pub fn get_const(self: Self, i: usize) *const T {
+            return &self.items[i];
+        }
 
         pub fn grow(self: *Self, n: usize) void {
             std.debug.assert(self.idx + n < N);
             self.idx += n;
         }
 
-        pub fn back(self: Self) T {
+        pub fn back(self: *Self) *T {
+            return &self.items[self.idx - 1];
+        }
+
+        pub fn back_const(self: Self) T {
             return self.items[self.idx - 1];
         }
 

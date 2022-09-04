@@ -7,6 +7,8 @@ y: i32 = 0,
 w: i32 = 0,
 h: i32 = 0,
 
+pub const UNCLIPPED_RECT = Self{ .x = 0, .y = 0, .w = 0x1000000, .h = 0x1000000 };
+
 pub fn expand(self: Self, n: i32) Self {
     return Self{
         .x = self.x - n,
