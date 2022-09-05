@@ -24,18 +24,18 @@ const colors = [_]struct {
 
 fn style_window(ctx: *zigmui.Context) void {
     if (zigmui.widgets.begin_window(ctx, "Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) |_| {
-        //     int sw = mu_get_current_container(ctx)->body.w * 0.14;
+        //     int sw = mu_get_current_container(ctx).body.w * 0.14;
         //     {
         //       int widths[] = {80, sw, sw, sw, sw, -1};
-        //       ctx->layout_stack.back().row(6, widths, 0);
+        //       ctx.layout_stack.back().row(6, widths, 0);
         //     }
         //     for (int i = 0; colors[i].label; i++) {
         //       mu_label(ctx, colors[i].label);
-        //       uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
-        //       uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
-        //       uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
-        //       uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-        //       ctx->draw_rect(mu_layout_next(ctx), ctx->style->colors[i]);
+        //       uint8_slider(ctx, &ctx.style.colors[i].r, 0, 255);
+        //       uint8_slider(ctx, &ctx.style.colors[i].g, 0, 255);
+        //       uint8_slider(ctx, &ctx.style.colors[i].b, 0, 255);
+        //       uint8_slider(ctx, &ctx.style.colors[i].a, 0, 255);
+        //       ctx.draw_rect(mu_layout_next(ctx), ctx.style.colors[i]);
         //     }
         zigmui.widgets.end_window(ctx);
     }
@@ -47,18 +47,18 @@ fn log_window(ctx: *zigmui.Context) void {
         //     /* output text panel */
         //     {
         //       int widths[] = {-1};
-        //       ctx->layout_stack.back().row(1, widths, -25);
+        //       ctx.layout_stack.back().row(1, widths, -25);
         //     }
         //     mu_begin_panel(ctx, "Log Output");
         //     auto panel = mu_get_current_container(ctx);
         //     {
         //       int widths[] = {-1};
-        //       ctx->layout_stack.back().row(1, widths, -1);
+        //       ctx.layout_stack.back().row(1, widths, -1);
         //     }
         //     mu_text(ctx, logbuf);
         //     mu_end_panel(ctx);
         //     if (logbuf_updated) {
-        //       panel->scroll.y = panel->content_size.y;
+        //       panel.scroll.y = panel.content_size.y;
         //       logbuf_updated = 0;
         //     }
 
@@ -67,10 +67,10 @@ fn log_window(ctx: *zigmui.Context) void {
         //     int submitted = 0;
         //     {
         //       int widths[] = {-70, -1};
-        //       ctx->layout_stack.back().row(2, widths, 0);
+        //       ctx.layout_stack.back().row(2, widths, 0);
         //     }
         //     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-        //       ctx->set_focus(ctx->last_id);
+        //       ctx.set_focus(ctx.last_id);
         //       submitted = 1;
         //     }
         //     if (mu_button(ctx, "Submit")) {
@@ -88,23 +88,23 @@ fn log_window(ctx: *zigmui.Context) void {
 fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
     _ = bg;
     if (zigmui.widgets.begin_window(ctx, "Demo Window", .{ .x = 40, .y = 40, .w = 300, .h = 450 }, .NONE)) |_| {
-        // auto win = mu_get_current_container(ctx);
-        // win->rect.w = mu_max(win->rect.w, 240);
-        // win->rect.h = mu_max(win->rect.h, 300);
+        const win = ctx.container.current_container();
+        win.rect.w = std.math.max(win.rect.w, 240);
+        win.rect.h = std.math.max(win.rect.h, 300);
 
-        // /* window info */
-        // if (mu_header(ctx, "Window Info")) {
+        // window info
+        // if (zigmui.widgets.header(ctx, "Window Info", .{})) |_| {
         //   auto win = mu_get_current_container(ctx);
         //   char buf[64];
         //   {
         //     int widths[] = {54, -1};
-        //     ctx->layout_stack.back().row(2, widths, 0);
+        //     ctx.layout_stack.back().row(2, widths, 0);
         //   }
         //   mu_label(ctx, "Position:");
-        //   sprintf(buf, "%d, %d", win->rect.x, win->rect.y);
+        //   sprintf(buf, "%d, %d", win.rect.x, win.rect.y);
         //   mu_label(ctx, buf);
         //   mu_label(ctx, "Size:");
-        //   sprintf(buf, "%d, %d", win->rect.w, win->rect.h);
+        //   sprintf(buf, "%d, %d", win.rect.w, win.rect.h);
         //   mu_label(ctx, buf);
         // }
 
@@ -112,7 +112,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         // if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
         //   {
         //     int widths[] = {86, -110, -1};
-        //     ctx->layout_stack.back().row(3, widths, 0);
+        //     ctx.layout_stack.back().row(3, widths, 0);
         //   }
         //   mu_label(ctx, "Test buttons 1:");
         //   if (mu_button(ctx, "Button 1")) {
@@ -139,7 +139,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         // if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
         //   {
         //     int widths[] = {140, -1};
-        //     ctx->layout_stack.back().row(2, widths, 0);
+        //     ctx.layout_stack.back().row(2, widths, 0);
         //   }
         //   mu_layout_begin_column(ctx);
         //   if (mu_begin_treenode(ctx, "Test 1")) {
@@ -162,7 +162,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   if (mu_begin_treenode(ctx, "Test 2")) {
         //     {
         //       int widths[] = {54, 54};
-        //       ctx->layout_stack.back().row(2, widths, 0);
+        //       ctx.layout_stack.back().row(2, widths, 0);
         //     }
         //     if (mu_button(ctx, "Button 3")) {
         //       write_log("Pressed button 3");
@@ -190,7 +190,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   mu_layout_begin_column(ctx);
         //   {
         //     int widths[] = {-1};
-        //     ctx->layout_stack.back().row(1, widths, 0);
+        //     ctx.layout_stack.back().row(1, widths, 0);
         //   }
         //   mu_text(
         //       ctx,
@@ -204,13 +204,13 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         // if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
         //   {
         //     int widths[] = {-78, -1};
-        //     ctx->layout_stack.back().row(2, widths, 74);
+        //     ctx.layout_stack.back().row(2, widths, 74);
         //   }
         //   /* sliders */
         //   mu_layout_begin_column(ctx);
         //   {
         //     int widths[] = {46, -1};
-        //     ctx->layout_stack.back().row(2, widths, 0);
+        //     ctx.layout_stack.back().row(2, widths, 0);
         //   }
         //   mu_label(ctx, "Red:");
         //   mu_slider(ctx, &bg[0], 0, 255);
@@ -221,7 +221,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   mu_layout_end_column(ctx);
         //   /* color preview */
         //   UIRect r = mu_layout_next(ctx);
-        //   ctx->draw_rect(r, mu_Color(bg[0], bg[1], bg[2], 255));
+        //   ctx.draw_rect(r, mu_Color(bg[0], bg[1], bg[2], 255));
         //   char buf[32];
         //   sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
         //   mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);

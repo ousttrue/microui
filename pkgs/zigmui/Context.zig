@@ -10,6 +10,7 @@ const CommandDrawer = @import("./CommandDrawer.zig");
 const Input = @import("./Input.zig");
 const LayoutManager = @import("./LayoutManager.zig");
 const Layout = @import("./Layout.zig");
+const Tree = @import("./Tree.zig");
 
 const ROOTLIST_SIZE = 32;
 const COMMANDLIST_SIZE = 256 * 1024;
@@ -22,6 +23,7 @@ container: ContainerManager = .{},
 command_drawer: CommandDrawer = .{},
 input: Input = .{},
 layout: LayoutManager = .{},
+tree: Tree = .{},
 
 command_groups: [ROOTLIST_SIZE]c.struct_UICommandRange = undefined,
 command_buffer: [COMMANDLIST_SIZE]u8 = undefined,
