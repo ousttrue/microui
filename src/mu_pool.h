@@ -35,7 +35,7 @@ public:
     return n;
   }
 
-  int get_index(mu_Id id) {
+  int get_index(mu_Id id) const {
     for (int i = 0; i < N; i++) {
       if (items[i].id == id) {
         return i;

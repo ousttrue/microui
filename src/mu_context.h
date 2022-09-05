@@ -5,10 +5,10 @@
 #include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
+#include "mu_tree.h"
 #include <assert.h>
 
 const auto MU_MAX_FMT = 127;
-const auto MU_TREENODEPOOL_SIZE = 48;
 
 struct mu_Context {
   MuHash _hash;
@@ -17,10 +17,9 @@ struct mu_Context {
   CommandDrawer _command_drawer;
   MuLayoutManager _layout;
   mu_Input _input;
-
+  TreeManager _tree;
   char number_edit_buf[MU_MAX_FMT] = {0};
   mu_Id number_edit = 0;
-  mu_Pool<MU_TREENODEPOOL_SIZE> treenode_pool;
 
 public:
   // avoid copy

@@ -351,7 +351,7 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
 static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
                      MU_OPT opt) {
   mu_Id id = ctx->_hash.create(label, strlen(label));
-  int idx = ctx->treenode_pool.get_index(id);
+  int idx = ctx->_tree.get(id);
   int width = -1;
   ctx->_layout.back().row(1, &width, 0);
 
@@ -367,15 +367,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
              ctx->_input.has_focus(id));
 
   // update pool ref
-  if (idx >= 0) {
-    if (active) {
-      ctx->treenode_pool.update(ctx->frame, idx);
-    } else {
-      ctx->treenode_pool.clear(idx);
-    }
-  } else if (active) {
-    ctx->treenode_pool.init(ctx->frame, id);
-  }
+  ctx->_tree.update(id, idx, active, ctx->frame);
 
   // draw
   if (istreenode) {
