@@ -8,6 +8,8 @@ const Container = @import("./Container.zig");
 const ContainerManager = @import("./ContainerManager.zig");
 const CommandDrawer = @import("./CommandDrawer.zig");
 const Input = @import("./Input.zig");
+const LayoutManager = @import("./LayoutManager.zig");
+const Layout = @import("./Layout.zig");
 const RES = enum(u32) {
     ACTIVE = (1 << 0),
     SUBMIT = (1 << 1),
@@ -24,6 +26,7 @@ hash: Hash = .{},
 container: ContainerManager = .{},
 command_drawer: CommandDrawer = .{},
 input: Input = .{},
+layout: LayoutManager = .{},
 
 command_groups: [ROOTLIST_SIZE]c.struct_UICommandRange = undefined,
 command_buffer: [COMMANDLIST_SIZE]u8 = undefined,
@@ -50,7 +53,7 @@ pub fn begin(self: *Self) void {
 
 pub fn end(self: *Self, command: *c.UIRenderFrame) !void {
     self.hash.end();
-    //   self.layout.end();
+    self.layout.end();
     const mouse_pressed = self.input.end();
     self.container.end(mouse_pressed, command);
     self.command_drawer.end(command);
@@ -193,7 +196,7 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
         self.scrollbars(cnt, &body);
     }
     const style = self.command_drawer.style;
-    // self.layout.push(mu_Layout(body.expand(-style.padding), cnt.scroll));
+    self.layout.layout_stack.push(Layout.create(body.expand(-style.padding), cnt.scroll));
     cnt.body = body;
 
     // do `resize` handle
@@ -216,12 +219,12 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
         }
     }
 
-    //   // resize to content size
-    //   if (opt & MU_OPT_AUTOSIZE) {
-    //     UIRect r = self.layout.back().body;
-    //     cnt.rect.w = cnt.content_size.x + (cnt.rect.w - r.w);
-    //     cnt.rect.h = cnt.content_size.y + (cnt.rect.h - r.h);
-    //   }
+    // resize to content size
+    if (opt.has(.AUTOSIZE)) {
+        const r = self.layout.layout_stack.back_const().body;
+        cnt.rect.w = cnt.content_size.x + (cnt.rect.w - r.w);
+        cnt.rect.h = cnt.content_size.y + (cnt.rect.h - r.h);
+    }
 
     // close if this is a popup window and elsewhere was clicked
     if (opt.has(.POPUP) and self.input.mouse_pressed != .NONE) {
@@ -235,19 +238,22 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
 }
 
 pub fn end_window(self: *Self) void {
+    // body
     self.command_drawer.clip_stack.pop();
+
     // push tail 'goto' jump command and set head 'skip' command. the final steps
     // on initing these are done in mu_end()
-    const cnt = self.container.current_container();
+    var cnt = self.container.current_container();
     cnt.tail = self.command_drawer.pos;
+
     // pop base clip rect and container
     self.command_drawer.clip_stack.pop();
 
     // apply layout size
-    // const layout = self.layout.pop();
-    // // auto cnt = self.container.current_container();
-    // cnt.content_size.x = layout.max.x - layout.body.x;
-    // cnt.content_size.y = layout.max.y - layout.body.y;
+    const layout = self.layout.layout_stack.back_const();
+    self.layout.layout_stack.pop();
+    cnt.content_size.x = layout.max.x - layout.body.x;
+    cnt.content_size.y = layout.max.y - layout.body.y;
 
     self.container.pop();
     self.hash.pop();
