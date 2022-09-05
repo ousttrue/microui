@@ -142,15 +142,13 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
     // root-container being clipped to the outer */
     self.command_drawer.clip_stack.push_unclipped_rect();
 
-    var body = cnt.rect;
-    // rect = body;
-
     // draw frame
     if (!opt.has(.NOFRAME)) {
         self.command_drawer.draw_frame(cnt.rect, .WINDOWBG);
     }
 
     // do title bar
+    var body = cnt.rect;
     if (!opt.has(.NOTITLE)) {
         var tr = cnt.rect;
         const style = self.command_drawer.style;
@@ -225,14 +223,14 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
     //     cnt.rect.h = cnt.content_size.y + (cnt.rect.h - r.h);
     //   }
 
-    //   // close if this is a popup window and elsewhere was clicked
-    //   if (opt & MU_OPT_POPUP && self.input.mouse_pressed()) {
-    //     if (!self.container.is_hover_root(cnt)) {
-    //       cnt.open = false;
-    //     }
-    //   }
+    // close if this is a popup window and elsewhere was clicked
+    if (opt.has(.POPUP) and self.input.mouse_pressed != .NONE) {
+        if (!self.container.is_hover_root(cnt)) {
+            cnt.open = false;
+        }
+    }
 
-    //   self.command_drawer.push_clip(cnt.body);
+    self.command_drawer.clip_stack.push(cnt.body);
     return .ACTIVE;
 }
 
@@ -243,11 +241,14 @@ pub fn end_window(self: *Self) void {
     const cnt = self.container.current_container();
     cnt.tail = self.command_drawer.pos;
     // pop base clip rect and container
-    // self.command_drawer.pop_clip();
+    self.command_drawer.clip_stack.pop();
+
+    // apply layout size
     // const layout = self.layout.pop();
     // // auto cnt = self.container.current_container();
     // cnt.content_size.x = layout.max.x - layout.body.x;
     // cnt.content_size.y = layout.max.y - layout.body.y;
+
     self.container.pop();
     self.hash.pop();
 }
