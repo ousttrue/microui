@@ -185,9 +185,9 @@ pub fn draw_control_text(
     const tw = self.style.text_width(str);
     var pos = Vec2{};
     pos.y = rect.y + @divTrunc((rect.h - self.style.text_height()), @as(i32, 2));
-    if (opt.contains(.ALIGNCENTER)) {
+    if (opt.has(.ALIGNCENTER)) {
         pos.x = rect.x + @divTrunc(rect.w - tw, 2);
-    } else if (opt.contains(.ALIGNRIGHT)) {
+    } else if (opt.has(.ALIGNRIGHT)) {
         pos.x = rect.x + rect.w - tw - self.style.padding;
     } else {
         pos.x = rect.x + self.style.padding;

@@ -39,7 +39,7 @@ pub const OPT = enum(u32) {
     CLOSED = (1 << 11),
     EXPANDED = (1 << 12),
 
-    pub fn contains(self: OPT, opt: OPT) bool {
+    pub fn has(self: OPT, opt: OPT) bool {
         return (@enumToInt(self) & @enumToInt(opt)) != 0;
     }
 };
@@ -90,6 +90,10 @@ pub fn end(self: *Self) MOUSE_BUTTON {
     self.last_mouse_pos = self.mouse_pos;
 
     return mouse_pressed;
+}
+
+pub fn set_scroll_target(self: *Self, cnt: *Container) void {
+    self.scroll_target = cnt;
 }
 
 pub fn input_mousemove(self: *Self, x: i32, y: i32) void {
@@ -157,7 +161,7 @@ pub fn has_hover(self: Self, id: Hash.Id) bool {
 
 pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) void {
     self.set_keep_focus(id);
-    if (opt.contains(.NOINTERACT)) {
+    if (opt.has(.NOINTERACT)) {
         return;
     }
 
@@ -169,7 +173,7 @@ pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) v
         if (self.mouse_pressed != .NONE and !mouseover) {
             self.set_focus(0);
         }
-        if (self.mouse_down == .NONE and !opt.contains(.HOLDFOCUS)) {
+        if (self.mouse_down == .NONE and !opt.has(.HOLDFOCUS)) {
             self.set_focus(0);
         }
     }

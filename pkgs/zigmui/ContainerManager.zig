@@ -91,13 +91,13 @@ pub fn is_hover_root(self: Self, cnt: *Container) bool {
 /// try to get existing container from pool
 pub fn get_container(self: *Self, id: Hash.Id, opt: Input.OPT, frame: u32) ?*Container {
     if (self.container_pool.get_index(id)) |idx| {
-        if (self.containers[idx].open or !opt.contains(.CLOSED)) {
+        if (self.containers[idx].open or !opt.has(.CLOSED)) {
             self.container_pool.update(frame, idx);
         }
         return &self.containers[idx];
     }
 
-    if (opt.contains(.CLOSED)) {
+    if (opt.has(.CLOSED)) {
         return null;
     }
 

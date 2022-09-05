@@ -1,8 +1,10 @@
 const std = @import("std");
 const c = @import("c");
 const Rect = @import("./Rect.zig");
+const Vec2 = @import("./Vec2.zig");
 const Color32 = @import("./Color32.zig");
 const Hash = @import("./Hash.zig");
+const Container = @import("./Container.zig");
 const ContainerManager = @import("./ContainerManager.zig");
 const CommandDrawer = @import("./CommandDrawer.zig");
 const Input = @import("./Input.zig");
@@ -54,6 +56,71 @@ pub fn end(self: *Self, command: *c.UIRenderFrame) !void {
     self.command_drawer.end(command);
 }
 
+pub fn scrollbar(self: *Self, cnt: *Container, b: *Rect, cs: Vec2, key: []const u8) void {
+    // only add scrollbar if content size is larger than body
+    const maxscroll = cs.y - b.h;
+    if (maxscroll > 0 and b.h > 0) {
+        // UIRect base, thumb;
+        const id = self.hash.create(key);
+
+        // get sizing / positioning
+        var base = Rect{};
+        base = b.*;
+        base.x = b.x + b.w;
+        const style = self.command_drawer.style;
+        base.w = style.scrollbar_size;
+
+        // handle input
+        const mouseover = self.mouse_over(base);
+        self.input.update_focus_hover(id, .NONE, mouseover);
+        if (self.input.has_focus(id) and
+            self.input.mouse_down == .LEFT)
+        {
+            cnt.scroll.y += self.input.mouse_delta.y * @divTrunc(cs.y, base.h);
+        }
+        // clamp scroll to limits
+        cnt.scroll.y = std.math.clamp(cnt.scroll.y, 0, maxscroll);
+
+        // draw base and thumb
+        self.command_drawer.draw_frame(base, .SCROLLBASE);
+        var thumb = base;
+        thumb.h = std.math.max(style.thumb_size, base.h * @divTrunc(b.h, cs.y));
+        thumb.y += @divTrunc(cnt.scroll.y * (base.h - thumb.h), maxscroll);
+        self.command_drawer.draw_frame(thumb, .SCROLLTHUMB);
+
+        // set this as the scroll_target (will get scrolled on mousewheel)
+        // if the mouse is over it
+        if (self.mouse_over(b.*)) {
+            self.input.set_scroll_target(cnt);
+        }
+    } else {
+        cnt.scroll.y = 0;
+    }
+}
+
+pub fn scrollbars(self: *Self, cnt: *Container, body: *Rect) void {
+    self.command_drawer.clip_stack.push(body.*);
+    defer self.command_drawer.clip_stack.pop();
+
+    // resize body to make room for scrollbars
+    const style = self.command_drawer.style;
+    const sz = style.scrollbar_size;
+    var cs = cnt.content_size;
+    cs.x += style.padding * 2;
+    cs.y += style.padding * 2;
+    if (cs.y > cnt.body.h) {
+        body.w -= sz;
+    }
+    if (cs.x > cnt.body.w) {
+        body.h -= sz;
+    }
+
+    // to create a horizontal or vertical scrollbar almost-identical code is
+    // used; only the references to `x|y` `w|h` need to be switched */
+    self.scrollbar(cnt, body, cs, "!scrollbary"); // x, y, w, h);
+    // scrollbar(ctx, cnt, body, cs, "!scrollbarx"); // y, x, h, w);
+}
+
 pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) ?RES {
     const id = self.hash.create(title);
     const cnt = self.container.get_container(id, opt, self.frame) orelse {
@@ -79,12 +146,12 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
     // rect = body;
 
     // draw frame
-    if (!opt.contains(.NOFRAME)) {
+    if (!opt.has(.NOFRAME)) {
         self.command_drawer.draw_frame(cnt.rect, .WINDOWBG);
     }
 
     // do title bar
-    if (!opt.contains(.NOTITLE)) {
+    if (!opt.has(.NOTITLE)) {
         var tr = cnt.rect;
         const style = self.command_drawer.style;
         tr.h = style.title_height;
@@ -108,7 +175,7 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
         }
 
         // do `close` button
-        if (!opt.contains(.NOCLOSE)) {
+        if (!opt.has(.NOCLOSE)) {
             const close_id = self.hash.create("!close");
             const r = Rect{ .x = tr.x + tr.w - tr.h, .y = tr.y, .w = tr.h, .h = tr.h };
             tr.w -= r.w;
@@ -124,22 +191,32 @@ pub fn begin_window(self: *Self, title: []const u8, rect: Rect, opt: Input.OPT) 
         }
     }
 
-    //   push_container_body(ctx, cnt, body, opt);
+    if (!opt.has(.NOSCROLL)) {
+        self.scrollbars(cnt, &body);
+    }
+    const style = self.command_drawer.style;
+    // self.layout.push(mu_Layout(body.expand(-style.padding), cnt.scroll));
+    cnt.body = body;
 
-    //   // do `resize` handle
-    //   if (~opt & MU_OPT_NORESIZE) {
-    //     auto style = self.command_drawer.style();
-    //     int sz = style.title_height;
-    //     mu_Id id = self.hash.create("!resize", 7);
-    //     UIRect r = UIRect(rect.x + rect.w - sz, rect.y + rect.h - sz, sz, sz);
-    //     auto mouseover = ctx.mouse_over(r);
-    //     self.input.update_focus_hover(id, r, opt, mouseover);
-    //     if (self.input.has_focus(id) &&
-    //         self.input.mouse_down() == MU_MOUSE_LEFT) {
-    //       cnt.rect.w = mu_max(96, cnt.rect.w + self.input.mouse_delta().x);
-    //       cnt.rect.h = mu_max(64, cnt.rect.h + self.input.mouse_delta().y);
-    //     }
-    //   }
+    // do `resize` handle
+    if (!opt.has(.NORESIZE)) {
+        const sz = style.title_height;
+        const resize_id = self.hash.create("!resize");
+        const r = Rect{
+            .x = cnt.rect.x + cnt.rect.w - sz,
+            .y = cnt.rect.y + cnt.rect.h - sz,
+            .w = sz,
+            .h = sz,
+        };
+        const mouseover = self.mouse_over(r);
+        self.input.update_focus_hover(resize_id, opt, mouseover);
+        if (self.input.has_focus(resize_id) and
+            self.input.mouse_down == .LEFT)
+        {
+            cnt.rect.w = std.math.max(96, cnt.rect.w + self.input.mouse_delta.x);
+            cnt.rect.h = std.math.max(64, cnt.rect.h + self.input.mouse_delta.y);
+        }
+    }
 
     //   // resize to content size
     //   if (opt & MU_OPT_AUTOSIZE) {

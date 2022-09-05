@@ -481,16 +481,6 @@ static void scrollbars(mu_Context *ctx, mu_Container *cnt, UIRect *body) {
   ctx->_command_drawer.pop_clip();
 }
 
-static void push_container_body(mu_Context *ctx, mu_Container *cnt, UIRect body,
-                                MU_OPT opt) {
-  if (~opt & MU_OPT_NOSCROLL) {
-    scrollbars(ctx, cnt, &body);
-  }
-  auto style = ctx->_command_drawer.style();
-  ctx->_layout.push(mu_Layout(body.expand(-style->padding), cnt->scroll));
-  cnt->body = body;
-}
-
 MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
                        MU_OPT opt) {
   mu_Id id = ctx->_hash.create(title, strlen(title));
@@ -557,7 +547,12 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     }
   }
 
-  push_container_body(ctx, cnt, body, opt);
+  if (~opt & MU_OPT_NOSCROLL) {
+    scrollbars(ctx, cnt, &body);
+  }
+  auto style = ctx->_command_drawer.style();
+  ctx->_layout.push(mu_Layout(body.expand(-style->padding), cnt->scroll));
+  cnt->body = body;
 
   // do `resize` handle
   if (~opt & MU_OPT_NORESIZE) {
@@ -631,7 +626,14 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
     ctx->_command_drawer.draw_frame(cnt->rect, MU_STYLE_PANELBG);
   }
   ctx->_container.push(cnt);
-  push_container_body(ctx, cnt, cnt->rect, opt);
+
+  if (~opt & MU_OPT_NOSCROLL) {
+    scrollbars(ctx, cnt, &cnt->rect);
+  }
+  // auto style = ctx->_command_drawer.style();
+  ctx->_layout.push(mu_Layout(cnt->rect.expand(-style->padding), cnt->scroll));
+  cnt->body = cnt->rect;
+
   ctx->_command_drawer.push_clip(cnt->body);
 }
 
