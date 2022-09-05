@@ -398,7 +398,7 @@ MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
   auto res = header(ctx, label, 1, opt);
   if (res & MU_RES_ACTIVE) {
     auto style = ctx->_command_drawer.style();
-    ctx->_layout.back().indent += style->indent;
+    ctx->_layout.back().add_indent(style->indent);
     ctx->_hash.push_last();
   }
   return res;
@@ -406,7 +406,7 @@ MU_RES mu_begin_treenode_ex(mu_Context *ctx, const char *label, MU_OPT opt) {
 
 void mu_end_treenode(mu_Context *ctx) {
   auto style = ctx->_command_drawer.style();
-  ctx->_layout.back().indent -= style->indent;
+  ctx->_layout.back().add_indent(-style->indent);
   ctx->_hash.pop();
 }
 
@@ -563,9 +563,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
   // resize to content size
   if (opt & MU_OPT_AUTOSIZE) {
-    UIRect r = ctx->_layout.back().body;
-    cnt->rect.w = cnt->content_size.x + (cnt->rect.w - r.w);
-    cnt->rect.h = cnt->content_size.y + (cnt->rect.h - r.h);
+    ctx->_layout.back().resize_container(cnt);
   }
 
   // close if this is a popup window and elsewhere was clicked
@@ -581,16 +579,18 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
 void mu_end_window(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
-  /* push tail 'goto' jump command and set head 'skip' command. the final steps
-  ** on initing these are done in mu_end() */
+
+  // push tail 'goto' jump command and set head 'skip' command. the final steps
+  // on initing these are done in mu_end()
   auto cnt = ctx->_container.current_container();
   cnt->range.tail = ctx->_command_drawer.size();
+
   // pop base clip rect and container
   ctx->_command_drawer.pop_clip();
+
   auto layout = ctx->_layout.pop();
-  // auto cnt = ctx->_container.current_container();
-  cnt->content_size.x = layout->max.x - layout->body.x;
-  cnt->content_size.y = layout->max.y - layout->body.y;
+  layout->fit(cnt);
+  
   ctx->_container.pop();
   ctx->_hash.pop();
 }
@@ -633,8 +633,7 @@ void mu_end_panel(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
   auto layout = ctx->_layout.pop();
   auto cnt = ctx->_container.current_container();
-  cnt->content_size.x = layout->max.x - layout->body.x;
-  cnt->content_size.y = layout->max.y - layout->body.y;
+  layout->fit(cnt);
   ctx->_container.pop();
   ctx->_hash.pop();
 }

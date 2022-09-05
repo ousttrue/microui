@@ -1,4 +1,5 @@
 #pragma once
+#include "mu_container.h"
 #include "mu_stack.h"
 #include "mu_style.h"
 #include <UIRenderFrame.h>
@@ -10,7 +11,9 @@ const int MU_MAX_WIDTHS = 16;
 
 enum LAYOUT { LAYOUT_NONE, LAYOUT_RELATIVE = 1, LAYOUT_ABSOLUTE = 2 };
 
-struct mu_Layout {
+class mu_Layout {
+  friend class MuLayoutManager;
+
   UIRect body;
   UIRect next;
   UIVec2 position;
@@ -23,6 +26,7 @@ struct mu_Layout {
   LAYOUT next_type = LAYOUT_NONE;
   int indent = 0;
 
+public:
   mu_Layout() {
     int width = 0;
     row(1, &width, 0);
@@ -33,6 +37,16 @@ struct mu_Layout {
     this->max = UIVec2(-0x1000000, -0x1000000);
     int width = 0;
     row(1, &width, 0);
+  }
+
+  void add_indent(int x) { indent += x; }
+  void resize_container(mu_Container *cnt) const {
+    cnt->rect.w = cnt->content_size.x + (cnt->rect.w - body.w);
+    cnt->rect.h = cnt->content_size.y + (cnt->rect.h - body.h);
+  }
+  void fit(mu_Container *cnt) const {
+    cnt->content_size.x = max.x - body.x;
+    cnt->content_size.y = max.y - body.y;
   }
 
   void row(int items, const int *widths, int height) {
@@ -54,10 +68,7 @@ class MuLayoutManager {
 public:
   void end() { assert(_layout_stack.size() == 0); }
 
-  void push(const mu_Layout &layout)
-  {
-    _layout_stack.push(layout);
-  }
+  void push(const mu_Layout &layout) { _layout_stack.push(layout); }
   mu_Layout &back() { return _layout_stack.back(); }
   mu_Layout *pop() {
     auto back = &_layout_stack.back();
