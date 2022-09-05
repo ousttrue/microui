@@ -12,7 +12,13 @@
         "utility": "cpp",
         "xmemory": "cpp",
         "xutility": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "algorithm": "cpp",
+        "limits": "cpp",
+        "array": "cpp",
+        "bit": "cpp",
+        "initializer_list": "cpp",
+        "type_traits": "cpp"
     },
     "cSpell.words": [
         "adipiscing",

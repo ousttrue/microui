@@ -95,11 +95,11 @@ void mu_end(mu_Context *ctx, UIRenderFrame *command) {
 void mu_text(mu_Context *ctx, const char *text) {
   auto style = ctx->_command_drawer.style();
   const char *start, *end, *p = text;
-  int width = -1;
-  ctx->_layout.begin_column(style);
-  ctx->_layout.back().row(1, &width, style->text_height());
+  auto layout = ctx->_layout.begin_column(style);
+  int width[] = {-1};
+  layout->row(1, width, style->text_height());
   do {
-    UIRect r = ctx->_layout.next(style);
+    UIRect r = ctx->_layout.back().next(style);
     int w = 0;
     start = end = p;
     do {
@@ -123,7 +123,7 @@ void mu_text(mu_Context *ctx, const char *text) {
 
 void mu_label(mu_Context *ctx, const char *text) {
   auto style = ctx->_command_drawer.style();
-  ctx->_command_drawer.draw_control_text(text, ctx->_layout.next(style),
+  ctx->_command_drawer.draw_control_text(text, ctx->_layout.back().next(style),
                                          MU_STYLE_TEXT, MU_OPT::MU_OPT_NONE);
 }
 
@@ -132,7 +132,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
   mu_Id id = label ? ctx->_hash.create(label, strlen(label))
                    : ctx->_hash.create(&icon, sizeof(icon));
   auto style = ctx->_command_drawer.style();
-  UIRect r = ctx->_layout.next(style);
+  UIRect r = ctx->_layout.back().next(style);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, opt, mouseover);
   // handle click
@@ -155,7 +155,7 @@ MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon, MU_OPT opt) {
 MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
   mu_Id id = ctx->_hash.create(&state, sizeof(state));
   auto style = ctx->_command_drawer.style();
-  UIRect r = ctx->_layout.next(style);
+  UIRect r = ctx->_layout.back().next(style);
   UIRect box = UIRect(r.x, r.y, r.h, r.h);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, MU_OPT::MU_OPT_NONE, mouseover);
@@ -257,7 +257,7 @@ static bool number_textbox(mu_Context *ctx, mu_Real *value, UIRect r,
 MU_RES mu_textbox_ex(mu_Context *ctx, char *buf, int bufsz, MU_OPT opt) {
   mu_Id id = ctx->_hash.create(&buf, sizeof(buf));
   auto style = ctx->_command_drawer.style();
-  UIRect r = ctx->_layout.next(style);
+  UIRect r = ctx->_layout.back().next(style);
   return mu_textbox_raw(ctx, buf, bufsz, id, r, opt);
 }
 
@@ -268,7 +268,7 @@ MU_RES mu_slider_ex(mu_Context *ctx, mu_Real *value, mu_Real low, mu_Real high,
   mu_Real last = *value, v = last;
   mu_Id id = ctx->_hash.create(&value, sizeof(value));
   auto style = ctx->_command_drawer.style();
-  UIRect base = ctx->_layout.next(style);
+  UIRect base = ctx->_layout.back().next(style);
 
   // handle text input mode
   auto res = MU_RES_NONE;
@@ -317,7 +317,7 @@ MU_RES mu_number_ex(mu_Context *ctx, mu_Real *value, mu_Real step,
   auto res = MU_RES::MU_RES_NONE;
   mu_Id id = ctx->_hash.create(&value, sizeof(value));
   auto style = ctx->_command_drawer.style();
-  UIRect base = ctx->_layout.next(style);
+  UIRect base = ctx->_layout.back().next(style);
   mu_Real last = *value;
 
   // handle text input mode
@@ -358,7 +358,7 @@ static MU_RES header(mu_Context *ctx, const char *label, int istreenode,
   auto active = (idx >= 0);
   auto expanded = (opt & MU_OPT_EXPANDED) ? !active : active;
   auto style = ctx->_command_drawer.style();
-  auto r = ctx->_layout.next(style);
+  auto r = ctx->_layout.back().next(style);
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, MU_OPT::MU_OPT_NONE, mouseover);
 
@@ -543,7 +543,7 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
     scrollbars(ctx, cnt, &body);
   }
   auto style = ctx->_command_drawer.style();
-  ctx->_layout.push(mu_Layout(body.expand(-style->padding), cnt->scroll));
+  ctx->_layout.push(mu_Layout(body.expand(-style->padding).move(-cnt->scroll)));
   cnt->body = body;
 
   // do `resize` handle
@@ -563,7 +563,9 @@ MU_RES mu_begin_window(mu_Context *ctx, const char *title, UIRect rect,
 
   // resize to content size
   if (opt & MU_OPT_AUTOSIZE) {
-    ctx->_layout.back().resize_container(cnt);
+    auto body_size = ctx->_layout.back().body_size();
+    cnt->rect.w = cnt->content_size.x + (cnt->rect.w - body_size.x);
+    cnt->rect.h = cnt->content_size.y + (cnt->rect.h - body_size.y);
   }
 
   // close if this is a popup window and elsewhere was clicked
@@ -589,8 +591,8 @@ void mu_end_window(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
 
   auto layout = ctx->_layout.pop();
-  layout->fit(cnt);
-  
+  cnt->content_size = layout->remain();
+
   ctx->_container.pop();
   ctx->_hash.pop();
 }
@@ -613,7 +615,7 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
   auto last_id = ctx->_hash.create_push(name, strlen(name));
   auto cnt = ctx->_container.get_container(last_id, opt, ctx->frame);
   auto style = ctx->_command_drawer.style();
-  cnt->rect = ctx->_layout.next(style);
+  cnt->rect = ctx->_layout.back().next(style);
   if (~opt & MU_OPT_NOFRAME) {
     ctx->_command_drawer.draw_frame(cnt->rect, MU_STYLE_PANELBG);
   }
@@ -623,7 +625,8 @@ void mu_begin_panel_ex(mu_Context *ctx, const char *name, MU_OPT opt) {
     scrollbars(ctx, cnt, &cnt->rect);
   }
   // auto style = ctx->_command_drawer.style();
-  ctx->_layout.push(mu_Layout(cnt->rect.expand(-style->padding), cnt->scroll));
+  ctx->_layout.push(
+      mu_Layout(cnt->rect.expand(-style->padding).move(-cnt->scroll)));
   cnt->body = cnt->rect;
 
   ctx->_command_drawer.push_clip(cnt->body);
@@ -633,7 +636,7 @@ void mu_end_panel(mu_Context *ctx) {
   ctx->_command_drawer.pop_clip();
   auto layout = ctx->_layout.pop();
   auto cnt = ctx->_container.current_container();
-  layout->fit(cnt);
+  cnt->content_size = layout->remain();
   ctx->_container.pop();
   ctx->_hash.pop();
 }

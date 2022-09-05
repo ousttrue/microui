@@ -58,7 +58,7 @@ static void style_window(mu_Context *ctx) {
       uint8_slider(ctx, &style->colors[i].g, 0, 255);
       uint8_slider(ctx, &style->colors[i].b, 0, 255);
       uint8_slider(ctx, &style->colors[i].a, 0, 255);
-      ctx->_command_drawer.draw_rect(ctx->_layout.next(style),
+      ctx->_command_drawer.draw_rect(ctx->_layout.back().next(style),
                                      static_cast<MU_STYLE>(i));
     }
     mu_end_window(ctx);
@@ -110,14 +110,15 @@ static void log_window(mu_Context *ctx) {
 }
 
 static void test_window(mu_Context *ctx, float bg[4]) {
-  /* do window */
+  // do window
   if (mu_begin_window(ctx, "Demo Window", UIRect(40, 40, 300, 450),
                       MU_OPT_NONE)) {
     auto win = ctx->_container.current_container();
+    // minimum window size
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 300);
 
-    /* window info */
+    // window info
     if (mu_header(ctx, "Window Info")) {
       auto win = ctx->_container.current_container();
       char buf[64];
@@ -247,7 +248,7 @@ static void test_window(mu_Context *ctx, float bg[4]) {
       mu_slider(ctx, &bg[2], 0, 255);
       ctx->_layout.end_column();
       /* color preview */
-      UIRect r = ctx->_layout.next(style);
+      UIRect r = ctx->_layout.back().next(style);
       ctx->_command_drawer.draw_rect_color(r,
                                            UIColor32(bg[0], bg[1], bg[2], 255));
       char buf[32];

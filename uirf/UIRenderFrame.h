@@ -13,6 +13,8 @@ struct UIVec2 {
   UIVec2() : x(0), y(0) {}
   UIVec2(int32_t x, int32_t y) : x(x), y(y) {}
 
+  UIVec2 operator-() const { return UIVec2(-x, -y); }
+
   UIVec2 &operator+=(const UIVec2 &rhs) {
     x += rhs.x;
     y += rhs.y;
@@ -30,6 +32,8 @@ struct UIRect {
 #ifdef __cplusplus
   UIRect() : x(0), y(0), w(0), h(0) {}
   UIRect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {}
+
+  UIRect move(const UIVec2 &p) const { return UIRect(x - p.x, y - p.y, w, h); }
 
   UIRect expand(int32_t n) const {
     return UIRect(x - n, y - n, w + n * 2, h + n * 2);
