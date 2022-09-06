@@ -13,8 +13,8 @@ const RES = enum(u32) {
 };
 
 pub fn label(ctx: *Context, text: []const u8) void {
-    const style = ctx.command_drawer.style;
-    ctx.command_drawer.draw_control_text(text, ctx.layout.next(style), .TEXT, .NONE);
+    const style = &ctx.command_drawer.style;
+    ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE);
 }
 
 pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?RES {
@@ -89,7 +89,7 @@ pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?RES
         ctx.scrollbars(cnt, &body);
     }
     const style = ctx.command_drawer.style;
-    ctx.layout.layout_stack.push(Layout.create(body.expand(-style.padding), cnt.scroll));
+    ctx.layout.stack.push(Layout.fromRect(body.expand(-style.padding).sub(cnt.scroll)));
     cnt.body = body;
 
     // do `resize` handle
@@ -114,7 +114,7 @@ pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?RES
 
     // resize to content size
     if (opt.has(.AUTOSIZE)) {
-        const r = ctx.layout.layout_stack.back_const().body;
+        const r = ctx.layout.stack.back_const().body;
         cnt.rect.w = cnt.content_size.x + (cnt.rect.w - r.w);
         cnt.rect.h = cnt.content_size.y + (cnt.rect.h - r.h);
     }
@@ -143,8 +143,8 @@ pub fn end_window(ctx: *Context) void {
     ctx.command_drawer.clip_stack.pop();
 
     // apply layout size
-    const layout = ctx.layout.layout_stack.back_const();
-    ctx.layout.layout_stack.pop();
+    const layout = ctx.layout.stack.back_const();
+    ctx.layout.stack.pop();
     cnt.content_size.x = layout.max.x - layout.body.x;
     cnt.content_size.y = layout.max.y - layout.body.y;
 

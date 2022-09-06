@@ -6,37 +6,48 @@ const colors = [_]struct {
     label: []const u8,
     idx: c_int,
 }{
-    .{ "text:", c.MU_COLOR_TEXT },
-    .{ "border:", c.MU_COLOR_BORDER },
-    .{ "windowbg:", c.MU_COLOR_WINDOWBG },
-    .{ "titlebg:", c.MU_COLOR_TITLEBG },
-    .{ "titletext:", c.MU_COLOR_TITLETEXT },
-    .{ "panelbg:", c.MU_COLOR_PANELBG },
-    .{ "button:", c.MU_COLOR_BUTTON },
-    .{ "buttonhover:", c.MU_COLOR_BUTTONHOVER },
-    .{ "buttonfocus:", c.MU_COLOR_BUTTONFOCUS },
-    .{ "base:", c.MU_COLOR_BASE },
-    .{ "basehover:", c.MU_COLOR_BASEHOVER },
-    .{ "basefocus:", c.MU_COLOR_BASEFOCUS },
-    .{ "scrollbase:", c.MU_COLOR_SCROLLBASE },
-    .{ "scrollthumb:", c.MU_COLOR_SCROLLTHUMB },
+    .{ .label = "text:", .idx = c.MU_STYLE_TEXT },
+    .{ .label = "border:", .idx = c.MU_STYLE_BORDER },
+    .{ .label = "windowbg:", .idx = c.MU_STYLE_WINDOWBG },
+    .{ .label = "titlebg:", .idx = c.MU_STYLE_TITLEBG },
+    .{ .label = "titletext:", .idx = c.MU_STYLE_TITLETEXT },
+    .{ .label = "panelbg:", .idx = c.MU_STYLE_PANELBG },
+    .{ .label = "button:", .idx = c.MU_STYLE_BUTTON },
+    .{ .label = "buttonhover:", .idx = c.MU_STYLE_BUTTONHOVER },
+    .{ .label = "buttonfocus:", .idx = c.MU_STYLE_BUTTONFOCUS },
+    .{ .label = "base:", .idx = c.MU_STYLE_BASE },
+    .{ .label = "basehover:", .idx = c.MU_STYLE_BASEHOVER },
+    .{ .label = "basefocus:", .idx = c.MU_STYLE_BASEFOCUS },
+    .{ .label = "scrollbase:", .idx = c.MU_STYLE_SCROLLBASE },
+    .{ .label = "scrollthumb:", .idx = c.MU_STYLE_SCROLLTHUMB },
 };
+
+// pub fn uint8_slider(ctx: *zigmui.Context, value: []const u8, low: i32, high: i32) c_int {
+//     ctx.hash.from_str(value);
+//     //   float tmp = *value;
+//     const res = ctx.slider_ex(value, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
+//     //   *value = tmp;
+//     ctx.hash.pop();
+//     return res;
+// }
 
 fn style_window(ctx: *zigmui.Context) void {
     if (zigmui.widgets.begin_window(ctx, "Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) |_| {
-        //     int sw = mu_get_current_container(ctx).body.w * 0.14;
-        //     {
-        //       int widths[] = {80, sw, sw, sw, sw, -1};
-        //       ctx.layout_stack.back().row(6, widths, 0);
-        //     }
-        //     for (int i = 0; colors[i].label; i++) {
-        //       mu_label(ctx, colors[i].label);
-        //       uint8_slider(ctx, &ctx.style.colors[i].r, 0, 255);
-        //       uint8_slider(ctx, &ctx.style.colors[i].g, 0, 255);
-        //       uint8_slider(ctx, &ctx.style.colors[i].b, 0, 255);
-        //       uint8_slider(ctx, &ctx.style.colors[i].a, 0, 255);
-        //       ctx.draw_rect(mu_layout_next(ctx), ctx.style.colors[i]);
-        //     }
+        const sw = @floatToInt(i32, @intToFloat(f32, ctx.container.current_container().body.w) * 0.14);
+        {
+            const widths = [_]i32{ 80, sw, sw, sw, sw, -1 };
+            ctx.layout.stack.back().row(&widths, 0);
+        }
+        const style = &ctx.command_drawer.style;
+        for (colors) |color, i| {
+            zigmui.widgets.label(ctx, color.label);
+            // const style_color = &style.colors[i];
+            // uint8_slider(ctx, &ctx.style.colors[i].r, 0, 255);
+            //       uint8_slider(ctx, &ctx.style.colors[i].g, 0, 255);
+            //       uint8_slider(ctx, &ctx.style.colors[i].b, 0, 255);
+            //       uint8_slider(ctx, &ctx.style.colors[i].a, 0, 255);
+            ctx.command_drawer.draw_rect(ctx.layout.stack.back().next(style), style.colors[i]);
+        }
         zigmui.widgets.end_window(ctx);
     }
 }

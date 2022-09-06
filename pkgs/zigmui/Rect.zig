@@ -36,3 +36,12 @@ pub fn overlaps_vec2(self: Self, p: Vec2) bool {
     return p.x >= self.x and p.x < self.x + self.w and p.y >= self.y and
         p.y < self.y + self.h;
 }
+
+pub fn sub(self: Self, p: Vec2) Self {
+    return .{
+        .x = self.x - p.x,
+        .y = self.y - p.y,
+        .w = self.w,
+        .h = self.h,
+    };
+}

@@ -1,24 +1,6 @@
 #pragma once
 #include "mu_types.h"
 
-enum MU_STYLE {
-  MU_STYLE_TEXT,
-  MU_STYLE_BORDER,
-  MU_STYLE_WINDOWBG,
-  MU_STYLE_TITLEBG,
-  MU_STYLE_TITLETEXT,
-  MU_STYLE_PANELBG,
-  MU_STYLE_BUTTON,
-  MU_STYLE_BUTTONHOVER,
-  MU_STYLE_BUTTONFOCUS,
-  MU_STYLE_BASE,
-  MU_STYLE_BASEHOVER,
-  MU_STYLE_BASEFOCUS,
-  MU_STYLE_SCROLLBASE,
-  MU_STYLE_SCROLLTHUMB,
-  MU_STYLE_MAX
-};
-
 using text_width_callback = int (*)(mu_Font font, const char *str, int len);
 using text_height_callback = int (*)(mu_Font font);
 
