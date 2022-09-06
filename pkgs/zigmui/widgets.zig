@@ -4,6 +4,7 @@ const Context = @import("./Context.zig");
 const Rect = @import("./Rect.zig");
 const Input = @import("./Input.zig");
 const Layout = @import("./Layout.zig");
+const Hash = @import("./Hash.zig");
 const OPT = Input.OPT;
 
 const RES = enum(u32) {
@@ -150,4 +151,42 @@ pub fn end_window(ctx: *Context) void {
 
     ctx.container.pop();
     ctx.hash.stack.pop();
+}
+
+pub fn textbox_raw(ctx: *Context, buf: []const u8, id: Hash.Id, rect: Rect, opt: OPT) RES {
+    var res: RES = .NONE;
+
+    // base rect
+    const mouseover = ctx.mouse_over(rect);
+    ctx.input.update_focus_hover(id, opt | .HOLDFOCUS, mouseover);
+    ctx.command_drawer.draw_control_frame(id, rect, .BASE, opt, ctx.input.get_focus_state(id));
+
+    if (ctx.input.has_focus(id)) {
+        // text editor
+        res = res | ctx.input.handle_text(id, buf);
+        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt, true);
+    } else {
+        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt);
+    }
+
+    return res;
+}
+
+pub fn number_textbox(ctx: *Context, value: *f32, r: Rect, id: Hash.Id) bool {
+    if (ctx.input.mouse_pressed == .LEFT and
+        ctx.input.key_down & .SHIFT and ctx.input.has_hover(id))
+    {
+        ctx.editor.set_value(id, *value);
+    }
+
+    if (ctx.editor.buffer(id)) |buffer| {
+        const res = textbox_raw(ctx, buffer, id, r, .NONE);
+        if (res & .SUBMIT or !ctx.input.has_focus(id)) {
+            value.* = ctx.editor.commit();
+        } else {
+            return true;
+        }
+    }
+
+    return false;
 }

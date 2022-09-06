@@ -137,8 +137,11 @@ static bool number_textbox(mu_Context *ctx, mu_Real *value, UIRect r,
     ctx->_editor.set_value(id, *value);
   }
 
-  if (ctx->_editor.id() == id) {
-    int res = ctx->_editor.textbox(ctx, r);
+  size_t size;
+  if (auto buffer = ctx->_editor.buffer(id, &size)) {
+    // int res = ctx->_editor.textbox(ctx, r);
+    int res = mu_textbox_raw(ctx, buffer, size, id, r, MU_OPT::MU_OPT_NONE);
+
     if (res & MU_RES_SUBMIT || !ctx->_input.has_focus(id)) {
       *value = ctx->_editor.commit();
     } else {

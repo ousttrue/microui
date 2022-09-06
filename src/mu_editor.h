@@ -4,23 +4,27 @@ const auto MU_MAX_FMT = 127;
 const auto MU_REAL_FMT = "%.3g";
 
 class Editor {
-  char number_edit_buf[MU_MAX_FMT] = {0};
-  mu_Id number_edit = 0;
+  char _number_edit_buf[MU_MAX_FMT] = {0};
+  mu_Id _number_edit = 0;
+
+  mu_Id id() const { return _number_edit; }
 
 public:
-  mu_Id id() const { return number_edit; }
   void set_value(mu_Id id, float value) {
-    number_edit = id;
-    sprintf(number_edit_buf, MU_REAL_FMT, value);
+    _number_edit = id;
+    sprintf(_number_edit_buf, MU_REAL_FMT, value);
   }
 
-  MU_RES textbox(mu_Context *ctx, const UIRect &r) {
-    return mu_textbox_raw(ctx, number_edit_buf, sizeof(number_edit_buf),
-                          number_edit, r, MU_OPT::MU_OPT_NONE);
+  char *buffer(mu_Id id, size_t *size) {
+    if (id != _number_edit) {
+      return nullptr;
+    }
+    *size = sizeof(_number_edit_buf);
+    return _number_edit_buf;
   }
 
   float commit() {
-    number_edit = 0;
-    return strtod(number_edit_buf, nullptr);
+    _number_edit = 0;
+    return strtod(_number_edit_buf, nullptr);
   }
 };
