@@ -22,14 +22,23 @@ const colors = [_]struct {
     .{ .label = "scrollthumb:", .idx = c.MU_STYLE_SCROLLTHUMB },
 };
 
-// pub fn uint8_slider(ctx: *zigmui.Context, value: []const u8, low: i32, high: i32) c_int {
-//     ctx.hash.from_str(value);
-//     //   float tmp = *value;
-//     const res = ctx.slider_ex(value, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
-//     //   *value = tmp;
-//     ctx.hash.pop();
-//     return res;
-// }
+pub fn uint8_slider(ctx: *zigmui.Context, value: *u8, low: i32, high: i32) zigmui.RES {
+    const id = ctx.hash.from_value(value);
+    ctx.hash.stack.push(id);
+    var tmp = @intToFloat(f32, value.*);
+    const res = zigmui.widgets.slider_ex(
+        ctx,
+        &tmp,
+        @intToFloat(f32, low),
+        @intToFloat(f32, high),
+        0,
+        "%.0f",
+        .ALIGNCENTER,
+    );
+    value.* = @floatToInt(u8, tmp);
+    ctx.hash.stack.pop();
+    return res;
+}
 
 fn style_window(ctx: *zigmui.Context) void {
     if (zigmui.widgets.begin_window(ctx, "Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) |_| {
@@ -41,11 +50,11 @@ fn style_window(ctx: *zigmui.Context) void {
         const style = &ctx.command_drawer.style;
         for (colors) |color, i| {
             zigmui.widgets.label(ctx, color.label);
-            // const style_color = &style.colors[i];
-            // uint8_slider(ctx, &ctx.style.colors[i].r, 0, 255);
-            //       uint8_slider(ctx, &ctx.style.colors[i].g, 0, 255);
-            //       uint8_slider(ctx, &ctx.style.colors[i].b, 0, 255);
-            //       uint8_slider(ctx, &ctx.style.colors[i].a, 0, 255);
+            const style_color = &style.colors[i];
+            _ = uint8_slider(ctx, &style_color.r, 0, 255);
+            _ = uint8_slider(ctx, &style_color.g, 0, 255);
+            _ = uint8_slider(ctx, &style_color.b, 0, 255);
+            _ = uint8_slider(ctx, &style_color.a, 0, 255);
             ctx.command_drawer.draw_rect(ctx.layout.stack.back().next(style), style.colors[i]);
         }
         zigmui.widgets.end_window(ctx);

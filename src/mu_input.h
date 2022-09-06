@@ -138,6 +138,7 @@ public:
     }
   }
 
+private:
   int consume_text(char *buf, int bufsz) {
     int n = mu_min(bufsz - 1, _input_text_pos);
     if (n > 0) {
@@ -150,6 +151,7 @@ public:
     return n;
   }
 
+public:
   void set_focus(mu_Id id) {
     _focus = id;
     _keep_focus = true;

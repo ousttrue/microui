@@ -1,3 +1,5 @@
+const std = @import("std");
+const c = @import("c");
 const Vec2 = @import("./Vec2.zig");
 const Rect = @import("./Rect.zig");
 const Hash = @import("./Hash.zig");
@@ -21,6 +23,10 @@ pub const KEY = enum(u32) {
     ALT = (1 << 2),
     BACKSPACE = (1 << 3),
     RETURN = (1 << 4),
+
+    pub fn has(self: @This(), rhs: @This()) bool {
+        return (@enumToInt(self) & @enumToInt(rhs)) != 0;
+    }
 };
 
 pub const OPT = enum(u32) {
@@ -42,6 +48,31 @@ pub const OPT = enum(u32) {
     pub fn has(self: OPT, opt: OPT) bool {
         return (@enumToInt(self) & @enumToInt(opt)) != 0;
     }
+
+    pub fn add(self: @This(), rhs: @This()) @This() {
+        return @intToEnum(@This(), @enumToInt(self) | @enumToInt(rhs));
+    }
+};
+
+pub const RES = enum(u32) {
+    NONE = 0,
+    ACTIVE = (1 << 0),
+    SUBMIT = (1 << 1),
+    CHANGE = (1 << 2),
+
+    pub fn has(self: @This(), rhs: @This()) bool {
+        return (@enumToInt(self) & @enumToInt(rhs)) != 0;
+    }
+
+    pub fn add(self: @This(), rhs: @This()) @This() {
+        return @intToEnum(@This(), @enumToInt(self) | @enumToInt(rhs));
+    }
+};
+
+pub const FOCUS_STATE = enum {
+    NONE,
+    HOVER,
+    FOCUS,
 };
 
 const Self = @This();
@@ -55,6 +86,7 @@ mouse_pressed: MOUSE_BUTTON = .NONE,
 key_down: KEY = .NONE,
 key_pressed: KEY = .NONE,
 input_text: [32]u8 = .{0} ** 32,
+input_text_pos: u32 = 0,
 
 focus: ?Hash.Id = null,
 keep_focus: bool = false,
@@ -153,11 +185,15 @@ pub fn has_hover(self: Self, id: Hash.Id) bool {
     return self.hover == id;
 }
 
-//   FOCUS_STATE get_focus_state(mu_Id id) const {
-//     return has_focus(id)  ? FOCUS_STATE_FOCUS
-//            : _hover == id ? FOCUS_STATE_HOVER
-//                           : FOCUS_STATE_NONE;
-//   }
+pub fn get_focus_state(self: Self, id: Hash.Id) FOCUS_STATE {
+    if (self.has_focus(id)) {
+        return .FOCUS;
+    } else if (self.hover == id) {
+        return .HOVER;
+    } else {
+        return .NONE;
+    }
+}
 
 pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) void {
     self.set_keep_focus(id);
@@ -185,4 +221,46 @@ pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) v
             self.set_hover(0);
         }
     }
+}
+
+fn consume_text(self: *Self, buf: []u8) usize {
+    const n = std.math.min(buf.len - 1, self.input_text_pos);
+    if (n > 0) {
+        @memcpy(@ptrCast([*]u8, &buf[0]), @ptrCast([*]const u8, &self.input_text[0]), n);
+    }
+    if (n < buf.len) {
+        buf[n] = 0;
+    }
+    self.input_text_pos = 0;
+    return n;
+}
+
+pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) RES {
+    var res: RES = .NONE;
+    if (self.has_focus(id)) {
+
+        // handle text input
+        var len = c.strlen(&buf[0]);
+        const n = self.consume_text(buf[len..]);
+        if (n > 0) {
+            res = res.add(.CHANGE);
+            len += n;
+        }
+
+        // handle backspace
+        //   if (key_pressed() & MU_KEY_BACKSPACE && len > 0) {
+        //     // skip utf-8 continuation bytes
+        //     while ((buf[--len] & 0xc0) == 0x80 && len > 0)
+        //       ;
+        //     buf[len] = '\0';
+        //     res = static_cast<MU_RES>(res | MU_RES_CHANGE);
+        //   }
+        //   // handle return
+        //   if (key_pressed() & MU_KEY_RETURN) {
+        //     set_focus(0);
+        //     res = static_cast<MU_RES>(res | MU_RES_SUBMIT);
+        //   }
+    }
+
+    return res;
 }

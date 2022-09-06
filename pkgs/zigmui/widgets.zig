@@ -7,18 +7,12 @@ const Layout = @import("./Layout.zig");
 const Hash = @import("./Hash.zig");
 const OPT = Input.OPT;
 
-const RES = enum(u32) {
-    ACTIVE = (1 << 0),
-    SUBMIT = (1 << 1),
-    CHANGE = (1 << 2),
-};
-
 pub fn label(ctx: *Context, text: []const u8) void {
     const style = &ctx.command_drawer.style;
-    ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE);
+    ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE, false);
 }
 
-pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?RES {
+pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?Input.RES {
     const id = ctx.hash.from_str(title);
     const cnt = ctx.container.get_container(id, opt, ctx.frame) orelse {
         return null;
@@ -57,7 +51,7 @@ pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?RES
             const title_id = ctx.hash.from_str("!title");
             const mouseover = ctx.mouse_over(tr);
             ctx.input.update_focus_hover(title_id, opt, mouseover);
-            ctx.command_drawer.draw_control_text(title, tr, .TITLETEXT, opt);
+            ctx.command_drawer.draw_control_text(title, tr, .TITLETEXT, opt, false);
             if (ctx.input.has_focus(title_id) and
                 ctx.input.mouse_down == .LEFT)
             {
@@ -153,20 +147,20 @@ pub fn end_window(ctx: *Context) void {
     ctx.hash.stack.pop();
 }
 
-pub fn textbox_raw(ctx: *Context, buf: []const u8, id: Hash.Id, rect: Rect, opt: OPT) RES {
-    var res: RES = .NONE;
+pub fn textbox_raw(ctx: *Context, buf: []u8, id: Hash.Id, rect: Rect, opt: OPT) Input.RES {
+    var res: Input.RES = .NONE;
 
     // base rect
     const mouseover = ctx.mouse_over(rect);
-    ctx.input.update_focus_hover(id, opt | .HOLDFOCUS, mouseover);
-    ctx.command_drawer.draw_control_frame(id, rect, .BASE, opt, ctx.input.get_focus_state(id));
+    ctx.input.update_focus_hover(id, opt.add(.HOLDFOCUS), mouseover);
+    ctx.command_drawer.draw_control_frame(rect, .BASE, opt, ctx.input.get_focus_state(id));
 
     if (ctx.input.has_focus(id)) {
         // text editor
-        res = res | ctx.input.handle_text(id, buf);
+        res = res.add(ctx.input.handle_text(id, buf));
         ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt, true);
     } else {
-        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt);
+        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt, false);
     }
 
     return res;
@@ -174,14 +168,14 @@ pub fn textbox_raw(ctx: *Context, buf: []const u8, id: Hash.Id, rect: Rect, opt:
 
 pub fn number_textbox(ctx: *Context, value: *f32, r: Rect, id: Hash.Id) bool {
     if (ctx.input.mouse_pressed == .LEFT and
-        ctx.input.key_down & .SHIFT and ctx.input.has_hover(id))
+        ctx.input.key_down.has(.SHIFT) and ctx.input.has_hover(id))
     {
-        ctx.editor.set_value(id, *value);
+        ctx.editor.set_value(id, value.*);
     }
 
-    if (ctx.editor.buffer(id)) |buffer| {
-        const res = textbox_raw(ctx, buffer, id, r, .NONE);
-        if (res & .SUBMIT or !ctx.input.has_focus(id)) {
+    if (ctx.editor.buffer(id)) |*buffer| {
+        const res = textbox_raw(ctx, buffer.*, id, r, .NONE);
+        if (res.has(.SUBMIT) or !ctx.input.has_focus(id)) {
             value.* = ctx.editor.commit();
         } else {
             return true;
@@ -189,4 +183,60 @@ pub fn number_textbox(ctx: *Context, value: *f32, r: Rect, id: Hash.Id) bool {
     }
 
     return false;
+}
+
+pub fn slider_ex(
+    ctx: *Context,
+    value: *f32,
+    low: f32,
+    high: f32,
+    step: f32,
+    fmt: [:0]const u8,
+    opt: OPT,
+) Input.RES {
+    const last = value.*;
+    var v: f32 = last;
+    const id = ctx.hash.from_value(value);
+    const style = &ctx.command_drawer.style;
+    const base = ctx.layout.back().next(style);
+
+    // handle text input mode
+    var res: Input.RES = .NONE;
+    if (number_textbox(ctx, &v, base, id)) {
+        return res;
+    }
+
+    // handle normal mode
+    const mouseover = ctx.mouse_over(base);
+    ctx.input.update_focus_hover(id, opt, mouseover);
+
+    // handle input
+    if (ctx.input.has_focus(id) and
+        @intToEnum(Input.MOUSE_BUTTON, @enumToInt(ctx.input.mouse_down) | @enumToInt(ctx.input.mouse_pressed)) == .LEFT)
+    {
+        v = low + @intToFloat(f32, ctx.input.mouse_pos.x - base.x) * (high - low) / @intToFloat(f32, base.w);
+        if (step != 0) {
+            v = (((v + step / 2) / step)) * step;
+        }
+    }
+    // clamp and store value, update res
+    v = std.math.clamp(v, low, high);
+    value.* = v;
+    if (last != v) {
+        res = res.add(.CHANGE);
+    }
+
+    // draw base
+    ctx.command_drawer.draw_control_frame(base, .BASE, opt, ctx.input.get_focus_state(id));
+    // draw thumb
+    const w = style.thumb_size;
+    const x = @floatToInt(i32, (v - low) * @intToFloat(f32, base.w - w) / (high - low));
+    const thumb = Rect{ .x = base.x + x, .y = base.y, .w = w, .h = base.h };
+    ctx.command_drawer.draw_control_frame(thumb, .BUTTON, opt, ctx.input.get_focus_state(id));
+    // draw text
+    var buf: [127 + 1]u8 = undefined;
+    const buf_len = c.sprintf(&buf[0], @ptrCast([*:0]const u8, &fmt[0]), v);
+    ctx.command_drawer.draw_control_text(buf[0..@intCast(usize, buf_len)], base, .TEXT, opt, false);
+
+    return res;
 }

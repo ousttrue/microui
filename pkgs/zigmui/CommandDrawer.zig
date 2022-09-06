@@ -175,24 +175,34 @@ pub fn draw_frame(self: *Self, rect: Rect, colorid: Style.STYLE) void {
     }
 }
 
+pub fn draw_control_frame(self: *Self, rect: Rect, colorid: Style.STYLE, opt: Input.OPT, focus_state: Input.FOCUS_STATE) void {
+    if (opt.has(.NOFRAME)) {
+        return;
+    }
+    self.draw_frame(rect, @intToEnum(Style.STYLE, @enumToInt(colorid) + @enumToInt(focus_state)));
+}
+
 pub fn draw_control_text(
     self: *Self,
     str: []const u8,
     rect: Rect,
     colorid: Style.STYLE,
     opt: Input.OPT,
+    edit: bool,
 ) void {
-    const tw = self.style.text_width(str);
-    var pos = Vec2{};
-    pos.y = rect.y + @divTrunc((rect.h - self.style.text_height()), @as(i32, 2));
-    if (opt.has(.ALIGNCENTER)) {
-        pos.x = rect.x + @divTrunc(rect.w - tw, 2);
-    } else if (opt.has(.ALIGNRIGHT)) {
-        pos.x = rect.x + rect.w - tw - self.style.padding;
-    } else {
-        pos.x = rect.x + self.style.padding;
-    }
     self.clip_stack.push(rect);
-    self.draw_text(str, pos, colorid);
+    if (edit) {
+        var size: Vec2 = undefined;
+        const pos = self.style.text_position(rect, str, .NONE, &size);
+        self.draw_text(str, pos, .TEXT);
+        // caret
+        self.draw_rect(
+            Rect{ .x = pos.x + size.x, .y = pos.y, .w = 1, .h = size.y },
+            self.style.colors[@enumToInt(Style.STYLE.TEXT)],
+        );
+    } else {
+        const pos = self.style.text_position(rect, str, opt, null);
+        self.draw_text(str, pos, colorid);
+    }
     self.clip_stack.pop();
 }
