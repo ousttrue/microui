@@ -38,4 +38,29 @@ struct mu_Style {
   }
 
   int text_height() const { return text_height_callback(font); }
+
+  UIVec2 text_position(const UIRect &rect, const char *str, int len, MU_OPT opt,
+                       UIVec2 *edit_size = nullptr) const {
+    UIVec2 pos;
+    auto tw = this->text_width(str, len);
+    auto th = this->text_height();
+    if (edit_size) {
+      edit_size->x = tw;
+      edit_size->y = th;
+    }
+    if (opt & MU_OPT_ALIGNCENTER) {
+      pos.x = rect.x + (rect.w - tw) / 2;
+    } else if (opt & MU_OPT_ALIGNRIGHT) {
+      pos.x = rect.x + rect.w - tw - this->padding;
+    } else {
+      if (edit_size) {
+        int ofx = rect.w - this->padding - tw - 1;
+        pos.x = rect.x + std::min(ofx, padding);
+      } else {
+        pos.x = rect.x + this->padding;
+      }
+    }
+    pos.y = rect.y + (rect.h - th) / 2;
+    return pos;
+  }
 };

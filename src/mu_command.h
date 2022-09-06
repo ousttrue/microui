@@ -144,20 +144,20 @@ public:
     draw_frame(rect, colorid);
   }
 
-  void draw_control_text(const char *str, UIRect rect, MU_STYLE colorid,
-                         MU_OPT opt) {
-    int tw = _style.text_width(str, -1);
-    UIVec2 pos;
-    pos.y = rect.y + (rect.h - _style.text_height()) / 2;
-    if (opt & MU_OPT_ALIGNCENTER) {
-      pos.x = rect.x + (rect.w - tw) / 2;
-    } else if (opt & MU_OPT_ALIGNRIGHT) {
-      pos.x = rect.x + rect.w - tw - _style.padding;
-    } else {
-      pos.x = rect.x + _style.padding;
-    }
+  void draw_control_text(const char *str, const UIRect &rect, MU_STYLE colorid,
+                         MU_OPT opt, bool edit = false) {
     push_clip(rect);
-    draw_text(str, -1, pos, colorid);
+    if (edit) {
+      UIVec2 size;
+      auto pos = _style.text_position(rect, str, -1, MU_OPT_NONE, &size);
+      draw_text(str, -1, pos, MU_STYLE_TEXT);
+      // caret
+      draw_rect(UIRect(pos.x + size.x, pos.y, 1, size.y),
+                                     MU_STYLE_TEXT);
+    } else {
+      auto pos = _style.text_position(rect, str, -1, opt);
+      draw_text(str, -1, pos, colorid);
+    }
     pop_clip();
   }
 };

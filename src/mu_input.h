@@ -196,4 +196,35 @@ public:
       }
     }
   }
+
+  MU_RES handle_text(mu_Id id, char *buf, int bufsz) {
+    auto res = MU_RES_NONE;
+    if (has_focus(id)) {
+
+      // handle text input
+      int len = strlen(buf);
+      auto n = consume_text(buf + len, bufsz - len);
+
+      if (n) {
+        res = static_cast<MU_RES>(res | MU_RES_CHANGE);
+        len += n;
+      }
+
+      // handle backspace
+      if (key_pressed() & MU_KEY_BACKSPACE && len > 0) {
+        // skip utf-8 continuation bytes
+        while ((buf[--len] & 0xc0) == 0x80 && len > 0)
+          ;
+        buf[len] = '\0';
+        res = static_cast<MU_RES>(res | MU_RES_CHANGE);
+      }
+      // handle return
+      if (key_pressed() & MU_KEY_RETURN) {
+        set_focus(0);
+        res = static_cast<MU_RES>(res | MU_RES_SUBMIT);
+      }
+    }
+
+    return res;
+  }
 };

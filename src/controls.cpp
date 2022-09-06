@@ -111,50 +111,18 @@ MU_RES mu_checkbox(mu_Context *ctx, const char *label, int *state) {
 
 MU_RES mu_textbox_raw(mu_Context *ctx, char *buf, int bufsz, mu_Id id, UIRect r,
                       MU_OPT opt) {
-  auto res = MU_RES::MU_RES_NONE;
+  auto res = MU_RES_NONE;
+
+  // base rect
   auto mouseover = ctx->mouse_over(r);
   ctx->_input.update_focus_hover(id, opt | MU_OPT_HOLDFOCUS, mouseover);
-
-  if (ctx->_input.has_focus(id)) {
-    // handle text input
-    int len = strlen(buf);
-    auto n = ctx->_input.consume_text(buf + len, bufsz - len);
-    if (n) {
-      res = res | MU_RES_CHANGE;
-      len += n;
-    }
-
-    // handle backspace
-    if (ctx->_input.key_pressed() & MU_KEY_BACKSPACE && len > 0) {
-      // skip utf-8 continuation bytes
-      while ((buf[--len] & 0xc0) == 0x80 && len > 0)
-        ;
-      buf[len] = '\0';
-      res = res | MU_RES_CHANGE;
-    }
-    // handle return
-    if (ctx->_input.key_pressed() & MU_KEY_RETURN) {
-      ctx->_input.set_focus(0);
-      res = res | MU_RES_SUBMIT;
-    }
-  }
-
-  // draw
   ctx->_command_drawer.draw_control_frame(id, r, MU_STYLE_BASE, opt,
                                           ctx->_input.get_focus_state(id));
+
   if (ctx->_input.has_focus(id)) {
-    auto style = ctx->_command_drawer.style();
-    int textw = style->text_width(buf, -1);
-    int texth = style->text_height();
-    int ofx = r.w - style->padding - textw - 1;
-    int textx = r.x + mu_min(ofx, style->padding);
-    int texty = r.y + (r.h - texth) / 2;
-    ctx->_command_drawer.push_clip(r);
-    ctx->_command_drawer.draw_text(buf, -1, UIVec2(textx, texty),
-                                   MU_STYLE_TEXT);
-    ctx->_command_drawer.draw_rect(UIRect(textx + textw, texty, 1, texth),
-                                   MU_STYLE_TEXT);
-    ctx->_command_drawer.pop_clip();
+    // text editor
+    res = res | ctx->_input.handle_text(id, buf, bufsz);
+    ctx->_command_drawer.draw_control_text(buf, r, MU_STYLE_TEXT, opt, true);
   } else {
     ctx->_command_drawer.draw_control_text(buf, r, MU_STYLE_TEXT, opt);
   }
