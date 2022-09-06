@@ -1,5 +1,5 @@
 set(TARGET_NAME microui)
-add_library(${TARGET_NAME} microui.cpp)
+add_library(${TARGET_NAME} microui.cpp controls.cpp)
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(
   ${TARGET_NAME}

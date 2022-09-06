@@ -10,7 +10,6 @@
 #include <UIRenderFrame.h>
 #define MU_VERSION "2.01"
 
-#define MU_REAL_FMT "%.3g"
 #define MU_SLIDER_FMT "%.2f"
 
 #define mu_min(a, b) ((a) < (b) ? (a) : (b))
@@ -60,20 +59,12 @@ extern "C" {
 EXPORT_MICROUI mu_Context *mu_new(int (*text_width)(void *, const char *, int),
                                   int (*text_height)(void *));
 EXPORT_MICROUI void mu_delete(mu_Context *ctx);
-
-EXPORT_MICROUI void mu_input_mousemove(mu_Context *ctx, int x, int y);
-EXPORT_MICROUI void mu_input_mousedown(mu_Context *ctx, int button);
-EXPORT_MICROUI void mu_input_mouseup(mu_Context *ctx, int button);
-EXPORT_MICROUI void mu_input_scroll(mu_Context *ctx, int x, int y);
-
 EXPORT_MICROUI void mu_begin(mu_Context *ctx);
 EXPORT_MICROUI void mu_end(mu_Context *ctx, struct UIRenderFrame *command);
 
-EXPORT_MICROUI int mu_pool_init(mu_Context *ctx, mu_PoolItem *items, int len,
-                                mu_Id id);
-EXPORT_MICROUI int mu_pool_get(mu_PoolItem *items, int len, mu_Id id);
-EXPORT_MICROUI void mu_pool_update(int frame, mu_PoolItem *items, int idx);
-
+//
+// controls
+//
 EXPORT_MICROUI void mu_text(mu_Context *ctx, const char *text);
 EXPORT_MICROUI void mu_label(mu_Context *ctx, const char *text);
 EXPORT_MICROUI MU_RES mu_button_ex(mu_Context *ctx, const char *label, int icon,

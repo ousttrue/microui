@@ -1,14 +1,13 @@
 #pragma once
 #include "mu_command.h"
 #include "mu_container.h"
+#include "mu_editor.h"
 #include "mu_hash.h"
 #include "mu_input.h"
 #include "mu_layout.h"
 #include "mu_pool.h"
 #include "mu_tree.h"
 #include <assert.h>
-
-const auto MU_MAX_FMT = 127;
 
 struct mu_Context {
   MuHash _hash;
@@ -18,8 +17,7 @@ struct mu_Context {
   MuLayoutManager _layout;
   mu_Input _input;
   TreeManager _tree;
-  char number_edit_buf[MU_MAX_FMT] = {0};
-  mu_Id number_edit = 0;
+  Editor _editor;
 
 public:
   // avoid copy

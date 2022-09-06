@@ -9,22 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <Windows.h>
+
 static MU_MOUSE button_map[256] = {
     MU_MOUSE_LEFT,
     MU_MOUSE_RIGHT,
     MU_MOUSE_MIDDLE,
 };
 
-// static const char key_map[256] = {
-//   [ SDLK_LSHIFT       & 0xff ] = MU_KEY_SHIFT,
-//   [ SDLK_RSHIFT       & 0xff ] = MU_KEY_SHIFT,
-//   [ SDLK_LCTRL        & 0xff ] = MU_KEY_CTRL,
-//   [ SDLK_RCTRL        & 0xff ] = MU_KEY_CTRL,
-//   [ SDLK_LALT         & 0xff ] = MU_KEY_ALT,
-//   [ SDLK_RALT         & 0xff ] = MU_KEY_ALT,
-//   [ SDLK_RETURN       & 0xff ] = MU_KEY_RETURN,
-//   [ SDLK_BACKSPACE    & 0xff ] = MU_KEY_BACKSPACE,
-// };
+static MU_KEY key_map[1024] = {0};
 
 static int text_width(mu_Font font, const char *text, int len) {
   if (len == -1) {
@@ -61,18 +54,52 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   ctx->_input.add_scroll_delta(xoffset, yoffset * -30);
 }
 
-int main(int argc, char **argv) {
-  if (!glfwInit())
-    exit(1);
+void key_callback(GLFWwindow *window, int key, int scancode, int action,
+                  int mods) {
+  auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
+  auto c = key_map[key];
+  switch (action) {
+  case GLFW_PRESS:
+    ctx->_input.set_keydown(c);
+    break;
 
-  /* Create a windowed mode window and its OpenGL context */
-  GLFWwindow *window = glfwCreateWindow(1200, 1000, "Hello World", NULL, NULL);
+  case GLFW_RELEASE:
+    ctx->_input.set_keyup(c);
+    break;
+
+  default:
+    break;
+  }
+}
+
+void character_callback(GLFWwindow *window, unsigned int codepoint) {
+
+  wchar_t wstr[] = {codepoint, 0};
+  int sizeNeeded =
+      WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
+  char encodedStr[4];
+  WideCharToMultiByte(CP_UTF8, 0, wstr, -1, encodedStr, sizeNeeded, NULL, NULL);
+  auto ctx = (mu_Context *)glfwGetWindowUserPointer(window);
+  if (encodedStr[sizeNeeded - 1] == 0) {
+    // remove zero
+    sizeNeeded -= 1;
+  }
+  ctx->_input.push_utf8(encodedStr, sizeNeeded);
+}
+
+int main(int argc, char **argv) {
+  if (!glfwInit()) {
+    exit(1);
+  }
+
+  // Create a windowed mode window and its OpenGL context
+  auto window = glfwCreateWindow(1200, 1000, "Hello World", nullptr, nullptr);
   if (!window) {
     glfwTerminate();
     return -1;
   }
 
-  /* Make the window's context current */
+  // Make the window's context current
   glfwMakeContextCurrent(window);
 
   r_init();
@@ -84,33 +111,26 @@ int main(int argc, char **argv) {
   glfwSetCursorPosCallback(window, cursor_position_callback);
   glfwSetMouseButtonCallback(window, mouse_button_callback);
   glfwSetScrollCallback(window, scroll_callback);
+  glfwSetKeyCallback(window, key_callback);
+  key_map[GLFW_KEY_LEFT_SHIFT] = MU_KEY_SHIFT;
+  key_map[GLFW_KEY_RIGHT_SHIFT] = MU_KEY_SHIFT;
+  key_map[GLFW_KEY_LEFT_CONTROL] = MU_KEY_CTRL;
+  key_map[GLFW_KEY_RIGHT_CONTROL] = MU_KEY_CTRL;
+  key_map[GLFW_KEY_LEFT_ALT] = MU_KEY_ALT;
+  key_map[GLFW_KEY_RIGHT_ALT] = MU_KEY_ALT;
+  key_map[GLFW_KEY_ENTER] = MU_KEY_RETURN;
+  key_map[GLFW_KEY_BACKSPACE] = MU_KEY_BACKSPACE;
+  glfwSetCharCallback(window, character_callback);
 
   float bg[3] = {90, 95, 100};
 
-  /* main loop */
+  // main loop
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    //   case SDL_TEXTINPUT:
-    //     mu_input_text(ctx, e.text.text);
-    //     break;
-
-    //   case SDL_KEYDOWN:
-    //   case SDL_KEYUP: {
-    //     int c = key_map[e.key.keysym.sym & 0xff];
-    //     if (c && e.type == SDL_KEYDOWN) {
-    //       mu_input_keydown(ctx, c);
-    //     }
-    //     if (c && e.type == SDL_KEYUP) {
-    //       mu_input_keyup(ctx, c);
-    //     }
-    //     break;
-    //   }
-    //   }
-    // }
     UIRenderFrame command;
     process_frame(ctx, bg, &command);
     render(width, height, bg, &command);

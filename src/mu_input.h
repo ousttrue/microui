@@ -1,6 +1,7 @@
 #pragma once
 #include "mu_types.h"
 #include <UIRenderFrame.h>
+#include <string>
 
 enum MU_MOUSE {
   MU_MOUSE_NONE,
@@ -38,6 +39,7 @@ inline MU_KEY operator&(MU_KEY L, MU_KEY R) {
       static_cast<std::underlying_type<MU_KEY>::type>(R));
 }
 
+const auto INPUT_TEXT_SIZE = 32;
 /// @brief input, focus, hover
 struct mu_Container;
 class mu_Input {
@@ -49,7 +51,8 @@ class mu_Input {
   MU_MOUSE _mouse_pressed = MU_MOUSE_NONE;
   MU_KEY _key_down = MU_KEY_NONE;
   MU_KEY _key_pressed = MU_KEY_NONE;
-  char _input_text[32] = {0};
+  char _input_text[INPUT_TEXT_SIZE] = {0};
+  uint32_t _input_text_pos = 0;
 
   mu_Id _focus = 0;
   bool _keep_focus = false;
@@ -80,7 +83,7 @@ public:
 
     // reset input state
     _key_pressed = MU_KEY::MU_KEY_NONE;
-    _input_text[0] = 0;
+    _input_text_pos = 0;
     _mouse_pressed = MU_MOUSE::MU_MOUSE_NONE;
     _scroll_delta = UIVec2(0, 0);
     _last_mouse_pos = _mouse_pos;
@@ -95,7 +98,9 @@ public:
   UIVec2 scroll_delta() const { return _scroll_delta; }
   MU_MOUSE mouse_down() const { return _mouse_down; }
   MU_MOUSE mouse_pressed() const { return _mouse_pressed; }
-  const char *input_text() const { return _input_text; }
+  std::u32string input_text() const {
+    return {_input_text, _input_text + _input_text_pos};
+  }
   MU_KEY key_down() const { return _key_down; }
   MU_KEY key_pressed() const { return _key_pressed; }
 
@@ -124,11 +129,25 @@ public:
     this->_key_down = this->_key_down & static_cast<MU_KEY>(~key);
   }
 
-  void set_text(const char *text) {
-    int len = strlen(this->_input_text);
-    int size = strlen(text) + 1;
-    assert(len + size <= (int)sizeof(this->_input_text));
-    memcpy(this->_input_text + len, text, size);
+  void push_utf8(const char *p, int size) {
+    for (int i = 0; i < size; ++i, ++p) {
+      this->_input_text[_input_text_pos++] = *p;
+    }
+    if (_input_text_pos < INPUT_TEXT_SIZE) {
+      this->_input_text[_input_text_pos] = 0;
+    }
+  }
+
+  int consume_text(char *buf, int bufsz) {
+    int n = mu_min(bufsz - 1, _input_text_pos);
+    if (n > 0) {
+      memcpy(buf, _input_text, n);
+    }
+    if (n < bufsz) {
+      buf[n] = 0;
+    }
+    _input_text_pos = 0;
+    return n;
   }
 
   void set_focus(mu_Id id) {
