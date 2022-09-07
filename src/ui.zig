@@ -32,7 +32,7 @@ pub fn uint8_slider(ctx: *zigmui.Context, value: *u8, low: i32, high: i32) zigmu
         @intToFloat(f32, low),
         @intToFloat(f32, high),
         0,
-        "%.0f",
+        "{d:.0}",
         .ALIGNCENTER,
     );
     value.* = @floatToInt(u8, tmp);

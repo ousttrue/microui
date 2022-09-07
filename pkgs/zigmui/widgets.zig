@@ -5,6 +5,7 @@ const Rect = @import("./Rect.zig");
 const Input = @import("./Input.zig");
 const Layout = @import("./Layout.zig");
 const Hash = @import("./Hash.zig");
+const TextEditor = @import("./TextEditor.zig");
 const OPT = Input.OPT;
 
 pub fn label(ctx: *Context, text: []const u8) void {
@@ -191,7 +192,7 @@ pub fn slider_ex(
     low: f32,
     high: f32,
     step: f32,
-    fmt: [:0]const u8,
+    comptime fmt: []const u8,
     opt: OPT,
 ) Input.RES {
     const last = value.*;
@@ -235,8 +236,11 @@ pub fn slider_ex(
     ctx.command_drawer.draw_control_frame(thumb, .BUTTON, opt, ctx.input.get_focus_state(id));
     // draw text
     var buf: [127 + 1]u8 = undefined;
-    const buf_len = c.sprintf(&buf[0], @ptrCast([*:0]const u8, &fmt[0]), v);
-    ctx.command_drawer.draw_control_text(buf[0..@intCast(usize, buf_len)], base, .TEXT, opt, false);
+    const slice = if (std.fmt.bufPrint(&buf, fmt, .{v})) |slice|
+        slice
+    else |_|
+        buf[0..0];
+    ctx.command_drawer.draw_control_text(slice, base, .TEXT, opt, false);
 
     return res;
 }
