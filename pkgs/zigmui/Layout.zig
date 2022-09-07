@@ -71,12 +71,12 @@ pub fn body_size(self: Self) Vec2 {
 }
 
 pub fn inherit_column(self: *Self, b: *const Self) void {
-    self._position.x =
-        std.math.max(self._position.x, b._position.x + b._body.x - self._body.x);
+    self.position.x =
+        std.math.max(self.position.x, b.position.x + b.body.x - self.body.x);
     self.next_row =
-        std.math.max(self.next_row, b.next_row + b._body.y - self._body.y);
-    self._max.x = std.math.max(self._max.x, b._max.x);
-    self._max.y = std.math.max(self._max.y, b._max.y);
+        std.math.max(self.next_row, b.next_row + b.body.y - self.body.y);
+    self.max.x = std.math.max(self.max.x, b.max.x);
+    self.max.y = std.math.max(self.max.y, b.max.y);
 }
 
 pub fn next(self: *Self, style: *const Style) Rect {

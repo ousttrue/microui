@@ -26,7 +26,7 @@ pub fn uint8_slider(ctx: *zigmui.Context, value: *u8, low: i32, high: i32) zigmu
     const id = ctx.hash.from_value(value);
     ctx.hash.stack.push(id);
     var tmp = @intToFloat(f32, value.*);
-    const res = zigmui.widgets.slider_ex(
+    const res = zigmui.widgets.slider(
         ctx,
         &tmp,
         @intToFloat(f32, low),
@@ -217,32 +217,38 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   mu_layout_end_column(ctx);
         // }
 
-        // /* background color sliders */
-        // if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
-        //   {
-        //     int widths[] = {-78, -1};
-        //     ctx.layout.stack.back().row(2, widths, 74);
-        //   }
-        //   /* sliders */
-        //   mu_layout_begin_column(ctx);
-        //   {
-        //     int widths[] = {46, -1};
-        //     ctx.layout.stack.back().row(2, widths, 0);
-        //   }
-        //   zigmui.widgets.label(ctx, "Red:");
-        //   mu_slider(ctx, &bg[0], 0, 255);
-        //   zigmui.widgets.label(ctx, "Green:");
-        //   mu_slider(ctx, &bg[1], 0, 255);
-        //   zigmui.widgets.label(ctx, "Blue:");
-        //   mu_slider(ctx, &bg[2], 0, 255);
-        //   mu_layout_end_column(ctx);
-        //   /* color preview */
-        //   UIRect r = mu_layout_next(ctx);
-        //   ctx.draw_rect(r, mu_Color(bg[0], bg[1], bg[2], 255));
-        //   char buf[32];
-        //   sprintf(buf, "#%02X%02X%02X", (int)bg[0], (int)bg[1], (int)bg[2]);
-        //   mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
-        // }
+        // background color sliders
+        if (zigmui.widgets.header(ctx, "Background Color", .{ .opt = .EXPANDED }) != .NONE) {
+            ctx.layout.stack.back().row(&.{ -78, -1 }, 74);
+
+            // sliders
+            const style = &ctx.command_drawer.style;
+            var layout = ctx.layout.begin_column(style);
+            layout.row(&.{ 46, -1 }, 0);
+            zigmui.widgets.label(ctx, "Red:");
+            _ = zigmui.widgets.slider(ctx, &bg[0], 0, 255, 0, null, .NONE);
+            zigmui.widgets.label(ctx, "Green:");
+            _ = zigmui.widgets.slider(ctx, &bg[1], 0, 255, 0, null, .NONE);
+            zigmui.widgets.label(ctx, "Blue:");
+            _ = zigmui.widgets.slider(ctx, &bg[2], 0, 255, 0, null, .NONE);
+            ctx.layout.end_column();
+
+            // color preview
+            const rect = ctx.layout.back().next(style);
+            ctx.command_drawer.draw_rect(rect, .{
+                .r = @floatToInt(u8, bg[0]),
+                .g = @floatToInt(u8, bg[1]),
+                .b = @floatToInt(u8, bg[2]),
+                .a = 255,
+            });
+            var buf: [32]u8 = undefined;
+            const slice = std.fmt.bufPrint(&buf, "#{x}{x}{x}", .{
+                @floatToInt(u8, bg[0]),
+                @floatToInt(u8, bg[1]),
+                @floatToInt(u8, bg[2]),
+            }) catch unreachable;
+            ctx.command_drawer.draw_control_text(slice, rect, .TEXT, .ALIGNCENTER, false);
+        }
 
         zigmui.widgets.end_window(ctx);
     }

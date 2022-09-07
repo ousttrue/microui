@@ -27,15 +27,15 @@ pub fn pop(self: *Self) *Layout {
 }
 
 pub fn begin_column(self: *Self, style: *const Style) *Layout {
-    const b = &self.stack.back();
+    const b = self.stack.back();
     self.stack.push(Layout.fromRect(b.next(style)));
     return self.stack.back();
 }
 
 pub fn end_column(self: *Self) void {
-    const b = &self.stack.back();
+    const b = self.stack.back();
     self.stack.pop();
     // inherit position/next_row/max from child layout if they are greater
-    const a = &self.stack.back();
+    var a = self.stack.back();
     a.inherit_column(b);
 }

@@ -209,13 +209,13 @@ pub fn number_textbox(ctx: *Context, value: *f32, r: Rect, id: Hash.Id) bool {
     return false;
 }
 
-pub fn slider_ex(
+pub fn slider(
     ctx: *Context,
     value: *f32,
     low: f32,
     high: f32,
     step: f32,
-    comptime fmt: []const u8,
+    comptime fmt: ?[]const u8,
     opt: OPT,
 ) Input.RES {
     const last = value.*;
@@ -257,13 +257,16 @@ pub fn slider_ex(
     const x = @floatToInt(i32, (v - low) * @intToFloat(f32, base.w - w) / (high - low));
     const thumb = Rect{ .x = base.x + x, .y = base.y, .w = w, .h = base.h };
     ctx.command_drawer.draw_control_frame(thumb, .BUTTON, opt, ctx.input.get_focus_state(id));
+
     // draw text
-    var buf: [127 + 1]u8 = undefined;
-    const slice = if (std.fmt.bufPrint(&buf, fmt, .{v})) |slice|
-        slice
-    else |_|
-        buf[0..0];
-    ctx.command_drawer.draw_control_text(slice, base, .TEXT, opt, false);
+    if (fmt) |f| {
+        var buf: [127 + 1]u8 = undefined;
+        const slice = if (std.fmt.bufPrint(&buf, f, .{v})) |slice|
+            slice
+        else |_|
+            buf[0..0];
+        ctx.command_drawer.draw_control_text(slice, base, .TEXT, opt, false);
+    }
 
     return res;
 }
