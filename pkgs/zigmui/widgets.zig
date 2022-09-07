@@ -1,9 +1,11 @@
 const std = @import("std");
 const c = @import("c");
 const Context = @import("./Context.zig");
+const Vec2 = @import("./Vec2.zig");
 const Rect = @import("./Rect.zig");
 const Input = @import("./Input.zig");
 const Layout = @import("./Layout.zig");
+const Container = @import("./Container.zig");
 const Hash = @import("./Hash.zig");
 const TextEditor = @import("./TextEditor.zig");
 const OPT = Input.OPT;
@@ -13,7 +15,11 @@ pub fn label(ctx: *Context, text: []const u8) void {
     ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE, false);
 }
 
-pub fn button(ctx: *Context, value: union(enum) { text: []const u8, icon: i32 }, option: struct { opt: Input.OPT = .NONE }) Input.RES {
+pub fn button(
+    ctx: *Context,
+    value: union(enum) { text: []const u8, icon: i32 },
+    option: struct { opt: Input.OPT = .NONE },
+) Input.RES {
     var res = Input.RES.NONE;
     const id = switch (value) {
         .text => |text| ctx.hash.from_str(text),
@@ -34,6 +40,69 @@ pub fn button(ctx: *Context, value: union(enum) { text: []const u8, icon: i32 },
         .icon => |icon| ctx.command_drawer.draw_icon(icon, rect, .TEXT),
     }
     return res;
+}
+
+pub fn scrollbar(ctx: *Context, cnt: *Container, b: *Rect, cs: Vec2, key: []const u8) void {
+    const maxscroll = cs.y - b.h;
+    if (maxscroll > 0 and b.h > 0) {
+        // only add scrollbar if content size is larger than body
+        const id = ctx.hash.from_str(key);
+
+        // get sizing / positioning
+        var base = b.*;
+        base.x = b.x + b.w;
+        const style = &ctx.command_drawer.style;
+        base.w = style.scrollbar_size;
+
+        // handle input
+        const mouseover = ctx.mouse_over(base);
+        ctx.input.update_focus_hover(id, .NONE, mouseover);
+        if (ctx.input.has_focus(id) and ctx.input.mouse_down == .LEFT) {
+            cnt.scroll.y += @floatToInt(
+                i32,
+                @intToFloat(f32, ctx.input.mouse_delta.y) * @intToFloat(f32, cs.y) / @intToFloat(f32, base.h),
+            );
+        }
+
+        // clamp scroll to limits
+        cnt.scroll.y = std.math.clamp(cnt.scroll.y, 0, maxscroll);
+
+        // draw base and thumb
+        ctx.command_drawer.draw_frame(base, .SCROLLBASE);
+        var thumb = base;
+        thumb.h = std.math.max(style.thumb_size, @floatToInt(i32, @intToFloat(f32, base.h) * @intToFloat(f32, b.h) / @intToFloat(f32, cs.y)));
+        thumb.y += @floatToInt(i32, @intToFloat(f32, cnt.scroll.y) * @intToFloat(f32, base.h - thumb.h) / @intToFloat(f32, maxscroll));
+        ctx.command_drawer.draw_frame(thumb, .SCROLLTHUMB);
+
+        // set this as the scroll_target (will get scrolled on mousewheel)
+        // if the mouse is over it
+        if (ctx.mouse_over(b.*)) {
+            ctx.input.set_scroll_target(cnt);
+        }
+    } else {
+        cnt.scroll.y = 0;
+    }
+}
+
+pub fn scrollbars(ctx: *Context, cnt: *Container, body: *Rect) void {
+    const style = &ctx.command_drawer.style;
+    const sz = style.scrollbar_size;
+    var cs = cnt.content_size;
+    cs.x += style.padding * 2;
+    cs.y += style.padding * 2;
+    ctx.command_drawer.clip_stack.push(body.*);
+    // resize body to make room for scrollbars
+    if (cs.y > cnt.body.h) {
+        body.w -= sz;
+    }
+    if (cs.x > cnt.body.w) {
+        body.h -= sz;
+    }
+    // to create a horizontal or vertical scrollbar almost-identical code is
+    // used; only the references to `x|y` `w|h` need to be switched
+    scrollbar(ctx, cnt, body, cs, "!scrollbary"); // x, y, w, h);
+    // scrollbar(ctx, cnt, body, cs, "!scrollbarx"); // y, x, h, w);
+    ctx.command_drawer.clip_stack.pop();
 }
 
 pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Input.RES {
@@ -105,7 +174,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Inpu
     }
 
     if (!opt.has(.NOSCROLL)) {
-        ctx.scrollbars(cnt, &body);
+        scrollbars(ctx, cnt, &body);
     }
     const style = ctx.command_drawer.style;
     ctx.layout.stack.push(Layout.fromRect(body.expand(-style.padding).move(cnt.scroll)));
@@ -182,7 +251,7 @@ pub fn begin_panel(ctx: *Context, name: []const u8, option: struct { opt: Input.
         }
         ctx.container.container_stack.push(cnt);
         if (option.opt.has(.NOSCROLL)) {
-            ctx.scrollbars(cnt, &cnt.rect);
+            scrollbars(ctx, cnt, &cnt.rect);
         }
         ctx.layout.push(Layout.fromRect(cnt.rect.expand(-style.padding).move(cnt.scroll)));
         cnt.body = cnt.rect;
