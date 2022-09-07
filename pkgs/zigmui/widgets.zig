@@ -8,11 +8,91 @@ const Layout = @import("./Layout.zig");
 const Container = @import("./Container.zig");
 const Hash = @import("./Hash.zig");
 const TextEditor = @import("./TextEditor.zig");
+const Style = @import("./Style.zig");
 const OPT = Input.OPT;
 
 pub fn label(ctx: *Context, text: []const u8) void {
     const style = &ctx.command_drawer.style;
     ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE, false);
+}
+
+fn get_word(src: []const u8) []const u8 {
+    for (src) |ch, i| {
+        if (ch == 0 or ch == ' ' or ch == '\n') {
+            return src[0..i];
+        }
+    }
+    return src;
+}
+
+const Line = struct {
+    text: []const u8,
+    pos: Vec2,
+};
+
+const LineIterator = struct {
+    const Self = @This();
+
+    src: []const u8,
+    style: *const Style,
+    pos: usize = 0,
+
+    pub fn init(src: []const u8, style: *const Style) Self {
+        return Self{
+            .src = src,
+            .style = style,
+        };
+    }
+
+    pub fn next(self: *Self, rect: Rect) ?Line {
+        if (self.pos >= self.src.len) {
+            return null;
+        }
+
+        const head = self.pos;
+
+        var w: i32 = 0;
+        while (self.pos < self.src.len) {
+            const word = get_word(self.src[self.pos..]);
+            const word_width = self.style.text_width(word);
+            if (w + word_width > rect.w) {
+                // wrap
+                break;
+            }
+            // advance
+            self.pos += word.len;
+            w += word_width;
+
+            // space
+            if (self.pos < self.src.len) {
+                const ch = self.src[self.pos];
+                const space = self.src[self.pos .. self.pos + 1];
+                self.pos += 1;
+                if (ch == '\n') {
+                    break;
+                }
+                w += self.style.text_width(space);
+            }
+        }
+
+        return Line{
+            .text = self.src[head..self.pos],
+            .pos = .{ .x = rect.x, .y = rect.y },
+        };
+    }
+};
+
+pub fn textarea(ctx: *Context, src: []const u8) void {
+    const style = &ctx.command_drawer.style;
+    var layout = ctx.layout.begin_column(style);
+    layout.row(&.{-1}, style.text_height());
+
+    var it = LineIterator.init(src, style);
+    while (it.next(layout.next(style))) |line| {
+        ctx.command_drawer.draw_text(line.text, line.pos, .TEXT);
+    }
+
+    ctx.layout.end_column();
 }
 
 pub fn button(

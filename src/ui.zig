@@ -86,7 +86,7 @@ fn log_window(ctx: *zigmui.Context) void {
         const panel = ctx.container.current_container();
         _ = panel;
         ctx.layout.stack.back().row(&.{-1}, -1);
-        zigmui.widgets.label(ctx, logbuf[0..logbuf_pos]);
+        zigmui.widgets.textarea(ctx, logbuf[0..logbuf_pos]);
         zigmui.widgets.end_panel(ctx);
         if (logbuf_updated) {
             // scroll to end
