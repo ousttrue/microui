@@ -41,7 +41,7 @@ pub fn uint8_slider(ctx: *zigmui.Context, value: *u8, low: i32, high: i32) zigmu
 }
 
 fn style_window(ctx: *zigmui.Context) void {
-    if (zigmui.widgets.begin_window(ctx, "Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) |_| {
+    if (zigmui.widgets.begin_window(ctx, "Style Editor", .{ .x = 350, .y = 250, .w = 300, .h = 240 }, .NONE)) {
         const sw = @floatToInt(i32, @intToFloat(f32, ctx.container.current_container().body.w) * 0.14);
         {
             const widths = [_]i32{ 80, sw, sw, sw, sw, -1 };
@@ -80,7 +80,7 @@ fn write_log(text: []const u8) void {
 }
 
 fn log_window(ctx: *zigmui.Context) void {
-    if (zigmui.widgets.begin_window(ctx, "Log Window", .{ .x = 350, .y = 40, .w = 300, .h = 200 }, .NONE)) |_| {
+    if (zigmui.widgets.begin_window(ctx, "Log Window", .{ .x = 350, .y = 40, .w = 300, .h = 200 }, .NONE)) {
 
         // output text panel
         ctx.layout.stack.back().row(&.{-1}, -25);
@@ -135,7 +135,7 @@ fn log_window(ctx: *zigmui.Context) void {
 }
 
 fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
-    if (zigmui.widgets.begin_window(ctx, "Demo Window", .{ .x = 40, .y = 40, .w = 300, .h = 450 }, .NONE)) |_| {
+    if (zigmui.widgets.begin_window(ctx, "Demo Window", .{ .x = 40, .y = 40, .w = 300, .h = 450 }, .NONE)) {
         const win = ctx.container.current_container();
         win.rect.w = std.math.max(win.rect.w, 240);
         win.rect.h = std.math.max(win.rect.h, 300);
@@ -171,13 +171,13 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
                 write_log("Pressed button 3");
             }
             if (zigmui.widgets.button(ctx, .{ .text = "Popup" }, .{})) {
-                // zigmui.widgets.open_popup(ctx, "Test Popup");
+                zigmui.widgets.open_popup(ctx, "Test Popup");
             }
-            // if (zigmui.widgets.begin_popup(ctx, "Test Popup")) {
-            //     zigmui.widgets.button(ctx, "Hello");
-            //     zigmui.widgets.button(ctx, "World");
-            //     zigmui.widgets.end_popup(ctx);
-            // }
+            if (zigmui.widgets.begin_popup(ctx, "Test Popup")) {
+                _ = zigmui.widgets.button(ctx, .{ .text = "Hello" }, .{});
+                _ = zigmui.widgets.button(ctx, .{ .text = "World" }, .{});
+                zigmui.widgets.end_popup(ctx);
+            }
         }
 
         // tree

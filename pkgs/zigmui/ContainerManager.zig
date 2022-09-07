@@ -148,7 +148,7 @@ pub fn begin_root_container(self: *Self, cnt: *Container, command_head: usize, m
     self.root_list.push(cnt);
     cnt.head = command_head;
     // set as hover root if the mouse is overlapping this container and it has a
-    // higher zindex than the current hover root */
+    // higher zindex than the current hover root
     if (cnt.rect.overlaps_vec2(mouse_pos)) {
         if (self.next_hover_root) |next_hover_root| {
             if (cnt.zindex > next_hover_root.zindex) {
@@ -160,13 +160,13 @@ pub fn begin_root_container(self: *Self, cnt: *Container, command_head: usize, m
     }
 }
 
-//   void open_popup(mu_Id id, const UIVec2 &mouse_pos, int frame) {
-//     auto cnt = get_container(id, MU_OPT::MU_OPT_NONE, frame);
-//     // set as hover root so popup isn't closed in begin_window_ex()
-//     _hover_root = _next_hover_root = cnt;
-//     // position at mouse cursor, open and bring-to-front
-//     cnt.rect = UIRect(mouse_pos.x, mouse_pos.y, 1, 1);
-//     cnt.open = true;
-//     bring_to_front(cnt);
-//   }
-// };
+pub fn open_popup(self: *Self, id: Hash.Id, mouse_pos: Vec2, frame: u32) void {
+    var cnt = self.get_container(id, .NONE, frame) orelse unreachable;
+    // set as hover root so popup isn't closed in begin_window_ex()
+    self.next_hover_root = cnt;
+    self.hover_root = cnt;
+    // position at mouse cursor, open and bring-to-front
+    cnt.rect = .{ .x = mouse_pos.x, .y = mouse_pos.y, .w = 1, .h = 1 };
+    cnt.open = true;
+    self.bring_to_front(cnt);
+}

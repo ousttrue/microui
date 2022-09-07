@@ -239,13 +239,13 @@ pub fn scrollbars(ctx: *Context, cnt: *Container, body: *Rect) void {
     ctx.command_drawer.clip_stack.pop();
 }
 
-pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Input.RES {
+pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) bool {
     const id = ctx.hash.from_str(text);
     const cnt = ctx.container.get_container(id, opt, ctx.frame) orelse {
-        return null;
+        return false;
     };
     if (!cnt.open) {
-        return null;
+        return false;
     }
     ctx.hash.stack.push(id);
 
@@ -349,7 +349,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Inpu
     }
 
     ctx.command_drawer.clip_stack.push(cnt.body);
-    return .ACTIVE;
+    return true;
 }
 
 pub fn end_window(ctx: *Context) void {
@@ -372,6 +372,20 @@ pub fn end_window(ctx: *Context) void {
 
     ctx.container.pop();
     ctx.hash.stack.pop();
+}
+
+pub fn open_popup(ctx: *Context, name: []const u8) void {
+    const id = ctx.hash.from_str(name);
+    ctx.container.open_popup(id, ctx.input.mouse_pos, ctx.frame);
+}
+
+pub fn begin_popup(ctx: *Context, name: []const u8) bool {
+    const opt = Input.OPT.POPUP.add(.AUTOSIZE).add(.NORESIZE).add(.NOSCROLL).add(.NOTITLE).add(.CLOSED);
+    return begin_window(ctx, name, .{}, opt);
+}
+
+pub fn end_popup(ctx: *Context) void {
+    end_window(ctx);
 }
 
 pub fn begin_panel(ctx: *Context, name: []const u8, option: struct { opt: Input.OPT = .NONE }) void {

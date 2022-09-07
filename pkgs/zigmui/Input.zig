@@ -10,6 +10,7 @@ pub const MOUSE_BUTTON = enum(u32) {
     LEFT = (1 << 0),
     RIGHT = (1 << 1),
     MIDDLE = (1 << 2),
+    _,
 
     pub fn remove(self: @This(), rhs: @This()) @This() {
         return @intToEnum(@This(), @enumToInt(self) & ~@enumToInt(rhs));
@@ -52,6 +53,7 @@ pub const OPT = enum(u32) {
     POPUP = (1 << 10),
     CLOSED = (1 << 11),
     EXPANDED = (1 << 12),
+    _,
 
     pub fn has(self: OPT, opt: OPT) bool {
         return (@enumToInt(self) & @enumToInt(opt)) != 0;
