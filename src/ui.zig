@@ -167,60 +167,66 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         if (zigmui.widgets.header(ctx, "Tree and Text", .{ .opt = .EXPANDED }) != .NONE) {
             ctx.layout.stack.back().row(&.{ 140, -1 }, 0);
             const style = &ctx.command_drawer.style;
-            var layout = ctx.layout.begin_column(style);
-            if (zigmui.widgets.begin_treenode(ctx, "Test 1", .{}) != .NONE) {
-                if (zigmui.widgets.begin_treenode(ctx, "Test 1a", .{}) != .NONE) {
-                    zigmui.widgets.label(ctx, "Hello");
-                    zigmui.widgets.label(ctx, "world");
+            {
+                var layout = ctx.layout.begin_column(style);
+                if (zigmui.widgets.begin_treenode(ctx, "Test 1", .{}) != .NONE) {
+                    if (zigmui.widgets.begin_treenode(ctx, "Test 1a", .{}) != .NONE) {
+                        zigmui.widgets.label(ctx, "Hello");
+                        zigmui.widgets.label(ctx, "world");
+                        zigmui.widgets.end_treenode(ctx);
+                    }
+                    if (zigmui.widgets.begin_treenode(ctx, "Test 1b", .{}) != .NONE) {
+                        if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
+                            write_log("Pressed button 1");
+                        }
+                        if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
+                            write_log("Pressed button 2");
+                        }
+                        zigmui.widgets.end_treenode(ctx);
+                    }
                     zigmui.widgets.end_treenode(ctx);
                 }
-                if (zigmui.widgets.begin_treenode(ctx, "Test 1b", .{}) != .NONE) {
-                    if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
-                        write_log("Pressed button 1");
-                    }
-                    if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
-                        write_log("Pressed button 2");
-                    }
-                    zigmui.widgets.end_treenode(ctx);
-                }
-                zigmui.widgets.end_treenode(ctx);
-            }
-            if (zigmui.widgets.begin_treenode(ctx, "Test 2", .{}) != .NONE) {
-                layout.row(&.{ 54, 54 }, 0);
-                //     if (zigmui.widgets.button(ctx, "Button 3")) {
-                //       write_log("Pressed button 3");
-                //     }
-                //     if (zigmui.widgets.button(ctx, "Button 4")) {
-                //       write_log("Pressed button 4");
-                //     }
-                //     if (zigmui.widgets.button(ctx, "Button 5")) {
-                //       write_log("Pressed button 5");
-                //     }
-                //     if (zigmui.widgets.button(ctx, "Button 6")) {
-                //       write_log("Pressed button 6");
-                //     }
-                zigmui.widgets.end_treenode(ctx);
-            }
-            if (zigmui.widgets.begin_treenode(ctx, "Test 3", .{}) != .NONE) {
-                //     static int checks[3] = {1, 0, 1};
-                //     zigmui.widgets.checkbox(ctx, "Checkbox 1", &checks[0]);
-                //     zigmui.widgets.checkbox(ctx, "Checkbox 2", &checks[1]);
-                //     zigmui.widgets.checkbox(ctx, "Checkbox 3", &checks[2]);
-                zigmui.widgets.end_treenode(ctx);
-            }
-            ctx.layout.end_column();
 
-            //   zigmui.widgets.layout_begin_column(ctx);
-            //   {
-            //     int widths[] = {-1};
-            //     ctx.layout.stack.back().row(1, widths, 0);
-            //   }
-            //   zigmui.widgets.text(
-            //       ctx,
-            //       "Lorem ipsum dolor sit amet, consectetur adipiscing "
-            //       "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
-            //       "ipsum, eu varius magna felis a nulla.");
-            //   zigmui.widgets.layout_end_column(ctx);
+                if (zigmui.widgets.begin_treenode(ctx, "Test 2", .{}) != .NONE) {
+                    layout.row(&.{ 54, 54 }, 0);
+                    //     if (zigmui.widgets.button(ctx, "Button 3")) {
+                    //       write_log("Pressed button 3");
+                    //     }
+                    //     if (zigmui.widgets.button(ctx, "Button 4")) {
+                    //       write_log("Pressed button 4");
+                    //     }
+                    //     if (zigmui.widgets.button(ctx, "Button 5")) {
+                    //       write_log("Pressed button 5");
+                    //     }
+                    //     if (zigmui.widgets.button(ctx, "Button 6")) {
+                    //       write_log("Pressed button 6");
+                    //     }
+                    zigmui.widgets.end_treenode(ctx);
+                }
+
+                if (zigmui.widgets.begin_treenode(ctx, "Test 3", .{}) != .NONE) {
+                    const S = struct {
+                        var checks = [_]bool{ true, false, true };
+                    };
+                    _ = zigmui.widgets.checkbox(ctx, "Checkbox 1", &S.checks[0]);
+                    _ = zigmui.widgets.checkbox(ctx, "Checkbox 2", &S.checks[1]);
+                    _ = zigmui.widgets.checkbox(ctx, "Checkbox 3", &S.checks[2]);
+                    zigmui.widgets.end_treenode(ctx);
+                }
+
+                ctx.layout.end_column();
+            }
+
+            {
+                var layout = ctx.layout.begin_column(style);
+                layout.row(&.{-1}, 0);
+                zigmui.widgets.textarea(ctx,
+                    \\Lorem ipsum dolor sit amet, consectetur adipiscing
+                    \\elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus
+                    \\ipsum, eu varius magna felis a nulla.
+                );
+                ctx.layout.end_column();
+            }
         }
 
         // background color sliders

@@ -122,6 +122,32 @@ pub fn button(
     return res;
 }
 
+pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) Input.RES {
+    const id = ctx.hash.from_value(state);
+    const style = &ctx.command_drawer.style;
+    const r = ctx.layout.back().next(style);
+    const box = Rect{ .x = r.x, .y = r.y, .w = r.h, .h = r.h };
+    const mouseover = ctx.mouse_over(r);
+    ctx.input.update_focus_hover(id, .NONE, mouseover);
+
+    // handle click
+    var res = Input.RES.NONE;
+    if (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id)) {
+        res = res.add(.CHANGE);
+        state.* = !state.*;
+    }
+
+    // draw
+    ctx.command_drawer.draw_control_frame(box, .BASE, .NONE, ctx.input.get_focus_state(id));
+    if (state.*) {
+        ctx.command_drawer.draw_icon(c.MU_ICON_CHECK, box, .TEXT);
+    }
+    const text_rect = Rect{ .x = r.x + box.w, .y = r.y, .w = r.w - box.w, .h = r.h };
+    ctx.command_drawer.draw_control_text(text, text_rect, .TEXT, .NONE, false);
+
+    return res;
+}
+
 pub fn scrollbar(ctx: *Context, cnt: *Container, b: *Rect, cs: Vec2, key: []const u8) void {
     const maxscroll = cs.y - b.h;
     if (maxscroll > 0 and b.h > 0) {
