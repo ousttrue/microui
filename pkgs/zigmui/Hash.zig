@@ -47,7 +47,7 @@ pub fn from_value(self: *Self, value: anytype) Id {
 //     return id;
 // }
 
-pub fn push_last(self: Self) void {
+pub fn push_last(self: *Self) void {
     self.stack.push(self.last);
 }
 

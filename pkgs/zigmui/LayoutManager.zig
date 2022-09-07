@@ -14,7 +14,7 @@ pub fn end(self: Self) void {
     std.debug.assert(self.stack.size() == 0);
 }
 
-pub fn push(self: *Self, layout: *const Layout) void {
+pub fn push(self: *Self, layout: Layout) void {
     self.stack.push(layout);
 }
 pub fn back(self: *Self) *Layout {

@@ -108,7 +108,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Inpu
         ctx.scrollbars(cnt, &body);
     }
     const style = ctx.command_drawer.style;
-    ctx.layout.stack.push(Layout.fromRect(body.expand(-style.padding).sub(cnt.scroll)));
+    ctx.layout.stack.push(Layout.fromRect(body.expand(-style.padding).move(cnt.scroll)));
     cnt.body = body;
 
     // do `resize` handle
@@ -167,6 +167,34 @@ pub fn end_window(ctx: *Context) void {
     cnt.content_size.x = layout.max.x - layout.body.x;
     cnt.content_size.y = layout.max.y - layout.body.y;
 
+    ctx.container.pop();
+    ctx.hash.stack.pop();
+}
+
+pub fn begin_panel(ctx: *Context, name: []const u8, option: struct { opt: Input.OPT = .NONE }) void {
+    const last_id = ctx.hash.from_str(name);
+    ctx.hash.stack.push(last_id);
+    if (ctx.container.get_container(last_id, option.opt, ctx.frame)) |cnt| {
+        const style = &ctx.command_drawer.style;
+        cnt.rect = ctx.layout.back().next(style);
+        if (!option.opt.has(.NOFRAME)) {
+            ctx.command_drawer.draw_frame(cnt.rect, .PANELBG);
+        }
+        ctx.container.container_stack.push(cnt);
+        if (option.opt.has(.NOSCROLL)) {
+            ctx.scrollbars(cnt, &cnt.rect);
+        }
+        ctx.layout.push(Layout.fromRect(cnt.rect.expand(-style.padding).move(cnt.scroll)));
+        cnt.body = cnt.rect;
+        ctx.command_drawer.clip_stack.push(cnt.body);
+    }
+}
+
+pub fn end_panel(ctx: *Context) void {
+    ctx.command_drawer.clip_stack.pop();
+    const layout = ctx.layout.pop();
+    var cnt = ctx.container.current_container();
+    cnt.content_size = layout.remain();
     ctx.container.pop();
     ctx.hash.stack.pop();
 }
@@ -306,4 +334,20 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
     ctx.command_drawer.draw_control_text(title, rect, .TEXT, .NONE, false);
 
     return if (expanded) .ACTIVE else .NONE;
+}
+
+pub fn begin_treenode(ctx: *Context, text: []const u8, option: struct { opt: Input.OPT = .NONE }) Input.RES {
+    var res = header(ctx, text, .{ .istreenode = true, .opt = option.opt });
+    if (res.has(.ACTIVE)) {
+        const style = &ctx.command_drawer.style;
+        ctx.layout.back().indent += style.indent;
+        ctx.hash.push_last();
+    }
+    return res;
+}
+
+pub fn end_treenode(ctx: *Context) void {
+    const style = &ctx.command_drawer.style;
+    ctx.layout.back().indent -= style.indent;
+    ctx.hash.stack.pop();
 }

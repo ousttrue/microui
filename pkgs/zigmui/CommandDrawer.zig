@@ -39,6 +39,9 @@ fn write_bytes(self: *Self, value: anytype) void {
 }
 
 fn write(self: *Self, data: []const u8) void {
+    if (data.len == 0) {
+        return;
+    }
     @memcpy(@ptrCast([*]u8, &self.buffer[self.pos]), @ptrCast([*]const u8, &data[0]), data.len);
     self.pos += data.len;
 }

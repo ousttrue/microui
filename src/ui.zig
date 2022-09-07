@@ -61,26 +61,38 @@ fn style_window(ctx: *zigmui.Context) void {
     }
 }
 
+var logbuf: [64000]u8 = undefined;
+var logbuf_pos: usize = 0;
+var logbuf_updated: bool = false;
+
+fn write_log(text: []const u8) void {
+    @memcpy(
+        @ptrCast([*]u8, &logbuf[0]) + logbuf_pos,
+        @ptrCast([*]const u8, &text[0]),
+        text.len,
+    );
+    logbuf_pos += text.len;
+    logbuf_updated = true;
+    logbuf[logbuf_pos] = '\n';
+    logbuf_pos += 1;
+}
+
 fn log_window(ctx: *zigmui.Context) void {
     if (zigmui.widgets.begin_window(ctx, "Log Window", .{ .x = 350, .y = 40, .w = 300, .h = 200 }, .NONE)) |_| {
 
-        //     /* output text panel */
-        //     {
-        //       int widths[] = {-1};
-        //       ctx.layout.stack.back().row(1, widths, -25);
-        //     }
-        //     mu_begin_panel(ctx, "Log Output");
-        //     auto panel = mu_get_current_container(ctx);
-        //     {
-        //       int widths[] = {-1};
-        //       ctx.layout.stack.back().row(1, widths, -1);
-        //     }
-        //     mu_text(ctx, logbuf);
-        //     mu_end_panel(ctx);
-        //     if (logbuf_updated) {
-        //       panel.scroll.y = panel.content_size.y;
-        //       logbuf_updated = 0;
-        //     }
+        // output text panel
+        ctx.layout.stack.back().row(&.{-1}, -25);
+        zigmui.widgets.begin_panel(ctx, "Log Output", .{});
+        const panel = ctx.container.current_container();
+        _ = panel;
+        ctx.layout.stack.back().row(&.{-1}, -1);
+        zigmui.widgets.label(ctx, logbuf[0..logbuf_pos]);
+        zigmui.widgets.end_panel(ctx);
+        if (logbuf_updated) {
+            // scroll to end
+            // panel.scroll.y = panel.content_size.y;
+            // logbuf_updated = false;
+        }
 
         //     /* input textbox + submit button */
         //     static char buf[128];
@@ -89,7 +101,7 @@ fn log_window(ctx: *zigmui.Context) void {
         //       int widths[] = {-70, -1};
         //       ctx.layout.stack.back().row(2, widths, 0);
         //     }
-        //     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
+        //     if (zigmui.widgets.textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
         //       ctx.set_focus(ctx.last_id);
         //       submitted = 1;
         //     }
@@ -106,7 +118,6 @@ fn log_window(ctx: *zigmui.Context) void {
 }
 
 fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
-    _ = bg;
     if (zigmui.widgets.begin_window(ctx, "Demo Window", .{ .x = 40, .y = 40, .w = 300, .h = 450 }, .NONE)) |_| {
         const win = ctx.container.current_container();
         win.rect.w = std.math.max(win.rect.w, 240);
@@ -133,89 +144,84 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
             ctx.layout.stack.back().row(&.{ 86, -110, -1 }, 0);
             zigmui.widgets.label(ctx, "Test buttons 1:");
             if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
-                // write_log("Pressed button 1");
+                write_log("Pressed button 1");
             }
             if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
-                // write_log("Pressed button 2");
+                write_log("Pressed button 2");
             }
             zigmui.widgets.label(ctx, "Test buttons 2:");
             if (zigmui.widgets.button(ctx, .{ .text = "Button 3" }, .{}) != .NONE) {
-                // write_log("Pressed button 3");
+                write_log("Pressed button 3");
             }
             if (zigmui.widgets.button(ctx, .{ .text = "Popup" }, .{}) != .NONE) {
-                // mu_open_popup(ctx, "Test Popup");
+                // zigmui.widgets.open_popup(ctx, "Test Popup");
             }
-            // if (mu_begin_popup(ctx, "Test Popup")) {
+            // if (zigmui.widgets.begin_popup(ctx, "Test Popup")) {
             //     zigmui.widgets.button(ctx, "Hello");
             //     zigmui.widgets.button(ctx, "World");
-            //     mu_end_popup(ctx);
+            //     zigmui.widgets.end_popup(ctx);
             // }
         }
 
-        // /* tree */
-        // if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
-        //   {
-        //     int widths[] = {140, -1};
-        //     ctx.layout.stack.back().row(2, widths, 0);
-        //   }
-        //   mu_layout_begin_column(ctx);
-        //   if (mu_begin_treenode(ctx, "Test 1")) {
-        //     if (mu_begin_treenode(ctx, "Test 1a")) {
-        //       zigmui.widgets.label(ctx, "Hello");
-        //       zigmui.widgets.label(ctx, "world");
-        //       mu_end_treenode(ctx);
-        //     }
-        //     if (mu_begin_treenode(ctx, "Test 1b")) {
-        //       if (zigmui.widgets.button(ctx, "Button 1")) {
-        //         write_log("Pressed button 1");
-        //       }
-        //       if (zigmui.widgets.button(ctx, "Button 2")) {
-        //         write_log("Pressed button 2");
-        //       }
-        //       mu_end_treenode(ctx);
-        //     }
-        //     mu_end_treenode(ctx);
-        //   }
-        //   if (mu_begin_treenode(ctx, "Test 2")) {
-        //     {
-        //       int widths[] = {54, 54};
-        //       ctx.layout.stack.back().row(2, widths, 0);
-        //     }
-        //     if (zigmui.widgets.button(ctx, "Button 3")) {
-        //       write_log("Pressed button 3");
-        //     }
-        //     if (zigmui.widgets.button(ctx, "Button 4")) {
-        //       write_log("Pressed button 4");
-        //     }
-        //     if (zigmui.widgets.button(ctx, "Button 5")) {
-        //       write_log("Pressed button 5");
-        //     }
-        //     if (zigmui.widgets.button(ctx, "Button 6")) {
-        //       write_log("Pressed button 6");
-        //     }
-        //     mu_end_treenode(ctx);
-        //   }
-        //   if (mu_begin_treenode(ctx, "Test 3")) {
-        //     static int checks[3] = {1, 0, 1};
-        //     mu_checkbox(ctx, "Checkbox 1", &checks[0]);
-        //     mu_checkbox(ctx, "Checkbox 2", &checks[1]);
-        //     mu_checkbox(ctx, "Checkbox 3", &checks[2]);
-        //     mu_end_treenode(ctx);
-        //   }
-        //   mu_layout_end_column(ctx);
+        // tree
+        if (zigmui.widgets.header(ctx, "Tree and Text", .{ .opt = .EXPANDED }) != .NONE) {
+            ctx.layout.stack.back().row(&.{ 140, -1 }, 0);
+            const style = &ctx.command_drawer.style;
+            var layout = ctx.layout.begin_column(style);
+            if (zigmui.widgets.begin_treenode(ctx, "Test 1", .{}) != .NONE) {
+                if (zigmui.widgets.begin_treenode(ctx, "Test 1a", .{}) != .NONE) {
+                    zigmui.widgets.label(ctx, "Hello");
+                    zigmui.widgets.label(ctx, "world");
+                    zigmui.widgets.end_treenode(ctx);
+                }
+                if (zigmui.widgets.begin_treenode(ctx, "Test 1b", .{}) != .NONE) {
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
+                        write_log("Pressed button 1");
+                    }
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
+                        write_log("Pressed button 2");
+                    }
+                    zigmui.widgets.end_treenode(ctx);
+                }
+                zigmui.widgets.end_treenode(ctx);
+            }
+            if (zigmui.widgets.begin_treenode(ctx, "Test 2", .{}) != .NONE) {
+                layout.row(&.{ 54, 54 }, 0);
+                //     if (zigmui.widgets.button(ctx, "Button 3")) {
+                //       write_log("Pressed button 3");
+                //     }
+                //     if (zigmui.widgets.button(ctx, "Button 4")) {
+                //       write_log("Pressed button 4");
+                //     }
+                //     if (zigmui.widgets.button(ctx, "Button 5")) {
+                //       write_log("Pressed button 5");
+                //     }
+                //     if (zigmui.widgets.button(ctx, "Button 6")) {
+                //       write_log("Pressed button 6");
+                //     }
+                zigmui.widgets.end_treenode(ctx);
+            }
+            if (zigmui.widgets.begin_treenode(ctx, "Test 3", .{}) != .NONE) {
+                //     static int checks[3] = {1, 0, 1};
+                //     zigmui.widgets.checkbox(ctx, "Checkbox 1", &checks[0]);
+                //     zigmui.widgets.checkbox(ctx, "Checkbox 2", &checks[1]);
+                //     zigmui.widgets.checkbox(ctx, "Checkbox 3", &checks[2]);
+                zigmui.widgets.end_treenode(ctx);
+            }
+            ctx.layout.end_column();
 
-        //   mu_layout_begin_column(ctx);
-        //   {
-        //     int widths[] = {-1};
-        //     ctx.layout.stack.back().row(1, widths, 0);
-        //   }
-        //   mu_text(
-        //       ctx,
-        //       "Lorem ipsum dolor sit amet, consectetur adipiscing "
-        //       "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
-        //       "ipsum, eu varius magna felis a nulla.");
-        //   mu_layout_end_column(ctx);
-        // }
+            //   zigmui.widgets.layout_begin_column(ctx);
+            //   {
+            //     int widths[] = {-1};
+            //     ctx.layout.stack.back().row(1, widths, 0);
+            //   }
+            //   zigmui.widgets.text(
+            //       ctx,
+            //       "Lorem ipsum dolor sit amet, consectetur adipiscing "
+            //       "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
+            //       "ipsum, eu varius magna felis a nulla.");
+            //   zigmui.widgets.layout_end_column(ctx);
+        }
 
         // background color sliders
         if (zigmui.widgets.header(ctx, "Background Color", .{ .opt = .EXPANDED }) != .NONE) {

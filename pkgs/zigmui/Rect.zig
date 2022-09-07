@@ -37,10 +37,10 @@ pub fn overlaps_vec2(self: Self, p: Vec2) bool {
         p.y < self.y + self.h;
 }
 
-pub fn sub(self: Self, p: Vec2) Self {
+pub fn move(self: Self, p: Vec2) Self {
     return .{
-        .x = self.x - p.x,
-        .y = self.y - p.y,
+        .x = self.x + p.x,
+        .y = self.y + p.y,
         .w = self.w,
         .h = self.h,
     };

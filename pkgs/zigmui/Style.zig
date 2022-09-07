@@ -21,8 +21,8 @@ pub const STYLE = enum(u32) {
     MAX,
 };
 
-pub const text_width_callback = fn (_: ?*anyopaque, text: [*c]const u8, _len: c_int) callconv(.C) c_int;
-pub const text_height_callback = fn (_: ?*anyopaque) callconv(.C) c_int;
+pub const text_width_callback = fn (_: ?*anyopaque, text: []const u8) u32;
+pub const text_height_callback = fn (_: ?*anyopaque) u32;
 
 const Self = @This();
 text_width_callback: ?*const text_width_callback = null,
@@ -55,7 +55,7 @@ colors: [@enumToInt(STYLE.MAX)]Color32 = .{
 
 pub fn text_width(self: Self, str: []const u8) c_int {
     if (self.text_width_callback) |callback| {
-        return callback.*(self.font, &str[0], @intCast(c_int, str.len));
+        return @intCast(c_int, callback.*(self.font, str));
     } else {
         unreachable;
     }
@@ -63,7 +63,7 @@ pub fn text_width(self: Self, str: []const u8) c_int {
 
 pub fn text_height(self: Self) c_int {
     if (self.text_height_callback) |callback| {
-        return callback.*(self.font);
+        return @intCast(c_int, callback.*(self.font));
     } else {
         unreachable;
     }

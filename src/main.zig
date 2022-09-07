@@ -3,16 +3,16 @@ const c = @import("c");
 const ui = @import("./ui.zig");
 const zigmui = @import("zigmui");
 
-fn text_width(_: ?*anyopaque, text: [*c]const u8, _len: c_int) callconv(.C) c_int {
-    const len = if (_len == -1)
-        @intCast(c_int, c.strlen(text))
-    else
-        _len;
-    return c.r_get_text_width(text, len);
+fn text_width(_: ?*anyopaque, text: []const u8) u32 {
+    if(text.len==0)
+    {
+        return 0;
+    }
+    return @intCast(u32, c.r_get_text_width(&text[0], @intCast(c_int, text.len)));
 }
 
-fn text_height(_: ?*anyopaque) callconv(.C) c_int {
-    return c.r_get_text_height();
+fn text_height(_: ?*anyopaque) u32 {
+    return @intCast(u32, c.r_get_text_height());
 }
 
 var mouse_x: c_int = 0;
