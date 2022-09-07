@@ -15,7 +15,7 @@ pub fn Pool(comptime N: usize) type {
     return struct {
         const Self = @This();
 
-        items: [N]Item = undefined,
+        items: [N]Item = .{.{}} ** N,
 
         pub fn clear(self: *Self, idx: usize) void {
             self.items[idx].clear();

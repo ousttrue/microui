@@ -9,14 +9,14 @@ pub fn get(self: Self, id: Hash.Id) ?usize {
     return self.treenode_pool.get_index(id);
 }
 
-pub fn update(self: *Self, id: Hash.Id, idx: usize, active: bool, frame: u32) void {
-    if (idx >= 0) {
+pub fn update(self: *Self, id: Hash.Id, idx: ?usize, active: bool, frame: u32) void {
+    if (idx) |i| {
         if (active) {
-            self.treenode_pool.update(frame, idx);
+            self.treenode_pool.update(frame, i);
         } else {
-            self.treenode_pool.clear(idx);
+            self.treenode_pool.clear(i);
         }
     } else if (active) {
-        self.treenode_pool.init(frame, id);
+        _ = self.treenode_pool.init(frame, id);
     }
 }

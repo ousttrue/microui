@@ -244,3 +244,40 @@ pub fn slider_ex(
 
     return res;
 }
+
+pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: bool = false, opt: Input.OPT = .NONE }) Input.RES {
+    const id = ctx.hash.from_str(title);
+    const idx = ctx.tree.get(id);
+    ctx.layout.back().row(&.{-1}, 0);
+    var active = (idx != null);
+    const expanded = if (option.opt.has(.EXPANDED)) !active else active;
+    const style = &ctx.command_drawer.style;
+    var rect = ctx.layout.back().next(style);
+    const mouseover = ctx.mouse_over(rect);
+    ctx.input.update_focus_hover(id, .NONE, mouseover);
+
+    // handle click
+    active = active != (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id));
+
+    // update pool ref
+        ctx.tree.update(id, idx, active, ctx.frame);
+
+    // draw
+    if (option.istreenode) {
+        if (ctx.input.has_hover(id)) {
+            ctx.command_drawer.draw_frame(rect, .BUTTONHOVER);
+        }
+    } else {
+        ctx.command_drawer.draw_control_frame(rect, .BUTTON, .NONE, ctx.input.get_focus_state(id));
+    }
+    ctx.command_drawer.draw_icon(
+        if (expanded) c.MU_ICON_EXPANDED else c.MU_ICON_COLLAPSED,
+        Rect{ .x = rect.x, .y = rect.y, .w = rect.h, .h = rect.h },
+        .TEXT,
+    );
+    rect.x += rect.h - style.padding;
+    rect.w -= rect.h - style.padding;
+    ctx.command_drawer.draw_control_text(title, rect, .TEXT, .NONE, false);
+
+    return if (expanded) .ACTIVE else .NONE;
+}
