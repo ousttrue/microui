@@ -16,6 +16,34 @@ pub fn label(ctx: *Context, text: []const u8) void {
     ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE, false);
 }
 
+pub fn textbox_raw(ctx: *Context, buf: []u8, id: Hash.Id, rect: Rect, opt: OPT) Input.RES {
+    // base rect
+    const mouseover = ctx.mouse_over(rect);
+    ctx.input.update_focus_hover(id, opt.add(.HOLDFOCUS), mouseover);
+    ctx.command_drawer.draw_control_frame(rect, .BASE, opt, ctx.input.get_focus_state(id));
+
+    // base rect
+    var res = Input.RES.NONE;
+    if (ctx.input.has_focus(id)) {
+        // text editor
+        const handled = ctx.input.handle_text(id, buf);
+        res = res.add(handled.res);
+        ctx.command_drawer.draw_control_text(buf[0..handled.size], rect, .TEXT, opt, true);
+    } else {
+        const len = c.strlen(&buf[0]);
+        ctx.command_drawer.draw_control_text(buf[0..len], rect, .TEXT, opt, false);
+    }
+    return res;
+}
+
+pub fn textbox(ctx: *Context, whole_buf: []u8, option: struct { opt: Input.OPT = .NONE }) Input.RES {
+    const id = ctx.hash.from_value(&whole_buf[0]);
+    const style = &ctx.command_drawer.style;
+    const r = ctx.layout.back().next(style);
+
+    return textbox_raw(ctx, whole_buf, id, r, option.opt);
+}
+
 fn get_word(src: []const u8) []const u8 {
     for (src) |ch, i| {
         if (ch == 0 or ch == ' ' or ch == '\n') {
@@ -372,25 +400,6 @@ pub fn end_panel(ctx: *Context) void {
     cnt.content_size = layout.remain();
     ctx.container.pop();
     ctx.hash.stack.pop();
-}
-
-pub fn textbox_raw(ctx: *Context, buf: []u8, id: Hash.Id, rect: Rect, opt: OPT) Input.RES {
-    var res: Input.RES = .NONE;
-
-    // base rect
-    const mouseover = ctx.mouse_over(rect);
-    ctx.input.update_focus_hover(id, opt.add(.HOLDFOCUS), mouseover);
-    ctx.command_drawer.draw_control_frame(rect, .BASE, opt, ctx.input.get_focus_state(id));
-
-    if (ctx.input.has_focus(id)) {
-        // text editor
-        res = res.add(ctx.input.handle_text(id, buf));
-        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt, true);
-    } else {
-        ctx.command_drawer.draw_control_text(buf, rect, .TEXT, opt, false);
-    }
-
-    return res;
 }
 
 pub fn number_textbox(ctx: *Context, value: *f32, r: Rect, id: Hash.Id) bool {

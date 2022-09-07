@@ -94,7 +94,7 @@ mouse_pressed: MOUSE_BUTTON = .NONE,
 key_down: KEY = .NONE,
 key_pressed: KEY = .NONE,
 input_text: [32]u8 = .{0} ** 32,
-input_text_pos: u32 = 0,
+input_text_pos: usize = 0,
 
 focus: ?Hash.Id = null,
 keep_focus: bool = false,
@@ -169,6 +169,7 @@ pub fn push_text(self: *Self, text: []const u8) void {
         @ptrCast([*]const u8, &text[0]),
         text.len,
     );
+    self.input_text_pos += text.len;
 }
 
 pub fn set_focus(self: *Self, id: Hash.Id) void {
@@ -244,20 +245,25 @@ fn consume_text(self: *Self, buf: []u8) usize {
     return n;
 }
 
-pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) RES {
-    var res: RES = .NONE;
+pub const HandleResult = struct {
+    res: RES = .NONE,
+    size: usize = 0,
+};
+
+pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) HandleResult {
+    var result = HandleResult{};
     if (self.has_focus(id)) {
+        result.size = @intCast(usize, c.strlen(&buf[0]));
 
         // handle text input
-        var len = c.strlen(&buf[0]);
-        const n = self.consume_text(buf[len..]);
+        const n = self.consume_text(buf[result.size..]);
         if (n > 0) {
-            res = res.add(.CHANGE);
-            len += n;
+            result.res = result.res.add(.CHANGE);
+            result.size += n;
         }
 
         // handle backspace
-        if (self.key_pressed.has(.BACKSPACE) and len > 0) {
+        if (self.key_pressed.has(.BACKSPACE) and result.size > 0) {
             // skip utf-8 continuation bytes
             // while ((buf[--len] & 0xc0) == 0x80 && len > 0)
             //   ;
@@ -268,9 +274,9 @@ pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) RES {
         // handle return
         if (self.key_pressed.has(.RETURN)) {
             self.set_focus(0);
-            res = res.add(.SUBMIT);
+            result.res = result.res.add(.SUBMIT);
         }
     }
 
-    return res;
+    return result;
 }

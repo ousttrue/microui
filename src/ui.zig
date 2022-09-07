@@ -66,12 +66,14 @@ var logbuf_pos: usize = 0;
 var logbuf_updated: bool = false;
 
 fn write_log(text: []const u8) void {
-    @memcpy(
-        @ptrCast([*]u8, &logbuf[0]) + logbuf_pos,
-        @ptrCast([*]const u8, &text[0]),
-        text.len,
-    );
-    logbuf_pos += text.len;
+    if (text.len > 0) {
+        @memcpy(
+            @ptrCast([*]u8, &logbuf[0]) + logbuf_pos,
+            @ptrCast([*]const u8, &text[0]),
+            text.len,
+        );
+        logbuf_pos += text.len;
+    }
     logbuf_updated = true;
     logbuf[logbuf_pos] = '\n';
     logbuf_pos += 1;
@@ -96,25 +98,36 @@ fn log_window(ctx: *zigmui.Context) void {
 
         // input textbox + submit button
         {
-            // const S = struct {
-            //     var buf: [128]u8 = undefined;
-            // };
-            //     int submitted = 0;
-            //     {
-            //       int widths[] = {-70, -1};
-            //       ctx.layout.stack.back().row(2, widths, 0);
-            //     }
-            //     if (zigmui.widgets.textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-            //       ctx.set_focus(ctx.last_id);
-            //       submitted = 1;
-            //     }
-            //     if (zigmui.widgets.button(ctx, "Submit")) {
-            //       submitted = 1;
-            //     }
-            //     if (submitted) {
-            //       write_log(buf);
-            //       buf[0] = '\0';
-            //     }
+            const S = struct {
+                var buf: [128]u8 = undefined;
+
+                fn slice() []const u8 {
+                    var len: usize = buf.len;
+                    for (buf) |ch, i| {
+                        if (ch == 0) {
+                            len = i;
+                            break;
+                        }
+                    }
+                    if (len > 0) {
+                        std.log.debug("{}", .{len});
+                    }
+                    return buf[0..len];
+                }
+            };
+            var submitted = false;
+            ctx.layout.stack.back().row(&.{ -70, -1 }, 0);
+            if (zigmui.widgets.textbox(ctx, &S.buf, .{}).has(.SUBMIT)) {
+                ctx.input.set_focus(ctx.hash.last);
+                submitted = true;
+            }
+            if (zigmui.widgets.button(ctx, .{ .text = "Submit" }, .{})) {
+                submitted = true;
+            }
+            if (submitted) {
+                write_log(S.slice());
+                S.buf[0] = 0;
+            }
         }
 
         zigmui.widgets.end_window(ctx);
