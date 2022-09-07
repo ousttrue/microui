@@ -13,8 +13,31 @@ pub fn label(ctx: *Context, text: []const u8) void {
     ctx.command_drawer.draw_control_text(text, ctx.layout.back().next(style), .TEXT, .NONE, false);
 }
 
-pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?Input.RES {
-    const id = ctx.hash.from_str(title);
+pub fn button(ctx: *Context, value: union(enum) { text: []const u8, icon: i32 }, option: struct { opt: Input.OPT = .NONE }) Input.RES {
+    var res = Input.RES.NONE;
+    const id = switch (value) {
+        .text => |text| ctx.hash.from_str(text),
+        .icon => |icon| ctx.hash.from_value(icon),
+    };
+    const style = &ctx.command_drawer.style;
+    const rect = ctx.layout.back().next(style);
+    const mouseover = ctx.mouse_over(rect);
+    ctx.input.update_focus_hover(id, option.opt, mouseover);
+    // handle click
+    if (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id)) {
+        res = res.add(.SUBMIT);
+    }
+    // draw
+    ctx.command_drawer.draw_control_frame(rect, .BUTTON, option.opt, ctx.input.get_focus_state(id));
+    switch (value) {
+        .text => |text| ctx.command_drawer.draw_control_text(text, rect, .TEXT, option.opt, false),
+        .icon => |icon| ctx.command_drawer.draw_icon(icon, rect, .TEXT),
+    }
+    return res;
+}
+
+pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) ?Input.RES {
+    const id = ctx.hash.from_str(text);
     const cnt = ctx.container.get_container(id, opt, ctx.frame) orelse {
         return null;
     };
@@ -52,7 +75,7 @@ pub fn begin_window(ctx: *Context, title: []const u8, rect: Rect, opt: OPT) ?Inp
             const title_id = ctx.hash.from_str("!title");
             const mouseover = ctx.mouse_over(tr);
             ctx.input.update_focus_hover(title_id, opt, mouseover);
-            ctx.command_drawer.draw_control_text(title, tr, .TITLETEXT, opt, false);
+            ctx.command_drawer.draw_control_text(text, tr, .TITLETEXT, opt, false);
             if (ctx.input.has_focus(title_id) and
                 ctx.input.mouse_down == .LEFT)
             {
@@ -260,7 +283,7 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
     active = active != (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id));
 
     // update pool ref
-        ctx.tree.update(id, idx, active, ctx.frame);
+    ctx.tree.update(id, idx, active, ctx.frame);
 
     // draw
     if (option.istreenode) {

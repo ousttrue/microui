@@ -67,13 +67,13 @@ fn log_window(ctx: *zigmui.Context) void {
         //     /* output text panel */
         //     {
         //       int widths[] = {-1};
-        //       ctx.layout_stack.back().row(1, widths, -25);
+        //       ctx.layout.stack.back().row(1, widths, -25);
         //     }
         //     mu_begin_panel(ctx, "Log Output");
         //     auto panel = mu_get_current_container(ctx);
         //     {
         //       int widths[] = {-1};
-        //       ctx.layout_stack.back().row(1, widths, -1);
+        //       ctx.layout.stack.back().row(1, widths, -1);
         //     }
         //     mu_text(ctx, logbuf);
         //     mu_end_panel(ctx);
@@ -87,13 +87,13 @@ fn log_window(ctx: *zigmui.Context) void {
         //     int submitted = 0;
         //     {
         //       int widths[] = {-70, -1};
-        //       ctx.layout_stack.back().row(2, widths, 0);
+        //       ctx.layout.stack.back().row(2, widths, 0);
         //     }
         //     if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
         //       ctx.set_focus(ctx.last_id);
         //       submitted = 1;
         //     }
-        //     if (mu_button(ctx, "Submit")) {
+        //     if (zigmui.widgets.button(ctx, "Submit")) {
         //       submitted = 1;
         //     }
         //     if (submitted) {
@@ -128,38 +128,35 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
             }
         }
 
-        // /* labels + buttons */
-        // if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
-        //   {
-        //     int widths[] = {86, -110, -1};
-        //     ctx.layout_stack.back().row(3, widths, 0);
-        //   }
-        //   zigmui.widgets.label(ctx, "Test buttons 1:");
-        //   if (mu_button(ctx, "Button 1")) {
-        //     write_log("Pressed button 1");
-        //   }
-        //   if (mu_button(ctx, "Button 2")) {
-        //     write_log("Pressed button 2");
-        //   }
-        //   zigmui.widgets.label(ctx, "Test buttons 2:");
-        //   if (mu_button(ctx, "Button 3")) {
-        //     write_log("Pressed button 3");
-        //   }
-        //   if (mu_button(ctx, "Popup")) {
-        //     mu_open_popup(ctx, "Test Popup");
-        //   }
-        //   if (mu_begin_popup(ctx, "Test Popup")) {
-        //     mu_button(ctx, "Hello");
-        //     mu_button(ctx, "World");
-        //     mu_end_popup(ctx);
-        //   }
-        // }
+        // labels + buttons
+        if (zigmui.widgets.header(ctx, "Test Buttons", .{ .opt = .EXPANDED }) != .NONE) {
+            ctx.layout.stack.back().row(&.{ 86, -110, -1 }, 0);
+            zigmui.widgets.label(ctx, "Test buttons 1:");
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
+                // write_log("Pressed button 1");
+            }
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
+                // write_log("Pressed button 2");
+            }
+            zigmui.widgets.label(ctx, "Test buttons 2:");
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 3" }, .{}) != .NONE) {
+                // write_log("Pressed button 3");
+            }
+            if (zigmui.widgets.button(ctx, .{ .text = "Popup" }, .{}) != .NONE) {
+                // mu_open_popup(ctx, "Test Popup");
+            }
+            // if (mu_begin_popup(ctx, "Test Popup")) {
+            //     zigmui.widgets.button(ctx, "Hello");
+            //     zigmui.widgets.button(ctx, "World");
+            //     mu_end_popup(ctx);
+            // }
+        }
 
         // /* tree */
         // if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
         //   {
         //     int widths[] = {140, -1};
-        //     ctx.layout_stack.back().row(2, widths, 0);
+        //     ctx.layout.stack.back().row(2, widths, 0);
         //   }
         //   mu_layout_begin_column(ctx);
         //   if (mu_begin_treenode(ctx, "Test 1")) {
@@ -169,10 +166,10 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //       mu_end_treenode(ctx);
         //     }
         //     if (mu_begin_treenode(ctx, "Test 1b")) {
-        //       if (mu_button(ctx, "Button 1")) {
+        //       if (zigmui.widgets.button(ctx, "Button 1")) {
         //         write_log("Pressed button 1");
         //       }
-        //       if (mu_button(ctx, "Button 2")) {
+        //       if (zigmui.widgets.button(ctx, "Button 2")) {
         //         write_log("Pressed button 2");
         //       }
         //       mu_end_treenode(ctx);
@@ -182,18 +179,18 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   if (mu_begin_treenode(ctx, "Test 2")) {
         //     {
         //       int widths[] = {54, 54};
-        //       ctx.layout_stack.back().row(2, widths, 0);
+        //       ctx.layout.stack.back().row(2, widths, 0);
         //     }
-        //     if (mu_button(ctx, "Button 3")) {
+        //     if (zigmui.widgets.button(ctx, "Button 3")) {
         //       write_log("Pressed button 3");
         //     }
-        //     if (mu_button(ctx, "Button 4")) {
+        //     if (zigmui.widgets.button(ctx, "Button 4")) {
         //       write_log("Pressed button 4");
         //     }
-        //     if (mu_button(ctx, "Button 5")) {
+        //     if (zigmui.widgets.button(ctx, "Button 5")) {
         //       write_log("Pressed button 5");
         //     }
-        //     if (mu_button(ctx, "Button 6")) {
+        //     if (zigmui.widgets.button(ctx, "Button 6")) {
         //       write_log("Pressed button 6");
         //     }
         //     mu_end_treenode(ctx);
@@ -210,7 +207,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         //   mu_layout_begin_column(ctx);
         //   {
         //     int widths[] = {-1};
-        //     ctx.layout_stack.back().row(1, widths, 0);
+        //     ctx.layout.stack.back().row(1, widths, 0);
         //   }
         //   mu_text(
         //       ctx,
@@ -224,13 +221,13 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         // if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
         //   {
         //     int widths[] = {-78, -1};
-        //     ctx.layout_stack.back().row(2, widths, 74);
+        //     ctx.layout.stack.back().row(2, widths, 74);
         //   }
         //   /* sliders */
         //   mu_layout_begin_column(ctx);
         //   {
         //     int widths[] = {46, -1};
-        //     ctx.layout_stack.back().row(2, widths, 0);
+        //     ctx.layout.stack.back().row(2, widths, 0);
         //   }
         //   zigmui.widgets.label(ctx, "Red:");
         //   mu_slider(ctx, &bg[0], 0, 255);
