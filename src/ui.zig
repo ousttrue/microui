@@ -124,7 +124,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         win.rect.h = std.math.max(win.rect.h, 300);
 
         // window info
-        if (zigmui.widgets.header(ctx, "Window Info", .{}) != .NONE) {
+        if (zigmui.widgets.header(ctx, "Window Info", .{})) {
             var buf: [64]u8 = undefined;
             ctx.layout.stack.back().row(&.{ 54, -1 }, 0);
             zigmui.widgets.label(ctx, "Position:");
@@ -140,20 +140,20 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         }
 
         // labels + buttons
-        if (zigmui.widgets.header(ctx, "Test Buttons", .{ .opt = .EXPANDED }) != .NONE) {
+        if (zigmui.widgets.header(ctx, "Test Buttons", .{ .opt = .EXPANDED })) {
             ctx.layout.stack.back().row(&.{ 86, -110, -1 }, 0);
             zigmui.widgets.label(ctx, "Test buttons 1:");
-            if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{})) {
                 write_log("Pressed button 1");
             }
-            if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{})) {
                 write_log("Pressed button 2");
             }
             zigmui.widgets.label(ctx, "Test buttons 2:");
-            if (zigmui.widgets.button(ctx, .{ .text = "Button 3" }, .{}) != .NONE) {
+            if (zigmui.widgets.button(ctx, .{ .text = "Button 3" }, .{})) {
                 write_log("Pressed button 3");
             }
-            if (zigmui.widgets.button(ctx, .{ .text = "Popup" }, .{}) != .NONE) {
+            if (zigmui.widgets.button(ctx, .{ .text = "Popup" }, .{})) {
                 // zigmui.widgets.open_popup(ctx, "Test Popup");
             }
             // if (zigmui.widgets.begin_popup(ctx, "Test Popup")) {
@@ -164,22 +164,22 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         }
 
         // tree
-        if (zigmui.widgets.header(ctx, "Tree and Text", .{ .opt = .EXPANDED }) != .NONE) {
+        if (zigmui.widgets.header(ctx, "Tree and Text", .{ .opt = .EXPANDED })) {
             ctx.layout.stack.back().row(&.{ 140, -1 }, 0);
             const style = &ctx.command_drawer.style;
             {
                 var layout = ctx.layout.begin_column(style);
-                if (zigmui.widgets.begin_treenode(ctx, "Test 1", .{}) != .NONE) {
-                    if (zigmui.widgets.begin_treenode(ctx, "Test 1a", .{}) != .NONE) {
+                if (zigmui.widgets.begin_treenode(ctx, "Test 1", .{})) {
+                    if (zigmui.widgets.begin_treenode(ctx, "Test 1a", .{})) {
                         zigmui.widgets.label(ctx, "Hello");
                         zigmui.widgets.label(ctx, "world");
                         zigmui.widgets.end_treenode(ctx);
                     }
-                    if (zigmui.widgets.begin_treenode(ctx, "Test 1b", .{}) != .NONE) {
-                        if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{}) != .NONE) {
+                    if (zigmui.widgets.begin_treenode(ctx, "Test 1b", .{})) {
+                        if (zigmui.widgets.button(ctx, .{ .text = "Button 1" }, .{})) {
                             write_log("Pressed button 1");
                         }
-                        if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{}) != .NONE) {
+                        if (zigmui.widgets.button(ctx, .{ .text = "Button 2" }, .{})) {
                             write_log("Pressed button 2");
                         }
                         zigmui.widgets.end_treenode(ctx);
@@ -187,24 +187,24 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
                     zigmui.widgets.end_treenode(ctx);
                 }
 
-                if (zigmui.widgets.begin_treenode(ctx, "Test 2", .{}) != .NONE) {
+                if (zigmui.widgets.begin_treenode(ctx, "Test 2", .{})) {
                     layout.row(&.{ 54, 54 }, 0);
-                    //     if (zigmui.widgets.button(ctx, "Button 3")) {
-                    //       write_log("Pressed button 3");
-                    //     }
-                    //     if (zigmui.widgets.button(ctx, "Button 4")) {
-                    //       write_log("Pressed button 4");
-                    //     }
-                    //     if (zigmui.widgets.button(ctx, "Button 5")) {
-                    //       write_log("Pressed button 5");
-                    //     }
-                    //     if (zigmui.widgets.button(ctx, "Button 6")) {
-                    //       write_log("Pressed button 6");
-                    //     }
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 3" }, .{})) {
+                        write_log("Pressed button 3");
+                    }
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 4" }, .{})) {
+                        write_log("Pressed button 4");
+                    }
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 5" }, .{})) {
+                        write_log("Pressed button 5");
+                    }
+                    if (zigmui.widgets.button(ctx, .{ .text = "Button 6" }, .{})) {
+                        write_log("Pressed button 6");
+                    }
                     zigmui.widgets.end_treenode(ctx);
                 }
 
-                if (zigmui.widgets.begin_treenode(ctx, "Test 3", .{}) != .NONE) {
+                if (zigmui.widgets.begin_treenode(ctx, "Test 3", .{})) {
                     const S = struct {
                         var checks = [_]bool{ true, false, true };
                     };
@@ -230,7 +230,7 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
         }
 
         // background color sliders
-        if (zigmui.widgets.header(ctx, "Background Color", .{ .opt = .EXPANDED }) != .NONE) {
+        if (zigmui.widgets.header(ctx, "Background Color", .{ .opt = .EXPANDED })) {
             ctx.layout.stack.back().row(&.{ -78, -1 }, 74);
 
             // sliders

@@ -99,8 +99,8 @@ pub fn button(
     ctx: *Context,
     value: union(enum) { text: []const u8, icon: i32 },
     option: struct { opt: Input.OPT = .NONE },
-) Input.RES {
-    var res = Input.RES.NONE;
+) bool {
+    var res = false;
     const id = switch (value) {
         .text => |text| ctx.hash.from_str(text),
         .icon => |icon| ctx.hash.from_value(icon),
@@ -111,7 +111,7 @@ pub fn button(
     ctx.input.update_focus_hover(id, option.opt, mouseover);
     // handle click
     if (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id)) {
-        res = res.add(.SUBMIT);
+        res = true;
     }
     // draw
     ctx.command_drawer.draw_control_frame(rect, .BUTTON, option.opt, ctx.input.get_focus_state(id));
@@ -122,7 +122,7 @@ pub fn button(
     return res;
 }
 
-pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) Input.RES {
+pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) bool {
     const id = ctx.hash.from_value(state);
     const style = &ctx.command_drawer.style;
     const r = ctx.layout.back().next(style);
@@ -131,9 +131,9 @@ pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) Input.RES {
     ctx.input.update_focus_hover(id, .NONE, mouseover);
 
     // handle click
-    var res = Input.RES.NONE;
+    var res = false;
     if (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id)) {
-        res = res.add(.CHANGE);
+        res = true;
         state.* = !state.*;
     }
 
@@ -474,7 +474,7 @@ pub fn slider(
     return res;
 }
 
-pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: bool = false, opt: Input.OPT = .NONE }) Input.RES {
+pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: bool = false, opt: Input.OPT = .NONE }) bool {
     const id = ctx.hash.from_str(title);
     const idx = ctx.tree.get(id);
     ctx.layout.back().row(&.{-1}, 0);
@@ -508,12 +508,12 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
     rect.w -= rect.h - style.padding;
     ctx.command_drawer.draw_control_text(title, rect, .TEXT, .NONE, false);
 
-    return if (expanded) .ACTIVE else .NONE;
+    return expanded;
 }
 
-pub fn begin_treenode(ctx: *Context, text: []const u8, option: struct { opt: Input.OPT = .NONE }) Input.RES {
+pub fn begin_treenode(ctx: *Context, text: []const u8, option: struct { opt: Input.OPT = .NONE }) bool {
     var res = header(ctx, text, .{ .istreenode = true, .opt = option.opt });
-    if (res.has(.ACTIVE)) {
+    if (res) {
         const style = &ctx.command_drawer.style;
         ctx.layout.back().indent += style.indent;
         ctx.hash.push_last();
