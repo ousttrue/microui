@@ -1,5 +1,8 @@
+const std = @import("std");
 const Vec2 = @import("./Vec2.zig");
+const Rect = @import("./Rect.zig");
 const Color32 = @import("./Color32.zig");
+const Input = @import("./Input.zig");
 pub const STYLE = enum(u32) {
     TEXT,
     BORDER,
@@ -64,4 +67,34 @@ pub fn text_height(self: Self) c_int {
     } else {
         unreachable;
     }
+}
+
+pub fn text_position(
+    self: Self,
+    rect: Rect,
+    str: []const u8,
+    opt: Input.OPT,
+    edit_size: ?*Vec2,
+) Vec2 {
+    const tw = self.text_width(str);
+    const th = self.text_height();
+    if (edit_size) |es| {
+        es.x = tw;
+        es.y = th;
+    }
+    var pos: Vec2 = undefined;
+    if (opt.has(.ALIGNCENTER)) {
+        pos.x = rect.x + @divTrunc(rect.w - tw, @as(i32, 2));
+    } else if (opt.has(.ALIGNRIGHT)) {
+        pos.x = rect.x + rect.w - tw - self.padding;
+    } else {
+        if (edit_size != null) {
+            const ofx = rect.w - self.padding - tw - 1;
+            pos.x = rect.x + std.math.min(ofx, self.padding);
+        } else {
+            pos.x = rect.x + self.padding;
+        }
+    }
+    pos.y = rect.y + @divTrunc(rect.h - th, @as(i32, 2));
+    return pos;
 }
