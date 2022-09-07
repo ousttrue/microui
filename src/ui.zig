@@ -90,28 +90,32 @@ fn log_window(ctx: *zigmui.Context) void {
         zigmui.widgets.end_panel(ctx);
         if (logbuf_updated) {
             // scroll to end
-            // panel.scroll.y = panel.content_size.y;
-            // logbuf_updated = false;
+            panel.scroll.y = panel.content_size.y;
+            logbuf_updated = false;
         }
 
-        //     /* input textbox + submit button */
-        //     static char buf[128];
-        //     int submitted = 0;
-        //     {
-        //       int widths[] = {-70, -1};
-        //       ctx.layout.stack.back().row(2, widths, 0);
-        //     }
-        //     if (zigmui.widgets.textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-        //       ctx.set_focus(ctx.last_id);
-        //       submitted = 1;
-        //     }
-        //     if (zigmui.widgets.button(ctx, "Submit")) {
-        //       submitted = 1;
-        //     }
-        //     if (submitted) {
-        //       write_log(buf);
-        //       buf[0] = '\0';
-        //     }
+        // input textbox + submit button
+        {
+            // const S = struct {
+            //     var buf: [128]u8 = undefined;
+            // };
+            //     int submitted = 0;
+            //     {
+            //       int widths[] = {-70, -1};
+            //       ctx.layout.stack.back().row(2, widths, 0);
+            //     }
+            //     if (zigmui.widgets.textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
+            //       ctx.set_focus(ctx.last_id);
+            //       submitted = 1;
+            //     }
+            //     if (zigmui.widgets.button(ctx, "Submit")) {
+            //       submitted = 1;
+            //     }
+            //     if (submitted) {
+            //       write_log(buf);
+            //       buf[0] = '\0';
+            //     }
+        }
 
         zigmui.widgets.end_window(ctx);
     }

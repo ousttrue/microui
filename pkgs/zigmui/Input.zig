@@ -11,8 +11,8 @@ pub const MOUSE_BUTTON = enum(u32) {
     RIGHT = (1 << 1),
     MIDDLE = (1 << 2),
 
-    pub fn remove(self: *@This(), rhs: @This()) void {
-        self.* = @intToEnum(@This(), @enumToInt(self.*) & ~@enumToInt(rhs));
+    pub fn remove(self: @This(), rhs: @This()) @This() {
+        return @intToEnum(@This(), @enumToInt(self) & ~@enumToInt(rhs));
     }
 };
 
@@ -26,6 +26,14 @@ pub const KEY = enum(u32) {
 
     pub fn has(self: @This(), rhs: @This()) bool {
         return (@enumToInt(self) & @enumToInt(rhs)) != 0;
+    }
+
+    pub fn add(self: @This(), rhs: @This()) @This() {
+        return @intToEnum(@This(), @enumToInt(self) | @enumToInt(rhs));
+    }
+
+    pub fn remove(self: @This(), rhs: @This()) @This() {
+        return @intToEnum(@This(), @enumToInt(self) & ~@enumToInt(rhs));
     }
 };
 
@@ -128,39 +136,40 @@ pub fn set_scroll_target(self: *Self, cnt: *Container) void {
     self.scroll_target = cnt;
 }
 
-pub fn input_mousemove(self: *Self, x: i32, y: i32) void {
+pub fn set_mousemove(self: *Self, x: i32, y: i32) void {
     self.mouse_pos = .{ .x = x, .y = y };
 }
 
-pub fn input_mousedown(self: *Self, btn: MOUSE_BUTTON) void {
+pub fn set_mousedown(self: *Self, btn: MOUSE_BUTTON) void {
     self.mouse_down = @intToEnum(MOUSE_BUTTON, @enumToInt(self.mouse_down) | @enumToInt(btn));
     self.mouse_pressed = @intToEnum(MOUSE_BUTTON, @enumToInt(self.mouse_pressed) | @enumToInt(btn));
 }
 
-pub fn input_mouseup(self: *Self, btn: MOUSE_BUTTON) void {
-    self.mouse_down.remove(btn);
+pub fn set_mouseup(self: *Self, btn: MOUSE_BUTTON) void {
+    self.mouse_down = self.mouse_down.remove(btn);
 }
 
-pub fn input_scroll(self: *Self, x: i32, y: i32) void {
+pub fn set_scroll(self: *Self, x: i32, y: i32) void {
     self.scroll_delta.x += x;
     self.scroll_delta.y += y;
 }
 
-//   void keydown(MU_KEY key) {
-//     self._key_pressed = self._key_pressed | key;
-//     self._key_down = self._key_down | key;
-//   }
+pub fn set_keydown(self: *Self, key: KEY) void {
+    self.key_pressed = self.key_pressed.add(key);
+    self.key_down = self.key_down.add(key);
+}
 
-//   void keyup(MU_KEY key) {
-//     self._key_down = self._key_down & static_cast<MU_KEY>(~key);
-//   }
+pub fn set_keyup(self: *Self, key: KEY) void {
+    self.key_down = self.key_down.remove(key);
+}
 
-//   void text(const char *text) {
-//     int len = strlen(self._input_text);
-//     int size = strlen(text) + 1;
-//     assert(len + size <= (int)sizeof(self._input_text));
-//     memcpy(self._input_text + len, text, size);
-//   }
+pub fn push_text(self: *Self, text: []const u8) void {
+    @memcpy(
+        @ptrCast([*]u8, &self.input_text[self.input_text_pos]),
+        @ptrCast([*]const u8, &text[0]),
+        text.len,
+    );
+}
 
 pub fn set_focus(self: *Self, id: Hash.Id) void {
     self.focus = id;
@@ -248,18 +257,19 @@ pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) RES {
         }
 
         // handle backspace
-        //   if (key_pressed() & MU_KEY_BACKSPACE && len > 0) {
-        //     // skip utf-8 continuation bytes
-        //     while ((buf[--len] & 0xc0) == 0x80 && len > 0)
-        //       ;
-        //     buf[len] = '\0';
-        //     res = static_cast<MU_RES>(res | MU_RES_CHANGE);
-        //   }
-        //   // handle return
-        //   if (key_pressed() & MU_KEY_RETURN) {
-        //     set_focus(0);
-        //     res = static_cast<MU_RES>(res | MU_RES_SUBMIT);
-        //   }
+        if (self.key_pressed.has(.BACKSPACE) and len > 0) {
+            // skip utf-8 continuation bytes
+            // while ((buf[--len] & 0xc0) == 0x80 && len > 0)
+            //   ;
+            // buf[len] = '\0';
+            // res = static_cast<MU_RES>(res | MU_RES_CHANGE);
+        }
+
+        // handle return
+        if (self.key_pressed.has(.RETURN)) {
+            self.set_focus(0);
+            res = res.add(.SUBMIT);
+        }
     }
 
     return res;
