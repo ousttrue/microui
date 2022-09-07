@@ -330,7 +330,7 @@ pub fn begin_panel(ctx: *Context, name: []const u8, option: struct { opt: Input.
             ctx.command_drawer.draw_frame(cnt.rect, .PANELBG);
         }
         ctx.container.container_stack.push(cnt);
-        if (option.opt.has(.NOSCROLL)) {
+        if (!option.opt.has(.NOSCROLL)) {
             scrollbars(ctx, cnt, &cnt.rect);
         }
         ctx.layout.push(Layout.fromRect(cnt.rect.expand(-style.padding).move(cnt.scroll)));
