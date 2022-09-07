@@ -31,6 +31,13 @@ port to ZIG.
 +-----------+
 ```
 
+### TODO
+
+* [ ] zig renderer
+* [ ] OpenGL4 vbo
+* [ ] wasm version
+* [ ] WebGL vbo
+
 ### command
 
 command byte layout.
