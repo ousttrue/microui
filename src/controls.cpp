@@ -22,32 +22,66 @@ inline MU_OPT operator&(MU_OPT L, MU_OPT R) {
       static_cast<std::underlying_type<MU_OPT>::type>(R));
 }
 
+struct Span {
+  const char *p;
+  int len;
+};
+
+static const char *word_end(const char *p) {
+  // auto word = p;
+  while (*p && *p != ' ' && *p != '\n') {
+    ++p;
+  }
+  return p;
+}
+
+class LineWrap {
+  const char *p;
+  const mu_Style *style;
+
+public:
+  LineWrap(const char *text, const mu_Style *s) : p(text), style(s) {}
+  bool end() const { return *p == 0; }
+  Span next(int width) {
+    Span span;
+    span.p = p;
+    for (auto w = 0; *p && *p != '\n';) {
+      auto e = word_end(p);
+      auto word_width = style->text_width(p, e - p);
+      if (w + word_width > width) {
+        // wrap
+        break;
+      }
+      w += word_width;
+      p = e;
+
+      if (*p) {
+        // space
+        auto space = style->text_width(p, 1);
+        if (*p++ == '\n') {
+          break;
+        }
+        w += space;
+      }
+    }
+    span.len = p - span.p;
+    return span;
+  }
+};
+
 void mu_text(mu_Context *ctx, const char *text) {
   auto style = ctx->_command_drawer.style();
-  const char *start, *end, *p = text;
   auto layout = ctx->_layout.begin_column(style);
   int width[] = {-1};
   layout->row(1, width, style->text_height());
-  do {
-    UIRect r = ctx->_layout.back().next(style);
-    int w = 0;
-    start = end = p;
-    do {
-      const char *word = p;
-      while (*p && *p != ' ' && *p != '\n') {
-        p++;
-      }
-      w += style->text_width(word, p - word);
-      if (w > r.w && end != start) {
-        break;
-      }
-      w += style->text_width(p, 1);
-      end = p++;
-    } while (*end && *end != '\n');
-    ctx->_command_drawer.draw_text(start, end - start, UIVec2(r.x, r.y),
+
+  for (auto it = LineWrap(text, style); !it.end();) {
+    UIRect r = layout->next(style);
+    auto span = it.next(r.w);
+    ctx->_command_drawer.draw_text(span.p, span.len, UIVec2(r.x, r.y),
                                    MU_STYLE_TEXT);
-    p = end + 1;
-  } while (*end);
+  }
+
   ctx->_layout.end_column();
 }
 
