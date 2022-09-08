@@ -1,24 +1,42 @@
 #pragma once
 #include <UIRenderFrame.h>
+#include <memory>
 #include <stdint.h>
+#include <vector>
+
+struct Vertex {
+  float x;
+  float y;
+  float u;
+  float v;
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t a;
+};
 
 const auto BUFFER_SIZE = 16384;
 class Renderer {
   int _width = 800;
   int _height = 600;
-  int _triangle_count = 0;
-  uint32_t _id = 0;
 
-  float tex_buf[BUFFER_SIZE];
-  float vert_buf[BUFFER_SIZE];
-  uint8_t color_buf[BUFFER_SIZE];
-  uint32_t index_buf[BUFFER_SIZE];
+  std::shared_ptr<class VBO> vbo;
+  std::shared_ptr<class IBO> ibo;
+  std::shared_ptr<class Program> shader;
+
+  std::vector<Vertex> _vertices;
+  // int _triangle_count = 0;
+  // float tex_buf[BUFFER_SIZE];
+  // float vert_buf[BUFFER_SIZE];
+  // uint8_t color_buf[BUFFER_SIZE];
+  // uint32_t index_buf[BUFFER_SIZE];
 
 public:
+  std::shared_ptr<class Texture> atlas_texture;
+
   Renderer();
   ~Renderer();
   void initialize(const void *loadfunc);
-  void load_atlas(int w, int h, const unsigned char *data);
   void begin(int width, int height, const UIColor32 &clr);
   void flush();
   void draw_rect(const UIRect &rect, const UIColor32 &color);

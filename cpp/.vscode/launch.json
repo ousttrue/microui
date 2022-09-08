@@ -8,16 +8,15 @@
             "name": "demo",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/demo/debug/demo.exe",
+            "program": "${workspaceFolder}/build/Debug/bin/demo.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
-                {
-                    "name": "PATH",
-                    // "value": "${workspaceFolder}\\..\\zig_renderer\\zig-out\\lib;${workspaceFolder}\\build\\microui\\Debug;${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
-                    "value": "${workspaceFolder}\\build\\gl_renderer\\Debug;${workspaceFolder}\\build\\microui\\Debug;${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
-                }
+                // {
+                //     "name": "PATH",
+                //     "value": "${workspaceFolder}\\build\\Debug\\bin;${ENV:PATH}"
+                // }
             ],
             "console": "integratedTerminal"
         },
