@@ -1,7 +1,5 @@
 #include <Windows.h>
 
-#include <Gl/GL.h>
-
 #include "atlas.h"
 #include "renderer.h"
 #include "renderer_impl.h"
@@ -13,6 +11,7 @@
 Renderer g_renderer;
 
 void MUI_RENDERER_init(void *p) {
+  g_renderer.initialize(p);
   g_renderer.load_atlas(ATLAS_WIDTH, ATLAS_HEIGHT, atlas_texture);
 }
 
