@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "zig"
+		},
+		{
+			"path": "zig_renderer"
 		}
 	],
 	"settings": {}

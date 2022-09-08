@@ -2,6 +2,7 @@
     "files.exclude": {
         "cpp": true,
         "zig": true,
+        "zig_renderer": true,
     },
     "cmake.sourceDirectory": "${workspaceFolder}/cpp"
 }
