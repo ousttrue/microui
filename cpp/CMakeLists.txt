@@ -6,4 +6,4 @@ set(CMAKE_CXX_STANDARD 20)
 add_definitions(-DNOMINMAX)
 
 # target
-subdirs(uirf _external/glfw src gl_renderer demo)
+subdirs(uirf _external/glfw microui gl_renderer demo)

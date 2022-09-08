@@ -1,6 +1,8 @@
 const std = @import("std");
 const c_pkg = std.build.Pkg{ .name = "c", .source = .{ .path = "c.zig" } };
-const GLFW_BASE = "_external/glfw";
+const GLFW_BASE = "../cpp/_external/glfw";
+const CPP_BUILD_BASE = "../build";
+const CPP_BASE = "../cpp";
 
 const zigmui_pkg = std.build.Pkg{
     .name = "zigmui",
@@ -25,9 +27,9 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(c_pkg);
     exe.addPackage(zigmui_pkg);
     exe.addIncludePath(GLFW_BASE ++ "/include");
-    exe.addIncludePath("src");
-    exe.addIncludePath("uirf");
-    exe.addIncludePath("gl_renderer");
+    exe.addIncludePath(CPP_BASE ++ "/microui");
+    exe.addIncludePath(CPP_BASE ++ "/uirf");
+    exe.addIncludePath(CPP_BASE ++ "/gl_renderer");
     // exe.addCSourceFiles(&.{
     //     "src/microui.cpp",
     //     "src/renderer.cpp",
@@ -39,16 +41,16 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkLibC();
     exe.linkLibCpp();
 
-    exe.addLibraryPath("build/src/Debug");
+    exe.addLibraryPath(CPP_BUILD_BASE ++ "/src/Debug");
     exe.linkSystemLibrary("microui");
 
-    exe.addLibraryPath("build/gl_renderer/Debug");
+    exe.addLibraryPath(CPP_BUILD_BASE ++ "/gl_renderer/Debug");
     exe.linkSystemLibrary("gl_renderer");
 
-    exe.addLibraryPath("build/_external/glfw/src/Debug");
+    exe.addLibraryPath(CPP_BUILD_BASE ++ "/_external/glfw/src/Debug");
     exe.linkSystemLibrary("glfw3dll");
 
-    exe.addLibraryPath("build/src/Debug");
+    exe.addLibraryPath(CPP_BUILD_BASE ++ "/src/Debug");
     exe.install();
 
     const run_cmd = exe.run();
