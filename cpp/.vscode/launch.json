@@ -20,5 +20,18 @@
             ],
             "console": "integratedTerminal"
         },
+        {
+            "name": "write_atlas",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/gl_renderer/Debug/atlas_to_bytes.exe",
+            "args": [
+                "atlas.bin"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal"
+        },
     ]
 }

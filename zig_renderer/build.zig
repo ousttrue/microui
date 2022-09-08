@@ -13,6 +13,7 @@ pub fn build(b: *std.build.Builder) void {
     lib.linkLibC();
     lib.linkLibCpp();
     lib.linkSystemLibrary("OpenGL32");
+    lib.addIncludePath("../cpp/uirf");
     lib.install();
 
     const main_tests = b.addTest("src/main.zig");
