@@ -17,16 +17,16 @@ static MU_MOUSE button_map[256] = {
     MU_MOUSE_MIDDLE,
 };
 
-static MU_KEY key_map[1024] = {0};
+static MU_KEY key_map[1024] = {};
 
 static int text_width(mu_Font font, const char *text, int len) {
   if (len == -1) {
     len = strlen(text);
   }
-  return r_get_text_width(text, len);
+  return MUI_RENDERER_get_text_width(text, len);
 }
 
-static int text_height(mu_Font font) { return r_get_text_height(); }
+static int text_height(mu_Font font) { return MUI_RENDERER_get_text_height(); }
 
 int mouse_x = 0;
 int mouse_y = 0;
@@ -74,7 +74,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 
 void character_callback(GLFWwindow *window, unsigned int codepoint) {
 
-  wchar_t wstr[] = {codepoint, 0};
+  wchar_t wstr[] = {(wchar_t)codepoint, 0};
   int sizeNeeded =
       WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
   char encodedStr[4];
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
   // Make the window's context current
   glfwMakeContextCurrent(window);
 
-  r_init();
+  MUI_RENDERER_init(glfwGetProcAddress);
 
   // init microui
   auto ctx = mu_new(text_width, text_height);
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
     UIRenderFrame command;
     process_frame(ctx, bg, &command);
-    render(width, height, bg, &command);
+    MUI_RENDERER_render(width, height, bg, &command);
 
     glfwSwapBuffers(window);
   }

@@ -15,7 +15,8 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}\\..\\zig_renderer\\zig-out\\lib;${workspaceFolder}\\build\\microui\\Debug;${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
+                    // "value": "${workspaceFolder}\\..\\zig_renderer\\zig-out\\lib;${workspaceFolder}\\build\\microui\\Debug;${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
+                    "value": "${workspaceFolder}\\build\\gl_renderer\\Debug;${workspaceFolder}\\build\\microui\\Debug;${workspaceFolder}\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
                 }
             ],
             "console": "integratedTerminal"

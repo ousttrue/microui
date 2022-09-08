@@ -18,7 +18,15 @@
         "array": "cpp",
         "bit": "cpp",
         "initializer_list": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "xiosbase": "cpp",
+        "xlocnum": "cpp",
+        "xstring": "cpp",
+        "memory": "cpp",
+        "xlocale": "cpp",
+        "RENDERER.H": "cpp"
     },
     "cSpell.words": [
         "adipiscing",

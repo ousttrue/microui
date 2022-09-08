@@ -10,11 +10,11 @@
 extern "C" {
 #endif
 
-EXPORT_GLRENDERER void r_init(void);
-EXPORT_GLRENDERER int r_get_text_width(const char *text, int len);
-EXPORT_GLRENDERER int r_get_text_height(void);
-EXPORT_GLRENDERER void render(int width, int height, float bg[4],
-                              const struct UIRenderFrame *command);
+EXPORT_GLRENDERER void MUI_RENDERER_init(void *p);
+EXPORT_GLRENDERER int MUI_RENDERER_get_text_width(const char *text, int len);
+EXPORT_GLRENDERER int MUI_RENDERER_get_text_height(void);
+EXPORT_GLRENDERER void MUI_RENDERER_render(int width, int height, float bg[4],
+                                           const struct UIRenderFrame *command);
 
 #ifdef __cplusplus
 }
