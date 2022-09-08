@@ -5,6 +5,7 @@
         "-DGLFW_BUILD_TESTS=OFF",
         "-DGLFW_BUILD_DOCS=OFF",
     ],
+    "cmake.generator": "Ninja",
     "files.associations": {
         "cstdlib": "c",
         "renderer.h": "c",

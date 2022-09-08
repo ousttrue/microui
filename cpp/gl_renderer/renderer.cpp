@@ -1,7 +1,5 @@
-#include <Windows.h>
-
-#include "atlas.h"
 #include "renderer.h"
+#include "atlas.h"
 #include "renderer_impl.h"
 #include <algorithm>
 #include <assert.h>
@@ -29,7 +27,8 @@ int MUI_RENDERER_get_text_width(const char *text, int len) {
 
 int MUI_RENDERER_get_text_height(void) { return 18; }
 
-void MUI_RENDERER_render(int width, int height, float bg[4], const UIRenderFrame *command) {
+void MUI_RENDERER_render(int width, int height, float bg[4],
+                         const UIRenderFrame *command) {
   g_renderer.begin(width, height, UIColor32(bg[0], bg[1], bg[2], 255));
 
   auto end = command->end();
