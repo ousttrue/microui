@@ -28,3 +28,10 @@ pub fn init(width: u32, height: u32, grayscale: []const u8) Self {
 pub fn deinit(self: Self) void {
     c.glDeleteTextures(1, &self.id);
 }
+
+pub fn bind(self: Self) void {
+    c.glBindTexture(c.GL_TEXTURE_2D, self.id);
+}
+pub fn unbind(_: Self) void {
+    c.glBindTexture(c.GL_TEXTURE_2D, 0);
+}
