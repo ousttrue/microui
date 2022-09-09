@@ -15,21 +15,18 @@ struct Vertex {
   uint8_t a;
 };
 
-const auto BUFFER_SIZE = 16384;
 class Renderer {
-  int _width = 800;
-  int _height = 600;
+  float _matrix[16] = {
+      1, 0, 0, 0, //
+      0, 1, 0, 0, //
+      0, 0, 1, 0, //
+      0, 0, 0, 1, //
+  };
 
   std::shared_ptr<class VBO> vbo;
   std::shared_ptr<class IBO> ibo;
   std::shared_ptr<class Program> shader;
-
   std::vector<Vertex> _vertices;
-  // int _triangle_count = 0;
-  // float tex_buf[BUFFER_SIZE];
-  // float vert_buf[BUFFER_SIZE];
-  // uint8_t color_buf[BUFFER_SIZE];
-  // uint32_t index_buf[BUFFER_SIZE];
 
 public:
   std::shared_ptr<class Texture> atlas_texture;
@@ -47,6 +44,4 @@ public:
 
 private:
   void push_quad(const UIRect &dst, const UIRect &src, const UIColor32 &color);
-  void push_matrix();
-  void pop_matrix();
 };

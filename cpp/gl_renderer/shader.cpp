@@ -52,3 +52,7 @@ std::shared_ptr<Program> Program::create(const std::string &vs_source,
 }
 void Program::bind() { glUseProgram(_id); }
 void Program::unbind() { glUseProgram(0); }
+void Program::set_uniform_matrix(const std::string &key, const float *m, bool transpose) {
+  auto location = glGetUniformLocation(_id, key.c_str());
+  glUniformMatrix4fv(location, 1, transpose, m);
+}

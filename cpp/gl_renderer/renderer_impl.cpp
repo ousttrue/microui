@@ -6,6 +6,8 @@
 #include <glad/gl.h>
 #include <iostream>
 
+const auto MAX_QUADS = 12800;
+
 void errorCheck() {
   GLenum err;
   while (true) {
@@ -44,9 +46,10 @@ auto VS = R"(#version 110
 attribute vec2 vPos;
 attribute vec2 vTex;
 attribute vec4 vCol;
+uniform mat4 M;
 void main()
 {
-    gl_Position = vec4(vPos, 0.0, 1.0);
+    gl_Position = M * vec4(vPos, 0.0, 1.0);
 }
 )";
 
@@ -60,16 +63,16 @@ void main()
 
 Vertex vertices[3] = {
     Vertex{
-        .x = -0.5,
-        .y = -0.5,
+        .x = 10,
+        .y = 10,
     },
     Vertex{
-        .x = 0.5,
-        .y = -0.5,
+        .x = 100,
+        .y = 10,
     },
     Vertex{
-        .x = 0,
-        .y = 0.5,
+        .x = 10,
+        .y = 100,
     },
 };
 
@@ -90,9 +93,9 @@ void Renderer::initialize(const void *loadfunc) {
   gladLoadGL((GLADloadfunc)loadfunc);
 
   shader = Program::create(VS, FS);
-  vbo = VBO::create(BUFFER_SIZE * sizeof(Vertex));
+  vbo = VBO::create(MAX_QUADS * 6 * sizeof(Vertex));
   vbo->update(vertices, sizeof(vertices), 3);
-  ibo = IBO::create(BUFFER_SIZE * sizeof(uint32_t));
+  ibo = IBO::create(MAX_QUADS * 4 * sizeof(uint32_t));
   ibo->update(indices, sizeof(indices));
 
   // vertex layout
@@ -117,12 +120,16 @@ void Renderer::initialize(const void *loadfunc) {
 }
 
 void Renderer::begin(int width, int height, const UIColor32 &clr) {
-  _width = width;
-  _height = height;
   glViewport(0, 0, width, height);
   glScissor(0, 0, width, height);
   glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
   glClear(GL_COLOR_BUFFER_BIT);
+
+  // glOrtho(0.0f, _width, _height, 0.0f, -1.0f, +1.0f);
+  _matrix[0] = 2.0f / width;
+  _matrix[3] = -1;
+  _matrix[5] = 2.0f / -height;
+  _matrix[7] = 1;
 }
 
 void Renderer::flush() {
@@ -131,6 +138,7 @@ void Renderer::flush() {
   vbo->bind();
   ibo->bind();
 
+  shader->set_uniform_matrix("M", _matrix, true);
   ibo->draw();
 
   ibo->unbind();
@@ -170,7 +178,7 @@ void Renderer::set_clip_rect(const UIRect &rect) {
   flush();
   // std::cerr << rect.x << ", " << rect.y << ", " << rect.w << ", " << rect.h
   //           << std::endl;
-  glScissor(rect.x, _height - (rect.y + rect.h), rect.w, rect.h);
+  // glScissor(rect.x, _height - (rect.y + rect.h), rect.w, rect.h);
 }
 
 void Renderer::push_quad(const UIRect &dst, const UIRect &src,
@@ -222,23 +230,4 @@ void Renderer::push_quad(const UIRect &dst, const UIRect &src,
   // index_buf[index_idx + 3] = element_idx + 2;
   // index_buf[index_idx + 4] = element_idx + 3;
   // index_buf[index_idx + 5] = element_idx + 1;
-}
-
-void Renderer::push_matrix() {
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0.0f, _width, _height, 0.0f, -1.0f, +1.0f);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-}
-
-void Renderer::pop_matrix() {
-  glMatrixMode(GL_MODELVIEW);
-  glPopMatrix();
-  assert(glGetError() == 0);
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  assert(glGetError() == 0);
 }
