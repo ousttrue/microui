@@ -1,6 +1,6 @@
 #include "shader.h"
 #include <glad/gl.h>
-#include <iostream>>
+#include <iostream>
 
 inline bool compile_shader(uint32_t id, const char *src, char *log,
                            GLsizei log_len) {
