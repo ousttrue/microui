@@ -137,6 +137,18 @@ pub fn draw_text(self: *Self, text: []const u8, pos: c.UIVec2, color: c.UIColor3
     }
 }
 
+pub fn draw_icon(self: *Self, id: u32, rect: c.UIRect, color: c.UIColor32) void {
+    const glyph = atlas.atlas[id];
+    const x = rect.x + @divTrunc(rect.w - glyph[2], 2);
+    const y = rect.y + @divTrunc(rect.h - glyph[3], 2);
+    self.push_quad(.{ .x = x, .y = y, .w = glyph[2], .h = glyph[3] }, glyph, color);
+}
+
+pub fn set_clip_rect(self: *Self, rect: c.UIRect) void {
+    self.flush();
+    c.glScissor(rect.x, self.height - (rect.y + rect.h), rect.w, rect.h);
+}
+
 fn push_quad(self: *Self, quad: c.UIRect, glyph: atlas.Rect, color: c.UIColor32) void {
     const x = @intToFloat(f32, glyph[0]) / @intToFloat(f32, atlas.width);
     const y = @intToFloat(f32, glyph[1]) / @intToFloat(f32, atlas.height);

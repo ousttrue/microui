@@ -39,8 +39,8 @@ export fn MUI_RENDERER_render(width: c_int, height: c_int, bg: [*]const f32, com
                 const command_type = ptrAlignCast(*const c_int, p).*;
                 switch (command_type) {
                     c.UI_COMMAND_CLIP => {
-                        // const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
-                        // _ = cmd;
+                        const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
+                        r.set_clip_rect(cmd.rect);
                         p += (4 + @sizeOf(c.UIClipCommand));
                     },
                     c.UI_COMMAND_RECT => {
@@ -56,39 +56,13 @@ export fn MUI_RENDERER_render(width: c_int, height: c_int, bg: [*]const f32, com
                         p += (4 + @sizeOf(c.UITextCommand) + cmd.length);
                     },
                     c.UI_COMMAND_ICON => {
-                        // const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);
-                        // _ = cmd;
+                        const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);
+                        r.draw_icon(@intCast(u32, cmd.id), cmd.rect, cmd.color);
                         p += (4 + @sizeOf(c.UIIconCommand));
                     },
                     else => unreachable,
                 }
-                // logger.debug("{}, {}", .{command_type, size});
             }
-
-            // logger.debug("end", .{});
-
-            //     auto tail = command->command_buffer + it->tail;
-            //     UICommandHeader *cmd = nullptr;
-            //     for (auto p = command->command_buffer + it->head; p != tail;
-            //          p = p + cmd->size()) {
-            //       cmd = (UICommandHeader *)p;
-            //       switch (cmd->command) {
-            //       case UI_COMMAND_TEXT:
-            //         g_renderer.draw_text(cmd->text()->begin(), cmd->text()->end(),
-            //                              cmd->text()->pos, cmd->text()->color);
-            //         break;
-            //       case UI_COMMAND_RECT:
-            //         g_renderer.draw_rect(cmd->rect()->rect, cmd->rect()->color);
-            //         break;
-            //       case UI_COMMAND_ICON:
-            //         g_renderer.draw_icon(cmd->icon()->id, cmd->icon()->rect,
-            //                              cmd->icon()->color);
-            //         break;
-            //       case UI_COMMAND_CLIP:
-            //         g_renderer.set_clip_rect(cmd->clip()->rect);
-            //         break;
-            //       }
-            //     }
         }
 
         r.flush();
