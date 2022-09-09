@@ -1,3 +1,4 @@
+const std = @import("std");
 const c = @import("c");
 const Texture = @import("./Texture.zig");
 const Program = @import("./Program.zig");
@@ -118,13 +119,22 @@ pub fn draw_rect(self: *Self, rect: c.UIRect, color: c.UIColor32) void {
     self.push_quad(rect, atlas.atlas[@enumToInt(atlas.ATLAS_GLYPH.ATLAS_WHITE)], color);
 }
 
-fn push_triangle(self: *Self, idx0: u32, idx1: u32, idx2: u32) void {
-    self.indices[self.index_count] = idx0;
-    self.index_count += 1;
-    self.indices[self.index_count] = idx1;
-    self.index_count += 1;
-    self.indices[self.index_count] = idx2;
-    self.index_count += 1;
+pub fn draw_text(self: *Self, text: []const u8, pos: c.UIVec2, color: c.UIColor32) void {
+    var x = pos.x;
+    for (text) |ch| {
+        if ((ch & 0xc0) == 0x80) {
+            continue;
+        }
+        const chr = std.math.min(ch, 127);
+        const glyph = atlas.atlas[chr];
+        self.push_quad(.{
+            .x = x,
+            .y = pos.y,
+            .w = glyph[2],
+            .h = glyph[3],
+        }, glyph, color);
+        x += glyph[2];
+    }
 }
 
 fn push_quad(self: *Self, quad: c.UIRect, glyph: atlas.Rect, color: c.UIColor32) void {
@@ -191,4 +201,13 @@ fn push_quad(self: *Self, quad: c.UIRect, glyph: atlas.Rect, color: c.UIColor32)
         .a = color.a,
     };
     self.vertex_count += 1;
+}
+
+fn push_triangle(self: *Self, idx0: u32, idx1: u32, idx2: u32) void {
+    self.indices[self.index_count] = idx0;
+    self.index_count += 1;
+    self.indices[self.index_count] = idx1;
+    self.index_count += 1;
+    self.indices[self.index_count] = idx2;
+    self.index_count += 1;
 }

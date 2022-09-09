@@ -22,6 +22,7 @@ export fn MUI_RENDERER_init(p: *const anyopaque) callconv(.C) void {
 }
 
 fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
+    @setRuntimeSafety(false);
     const info = @typeInfo(T);
     // logger.debug("{}", .{info});
     return @ptrCast(T, @alignCast(info.Pointer.alignment, p));
@@ -35,7 +36,7 @@ export fn MUI_RENDERER_render(width: c_int, height: c_int, bg: [*]const f32, com
             var p = command.command_buffer + it.head;
             var end = command.command_buffer + it.tail;
             while (p != end) {
-                const command_type = @ptrCast(*const c_int, @alignCast(4, p)).*;
+                const command_type = ptrAlignCast(*const c_int, p).*;
                 switch (command_type) {
                     c.UI_COMMAND_CLIP => {
                         // const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
@@ -48,10 +49,11 @@ export fn MUI_RENDERER_render(width: c_int, height: c_int, bg: [*]const f32, com
                         p += (4 + @sizeOf(c.UIRectCommand));
                     },
                     c.UI_COMMAND_TEXT => {
-                        // const cmd = ptrAlignCast(*const c.UITextCommand, p + 4);
-                        // const cmd = @ptrCast(*const c.UITextCommand, @alignCast(8, p + 4));
-                        // _ = cmd;
-                        p += (4 + @sizeOf(c.UITextCommand) + @ptrCast(*const u32, @alignCast(4, p + 4 + 12)).*);
+                        const cmd = ptrAlignCast(*const c.UITextCommand, p + 4);
+                        const begin = 4 + @sizeOf(c.UITextCommand);
+                        const text = p[begin .. begin + cmd.length];
+                        r.draw_text(text, cmd.pos, cmd.color);
+                        p += (4 + @sizeOf(c.UITextCommand) + cmd.length);
                     },
                     c.UI_COMMAND_ICON => {
                         // const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);

@@ -60,8 +60,11 @@ pub fn write_clip(self: *Self, rect: Rect) void {
 }
 
 pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font: ?*const anyopaque) void {
+    // TODO: text の埋め方を変える
+    // 取り出すときに
+    // @setRuntimeSafety(false);
+    // が必要になっている。
     self.write_bytes(c.UI_COMMAND_TEXT);
-    const padding = @intCast(u32, 4 - str.len % 4);
     const value = c.UITextCommand{
         .pos = .{
             .x = pos.x,
@@ -73,15 +76,11 @@ pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font:
             .b = color.b,
             .a = color.a,
         },
-        .length = @intCast(u32, str.len) + padding,
+        .length = @intCast(u32, str.len),
         .font = font,
     };
     self.write_bytes(value);
     self.write(str);
-    var i: u32 = 0;
-    while (i < padding) : (i += 1) {
-        self.write_bytes(@as(u8, 0));
-    }
 }
 
 pub fn write_icon(self: *Self, id: c_int, rect: Rect, color: Color32) void {
