@@ -23,7 +23,7 @@ export fn MUI_RENDERER_init(p: *const anyopaque) callconv(.C) void {
 
 fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
     const info = @typeInfo(T);
-    logger.debug("{}", .{info});
+    // logger.debug("{}", .{info});
     return @ptrCast(T, @alignCast(info.Pointer.alignment, p));
 }
 
@@ -36,30 +36,31 @@ export fn MUI_RENDERER_render(width: c_int, height: c_int, bg: [*]const f32, com
             var end = command.command_buffer + it.tail;
             while (p != end) {
                 const command_type = @ptrCast(*const c_int, @alignCast(4, p)).*;
-                const size = switch (command_type) {
-                    c.UI_COMMAND_CLIP =>
-                    // const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
-                    // _ = cmd;
-                    (4 + @sizeOf(c.UIClipCommand)),
-
-                    c.UI_COMMAND_RECT =>
-                    // const cmd = ptrAlignCast(*const c.UIRectCommand, p + 4);
-                    // _ = cmd;
-                    (4 + @sizeOf(c.UIRectCommand)),
-
-                    c.UI_COMMAND_TEXT =>
-                    // const cmd = ptrAlignCast(*const c.UITextCommand, p + 4);
-                    // const cmd = @ptrCast(*const c.UITextCommand, @alignCast(8, p + 4));
-                    // _ = cmd;
-                    (4 + @sizeOf(c.UITextCommand) + @ptrCast(*const u32, @alignCast(4, p + 4 + 12)).*),
-                    c.UI_COMMAND_ICON =>
-                    // const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);
-                    // _ = cmd;
-                    (4 + @sizeOf(c.UIIconCommand)),
+                switch (command_type) {
+                    c.UI_COMMAND_CLIP => {
+                        // const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
+                        // _ = cmd;
+                        p += (4 + @sizeOf(c.UIClipCommand));
+                    },
+                    c.UI_COMMAND_RECT => {
+                        const cmd = ptrAlignCast(*const c.UIRectCommand, p + 4);
+                        r.draw_rect(cmd.rect, cmd.color);
+                        p += (4 + @sizeOf(c.UIRectCommand));
+                    },
+                    c.UI_COMMAND_TEXT => {
+                        // const cmd = ptrAlignCast(*const c.UITextCommand, p + 4);
+                        // const cmd = @ptrCast(*const c.UITextCommand, @alignCast(8, p + 4));
+                        // _ = cmd;
+                        p += (4 + @sizeOf(c.UITextCommand) + @ptrCast(*const u32, @alignCast(4, p + 4 + 12)).*);
+                    },
+                    c.UI_COMMAND_ICON => {
+                        // const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);
+                        // _ = cmd;
+                        p += (4 + @sizeOf(c.UIIconCommand));
+                    },
                     else => unreachable,
-                };
+                }
                 // logger.debug("{}, {}", .{command_type, size});
-                p += size;
             }
 
             // logger.debug("end", .{});

@@ -8,7 +8,6 @@ pub const ATLAS_GLYPH = enum(u32) {
     MU_ICON_CHECK,
     MU_ICON_COLLAPSED,
     MU_ICON_EXPANDED,
-    MU_ICON_MAX,
     ATLAS_WHITE = 5,
     ATLAS_FONT,
 };

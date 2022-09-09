@@ -24,19 +24,11 @@ pub fn unbind(_: Self) void {
     c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-pub fn update(self: Self, values: anytype) void {
-    const A = @TypeOf(values[0]);
-    switch (@typeInfo(A)) {
-        .Pointer => |pointer| {
-            self.bind();
-            c.glBufferSubData(c.GL_ELEMENT_ARRAY_BUFFER, 0, @sizeOf(pointer.child) * pointer.size, &values[0]);
-            self.count = values.len;
-            unbind();
-        },
-        else => {
-            unreachable;
-        },
-    }
+pub fn update(self: *Self, p: *const anyopaque, size: u32, count: u32) void {
+    self.bind();
+    c.glBufferSubData(c.GL_ELEMENT_ARRAY_BUFFER, 0, size, p);
+    self.count = count;
+    self.unbind();
 }
 
 pub fn draw(self: Self) void {

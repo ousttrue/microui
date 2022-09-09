@@ -6,6 +6,7 @@ const FS = @embedFile("./quad.fs");
 const Vbo = @import("./Vbo.zig");
 const Ibo = @import("./Ibo.zig");
 const Vao = @import("./Vao.zig");
+const atlas = @import("./atlas.zig");
 const MAX_QUADS = 12800;
 
 const Vertex = struct {
@@ -88,9 +89,9 @@ pub fn begin(self: *Self, width: i32, height: i32, bg: []const f32) void {
 pub fn flush(self: *Self) void {
     if (self.vertex_count > 0 and self.index_count > 0) {
         // update
-        self.vao.vbo.update(self.vertices[0..self.vertex_count]);
-        self.vertex_count = 0;        
-        self.vao.ibo.update(self.indices[0..self.index_count]);
+        self.vao.vbo.update(&self.vertices[0], @sizeOf(Vertex) * self.vertex_count, self.vertex_count);
+        self.vertex_count = 0;
+        self.vao.ibo.update(&self.indices[0], @sizeOf(u32) * self.index_count, self.index_count);
         self.index_count = 0;
 
         c.glDisable(c.GL_CULL_FACE);
@@ -111,4 +112,83 @@ pub fn flush(self: *Self) void {
         self.atlas_texture.unbind();
         self.program.unbind();
     }
+}
+
+pub fn draw_rect(self: *Self, rect: c.UIRect, color: c.UIColor32) void {
+    self.push_quad(rect, atlas.atlas[@enumToInt(atlas.ATLAS_GLYPH.ATLAS_WHITE)], color);
+}
+
+fn push_triangle(self: *Self, idx0: u32, idx1: u32, idx2: u32) void {
+    self.indices[self.index_count] = idx0;
+    self.index_count += 1;
+    self.indices[self.index_count] = idx1;
+    self.index_count += 1;
+    self.indices[self.index_count] = idx2;
+    self.index_count += 1;
+}
+
+fn push_quad(self: *Self, quad: c.UIRect, glyph: atlas.Rect, color: c.UIColor32) void {
+    const x = @intToFloat(f32, glyph[0]) / @intToFloat(f32, atlas.width);
+    const y = @intToFloat(f32, glyph[1]) / @intToFloat(f32, atlas.height);
+    const w = @intToFloat(f32, glyph[2]) / @intToFloat(f32, atlas.width);
+    const h = @intToFloat(f32, glyph[3]) / @intToFloat(f32, atlas.height);
+
+    const i = self.vertex_count;
+    self.push_triangle(i + 0, i + 1, i + 2);
+    self.push_triangle(i + 2, i + 3, i + 1);
+
+    // 0 - 1
+    // |   |
+    // 2 - 3
+    //
+    // 0,1,2
+    // 2,3,1
+
+    self.vertices[self.vertex_count] = Vertex{
+        .x = @intToFloat(f32, quad.x),
+        .y = @intToFloat(f32, quad.y),
+        .u = x,
+        .v = y,
+        .r = color.r,
+        .g = color.g,
+        .b = color.b,
+        .a = color.a,
+    };
+    self.vertex_count += 1;
+
+    self.vertices[self.vertex_count] = Vertex{
+        .x = @intToFloat(f32, quad.x + quad.w),
+        .y = @intToFloat(f32, quad.y),
+        .u = x + w,
+        .v = y,
+        .r = color.r,
+        .g = color.g,
+        .b = color.b,
+        .a = color.a,
+    };
+    self.vertex_count += 1;
+
+    self.vertices[self.vertex_count] = Vertex{
+        .x = @intToFloat(f32, quad.x),
+        .y = @intToFloat(f32, quad.y + quad.h),
+        .u = x,
+        .v = y + h,
+        .r = color.r,
+        .g = color.g,
+        .b = color.b,
+        .a = color.a,
+    };
+    self.vertex_count += 1;
+
+    self.vertices[self.vertex_count] = Vertex{
+        .x = @intToFloat(f32, quad.x + quad.w),
+        .y = @intToFloat(f32, quad.y + quad.h),
+        .u = x + w,
+        .v = y + h,
+        .r = color.r,
+        .g = color.g,
+        .b = color.b,
+        .a = color.a,
+    };
+    self.vertex_count += 1;
 }
