@@ -64,6 +64,9 @@ public:
         w += space;
       }
     }
+    if (p == span.p) {
+      ++p;
+    }
     span.len = p - span.p;
     return span;
   }

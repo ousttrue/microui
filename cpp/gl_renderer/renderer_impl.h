@@ -17,6 +17,8 @@ struct Vertex {
 };
 
 class Renderer {
+  uint32_t _width = 1;
+  uint32_t _height = 1;
   float _matrix[16] = {
       1, 0, 0, 0, //
       0, 1, 0, 0, //

@@ -8,25 +8,29 @@
 
 const auto MAX_QUADS = 12800;
 
-auto VS = R"(#version 110
+auto VS = R"(#version 400
 attribute vec2 vPos;
 attribute vec2 vTex;
 attribute vec4 vCol;
+varying vec2 user_Tex;
 varying vec4 user_Color;
 uniform mat4 M;
 void main()
 {
     gl_Position = M * vec4(vPos, 0.0, 1.0);
+    user_Tex = vTex;
     user_Color = vCol;
 }
 )";
 
-auto FS = R"(
-#version 110
+auto FS = R"(#version 400
+varying vec2 user_Tex;
 varying vec4 user_Color;
+uniform sampler2D ColorTex;
 void main()
 {
-    gl_FragColor = user_Color;
+    float alpha = texture(ColorTex, user_Tex).a;
+    gl_FragColor = user_Color * alpha;
 }
 )";
 
@@ -115,17 +119,11 @@ void Renderer::initialize(const void *loadfunc) {
   vao->unbind();
   vao->vbo->unbind();
   vao->ibo->unbind();
-
-  // init gl
-  // glEnable(GL_BLEND);
-  // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  // glDisable(GL_CULL_FACE);
-  // glDisable(GL_DEPTH_TEST);
-  // glEnable(GL_SCISSOR_TEST);
-  // glEnable(GL_TEXTURE_2D);
 }
 
 void Renderer::begin(int width, int height, const UIColor32 &clr) {
+  _width = width;
+  _height = height;
   glViewport(0, 0, width, height);
   glScissor(0, 0, width, height);
   glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
@@ -146,9 +144,19 @@ void Renderer::flush() {
     _vertices.clear();
     _indices.clear();
 
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    // alpha blend
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // draw
     shader->bind();
     shader->set_uniform_matrix("M", _matrix, true);
+    glActiveTexture(GL_TEXTURE0);
     atlas_texture->bind();
     vao->draw();
     atlas_texture->unbind();
@@ -187,7 +195,7 @@ void Renderer::set_clip_rect(const UIRect &rect) {
   flush();
   // std::cerr << rect.x << ", " << rect.y << ", " << rect.w << ", " << rect.h
   //           << std::endl;
-  // glScissor(rect.x, _height - (rect.y + rect.h), rect.w, rect.h);
+  glScissor(rect.x, _height - (rect.y + rect.h), rect.w, rect.h);
 }
 
 void Renderer::push_quad(const UIRect &quad, const UIRect &glyph,
