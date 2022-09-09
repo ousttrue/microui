@@ -14,6 +14,8 @@ pub fn build(b: *std.build.Builder) void {
     lib.linkLibCpp();
     lib.linkSystemLibrary("OpenGL32");
     lib.addIncludePath("../cpp/uirf");
+    lib.addIncludePath("../cpp/_external/glfw/deps");
+    lib.addCSourceFile("../cpp/_external/glfw/deps/glad_gl.c", &.{});
     lib.install();
 
     const main_tests = b.addTest("src/main.zig");
