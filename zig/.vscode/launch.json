@@ -11,7 +11,8 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}\\..\\cpp\\build\\gl_renderer\\Debug;${workspaceFolder}\\..\\cpp\\build\\_external\\glfw\\src\\Debug;${ENV:PATH}"
+                    // "value": "${workspaceFolder}\\..\\cpp\\build\\Debug\\bin;${ENV:PATH}"
+                    "value": "${workspaceFolder}\\..\\zig_renderer\\zig-out\\lib;${workspaceFolder}\\..\\cpp\\build\\Debug\\bin;${ENV:PATH}"
                 }
             ],
             "console": "integratedTerminal"

@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-EXPORT_GLRENDERER void MUI_RENDERER_init(void *p);
+EXPORT_GLRENDERER void MUI_RENDERER_init(const void *p);
 EXPORT_GLRENDERER int MUI_RENDERER_get_text_width(const char *text, int len);
 EXPORT_GLRENDERER int MUI_RENDERER_get_text_height(void);
 EXPORT_GLRENDERER void MUI_RENDERER_render(int width, int height, float bg[4],

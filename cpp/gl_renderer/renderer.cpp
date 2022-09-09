@@ -7,13 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 
-Renderer g_renderer;
-
-void MUI_RENDERER_init(void *p) {
-  g_renderer.initialize(p);
-  g_renderer.atlas_texture = Texture::load(ATLAS_WIDTH, ATLAS_HEIGHT, atlas_texture);
-}
-
 int MUI_RENDERER_get_text_width(const char *text, int len) {
   int res = 0;
   for (const char *p = text; *p && len--; p++) {
@@ -27,6 +20,14 @@ int MUI_RENDERER_get_text_width(const char *text, int len) {
 }
 
 int MUI_RENDERER_get_text_height(void) { return 18; }
+
+Renderer g_renderer;
+
+void MUI_RENDERER_init(const void *p) {
+  g_renderer.initialize(p);
+  g_renderer.atlas_texture =
+      Texture::load(ATLAS_WIDTH, ATLAS_HEIGHT, atlas_texture);
+}
 
 void MUI_RENDERER_render(int width, int height, float bg[4],
                          const UIRenderFrame *command) {

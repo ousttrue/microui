@@ -41,16 +41,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkLibC();
     exe.linkLibCpp();
 
-    exe.addLibraryPath(CPP_BUILD_BASE ++ "/src/Debug");
+    exe.addLibraryPath("../cpp/build/Debug/lib");
     exe.linkSystemLibrary("microui");
-
-    exe.addLibraryPath(CPP_BUILD_BASE ++ "/gl_renderer/Debug");
     exe.linkSystemLibrary("gl_renderer");
-
-    exe.addLibraryPath(CPP_BUILD_BASE ++ "/_external/glfw/src/Debug");
     exe.linkSystemLibrary("glfw3dll");
-
-    exe.addLibraryPath(CPP_BUILD_BASE ++ "/src/Debug");
     exe.install();
 
     const run_cmd = exe.run();

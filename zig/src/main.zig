@@ -7,11 +7,11 @@ fn text_width(_: ?*anyopaque, text: []const u8) u32 {
     if (text.len == 0) {
         return 0;
     }
-    return @intCast(u32, c.r_get_text_width(&text[0], @intCast(c_int, text.len)));
+    return @intCast(u32, c.MUI_RENDERER_get_text_width(&text[0], @intCast(c_int, text.len)));
 }
 
 fn text_height(_: ?*anyopaque) u32 {
-    return @intCast(u32, c.r_get_text_height());
+    return @intCast(u32, c.MUI_RENDERER_get_text_height());
 }
 
 var mouse_x: c_int = 0;
@@ -95,7 +95,7 @@ pub fn main() anyerror!void {
     // Make the window's context current
     c.glfwMakeContextCurrent(window);
 
-    c.r_init();
+    c.MUI_RENDERER_init(c.glfwGetProcAddress);
 
     // init microui
     var ctx = try allocator.create(zigmui.Context);
@@ -135,9 +135,10 @@ pub fn main() anyerror!void {
 
         var frame: c.UIRenderFrame = undefined;
         try ui.process_frame(ctx, &bg, &frame);
-        c.render(width, height, &bg[0], &frame);
+        c.MUI_RENDERER_render(width, height, &bg[0], &frame);
 
         // Swap front and back buffers
         c.glfwSwapBuffers(window);
     }
+
 }
