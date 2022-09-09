@@ -8,6 +8,28 @@
 
 const auto MAX_QUADS = 12800;
 
+auto VS = R"(#version 110
+attribute vec2 vPos;
+attribute vec2 vTex;
+attribute vec4 vCol;
+varying vec4 user_Color;
+uniform mat4 M;
+void main()
+{
+    gl_Position = M * vec4(vPos, 0.0, 1.0);
+    user_Color = vCol;
+}
+)";
+
+auto FS = R"(
+#version 110
+varying vec4 user_Color;
+void main()
+{
+    gl_FragColor = user_Color;
+}
+)";
+
 void errorCheck() {
   GLenum err;
   while (true) {
@@ -42,45 +64,26 @@ void errorCheck() {
   }
 }
 
-auto VS = R"(#version 110
-attribute vec2 vPos;
-attribute vec2 vTex;
-attribute vec4 vCol;
-uniform mat4 M;
-void main()
-{
-    gl_Position = M * vec4(vPos, 0.0, 1.0);
-}
-)";
+// Vertex vertices[3] = {
+//     Vertex{
+//         .x = 10,
+//         .y = 10,
+//     },
+//     Vertex{
+//         .x = 100,
+//         .y = 10,
+//     },
+//     Vertex{
+//         .x = 10,
+//         .y = 100,
+//     },
+// };
 
-auto FS = R"(
-#version 110
-void main()
-{
-    gl_FragColor = vec4(1, 1, 1, 1.0);
-}
-)";
-
-Vertex vertices[3] = {
-    Vertex{
-        .x = 10,
-        .y = 10,
-    },
-    Vertex{
-        .x = 100,
-        .y = 10,
-    },
-    Vertex{
-        .x = 10,
-        .y = 100,
-    },
-};
-
-uint32_t indices[3] = {
-    0,
-    1,
-    2,
-};
+// uint32_t indices[3] = {
+//     0,
+//     1,
+//     2,
+// };
 
 //
 // Renderer
@@ -93,22 +96,25 @@ void Renderer::initialize(const void *loadfunc) {
   gladLoadGL((GLADloadfunc)loadfunc);
 
   shader = Program::create(VS, FS);
-  vbo = VBO::create(MAX_QUADS * 6 * sizeof(Vertex));
-  vbo->update(vertices, sizeof(vertices), 3);
-  ibo = IBO::create(MAX_QUADS * 4 * sizeof(uint32_t));
-  ibo->update(indices, sizeof(indices));
+  vao = VAO::create();
+  vao->vbo = VBO::create(MAX_QUADS * 6 * sizeof(Vertex));
+  vao->ibo = IBO::create(MAX_QUADS * 4 * sizeof(uint32_t));
 
-  // vertex layout
-  vbo->bind();
+  // https://www.khronos.org/opengl/wiki/Vertex_Specification
+  vao->bind();
+  vao->vbo->bind();
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                        (void *)(sizeof(float) * 2));
+                        (void *)offsetof(Vertex, u));
   glEnableVertexAttribArray(2);
-  glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex),
-                        (void *)(sizeof(float) * 4));
-  vbo->unbind();
+  glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex),
+                        (void *)offsetof(Vertex, color));
+  vao->ibo->bind();
+  vao->unbind();
+  vao->vbo->unbind();
+  vao->ibo->unbind();
 
   // init gl
   // glEnable(GL_BLEND);
@@ -133,18 +139,21 @@ void Renderer::begin(int width, int height, const UIColor32 &clr) {
 }
 
 void Renderer::flush() {
-  shader->bind();
-  atlas_texture->bind();
-  vbo->bind();
-  ibo->bind();
+  if (!_vertices.empty() && !_indices.empty()) {
+    // update
+    vao->vbo->update(_vertices);
+    vao->ibo->update(_indices);
+    _vertices.clear();
+    _indices.clear();
 
-  shader->set_uniform_matrix("M", _matrix, true);
-  ibo->draw();
-
-  ibo->unbind();
-  vbo->unbind();
-  atlas_texture->unbind();
-  shader->unbind();
+    // draw
+    shader->bind();
+    shader->set_uniform_matrix("M", _matrix, true);
+    atlas_texture->bind();
+    vao->draw();
+    atlas_texture->unbind();
+    shader->unbind();
+  }
 }
 
 void Renderer::draw_rect(const UIRect &rect, const UIColor32 &color) {
@@ -181,53 +190,67 @@ void Renderer::set_clip_rect(const UIRect &rect) {
   // glScissor(rect.x, _height - (rect.y + rect.h), rect.w, rect.h);
 }
 
-void Renderer::push_quad(const UIRect &dst, const UIRect &src,
+void Renderer::push_quad(const UIRect &quad, const UIRect &glyph,
                          const UIColor32 &color) {
-  // if (_triangle_count == BUFFER_SIZE) {
-  //   flush();
-  // }
 
-  // int texvert_idx = _triangle_count * 4 * 2;
-  // int color_idx = _triangle_count * 4 * 4;
-  // int element_idx = _triangle_count * 4;
-  // int index_idx = _triangle_count * 6;
-  // _triangle_count++;
+  UIColor32 rgba = {
+      color.r,
+      color.g,
+      color.b,
+      color.a,
+  };
 
-  // // update texture buffer
-  // float x = src.x / (float)ATLAS_WIDTH;
-  // float y = src.y / (float)ATLAS_HEIGHT;
-  // float w = src.w / (float)ATLAS_WIDTH;
-  // float h = src.h / (float)ATLAS_HEIGHT;
-  // tex_buf[texvert_idx + 0] = x;
-  // tex_buf[texvert_idx + 1] = y;
-  // tex_buf[texvert_idx + 2] = x + w;
-  // tex_buf[texvert_idx + 3] = y;
-  // tex_buf[texvert_idx + 4] = x;
-  // tex_buf[texvert_idx + 5] = y + h;
-  // tex_buf[texvert_idx + 6] = x + w;
-  // tex_buf[texvert_idx + 7] = y + h;
+  float x = glyph.x / (float)ATLAS_WIDTH;
+  float y = glyph.y / (float)ATLAS_HEIGHT;
+  float w = glyph.w / (float)ATLAS_WIDTH;
+  float h = glyph.h / (float)ATLAS_HEIGHT;
+  auto i = _vertices.size();
 
-  // // update vertex buffer
-  // vert_buf[texvert_idx + 0] = dst.x;
-  // vert_buf[texvert_idx + 1] = dst.y;
-  // vert_buf[texvert_idx + 2] = dst.x + dst.w;
-  // vert_buf[texvert_idx + 3] = dst.y;
-  // vert_buf[texvert_idx + 4] = dst.x;
-  // vert_buf[texvert_idx + 5] = dst.y + dst.h;
-  // vert_buf[texvert_idx + 6] = dst.x + dst.w;
-  // vert_buf[texvert_idx + 7] = dst.y + dst.h;
+  // 0 - 1
+  // |   |
+  // 2 - 3
+  //
+  // 0,1,2
+  // 2,3,1
 
-  // // update color buffer
-  // memcpy(color_buf + color_idx + 0, &color, 4);
-  // memcpy(color_buf + color_idx + 4, &color, 4);
-  // memcpy(color_buf + color_idx + 8, &color, 4);
-  // memcpy(color_buf + color_idx + 12, &color, 4);
+  _vertices.push_back(Vertex{
+      .x = (float)quad.x,
+      .y = (float)quad.y,
+      .u = x,
+      .v = y,
+      .color = rgba,
+  });
 
-  // // update index buffer
-  // index_buf[index_idx + 0] = element_idx + 0;
-  // index_buf[index_idx + 1] = element_idx + 1;
-  // index_buf[index_idx + 2] = element_idx + 2;
-  // index_buf[index_idx + 3] = element_idx + 2;
-  // index_buf[index_idx + 4] = element_idx + 3;
-  // index_buf[index_idx + 5] = element_idx + 1;
+  _vertices.push_back(Vertex{
+      .x = (float)(quad.x + quad.w),
+      .y = (float)quad.y,
+      .u = x + w,
+      .v = y,
+      .color = rgba,
+  });
+
+  _vertices.push_back(Vertex{
+      .x = (float)quad.x,
+      .y = (float)(quad.y + quad.h),
+      .u = x,
+      .v = y + h,
+      .color = rgba,
+  });
+
+  _vertices.push_back(Vertex{
+      .x = (float)(quad.x + quad.w),
+      .y = (float)(quad.y + quad.h),
+      .u = x + w,
+      .v = y + h,
+      .color = rgba,
+  });
+
+  // triangle 0
+  _indices.push_back(i + 0);
+  _indices.push_back(i + 1);
+  _indices.push_back(i + 2);
+  // triangle 1
+  _indices.push_back(i + 2);
+  _indices.push_back(i + 3);
+  _indices.push_back(i + 1);
 }

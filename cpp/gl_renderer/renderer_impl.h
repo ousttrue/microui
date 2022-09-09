@@ -9,10 +9,11 @@ struct Vertex {
   float y;
   float u;
   float v;
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-  uint8_t a;
+  // uint8_t r;
+  // uint8_t g;
+  // uint8_t b;
+  // uint8_t a;
+  UIColor32 color;
 };
 
 class Renderer {
@@ -23,10 +24,11 @@ class Renderer {
       0, 0, 0, 1, //
   };
 
-  std::shared_ptr<class VBO> vbo;
-  std::shared_ptr<class IBO> ibo;
+  std::shared_ptr<class VAO> vao;
   std::shared_ptr<class Program> shader;
+
   std::vector<Vertex> _vertices;
+  std::vector<uint32_t> _indices;
 
 public:
   std::shared_ptr<class Texture> atlas_texture;
@@ -43,5 +45,6 @@ public:
   void set_clip_rect(const UIRect &rect);
 
 private:
-  void push_quad(const UIRect &dst, const UIRect &src, const UIColor32 &color);
+  void push_quad(const UIRect &quad, const UIRect &glyph,
+                 const UIColor32 &color);
 };
