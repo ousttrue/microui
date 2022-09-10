@@ -1,7 +1,7 @@
 # ![microui](https://user-images.githubusercontent.com/3920290/75171571-be83c500-5723-11ea-8a50-504cc2ae1109.png)
 A *tiny*, portable, immediate-mode UI library written in ANSI C.
 
-port to ZIG.
+This fork is a port to ZIG.
 
 ## Features
 * Tiny: around `1100 sloc` of ANSI C
@@ -33,10 +33,9 @@ port to ZIG.
 
 ### TODO
 
-* [ ] zig renderer
-* [ ] OpenGL4 vbo
+* [x] zig renderer
+* [x] OpenGL4 vbo
 * [ ] wasm version
-* [ ] WebGL vbo
 
 ### command
 
@@ -94,4 +93,3 @@ features will likely not be merged. Bug reports are welcome.
 ## License
 This library is free software; you can redistribute it and/or modify it under
 the terms of the MIT license. See [LICENSE](LICENSE) for details.
-
