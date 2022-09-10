@@ -4,22 +4,22 @@ const zigmui = @import("zigmui");
 
 const colors = [_]struct {
     label: []const u8,
-    idx: c_int,
+    idx: zigmui.STYLE,
 }{
-    .{ .label = "text:", .idx = c.MU_STYLE_TEXT },
-    .{ .label = "border:", .idx = c.MU_STYLE_BORDER },
-    .{ .label = "windowbg:", .idx = c.MU_STYLE_WINDOWBG },
-    .{ .label = "titlebg:", .idx = c.MU_STYLE_TITLEBG },
-    .{ .label = "titletext:", .idx = c.MU_STYLE_TITLETEXT },
-    .{ .label = "panelbg:", .idx = c.MU_STYLE_PANELBG },
-    .{ .label = "button:", .idx = c.MU_STYLE_BUTTON },
-    .{ .label = "buttonhover:", .idx = c.MU_STYLE_BUTTONHOVER },
-    .{ .label = "buttonfocus:", .idx = c.MU_STYLE_BUTTONFOCUS },
-    .{ .label = "base:", .idx = c.MU_STYLE_BASE },
-    .{ .label = "basehover:", .idx = c.MU_STYLE_BASEHOVER },
-    .{ .label = "basefocus:", .idx = c.MU_STYLE_BASEFOCUS },
-    .{ .label = "scrollbase:", .idx = c.MU_STYLE_SCROLLBASE },
-    .{ .label = "scrollthumb:", .idx = c.MU_STYLE_SCROLLTHUMB },
+    .{ .label = "text:", .idx = .TEXT },
+    .{ .label = "border:", .idx = .BORDER },
+    .{ .label = "windowbg:", .idx = .WINDOWBG },
+    .{ .label = "titlebg:", .idx = .TITLEBG },
+    .{ .label = "titletext:", .idx = .TITLETEXT },
+    .{ .label = "panelbg:", .idx = .PANELBG },
+    .{ .label = "button:", .idx = .BUTTON },
+    .{ .label = "buttonhover:", .idx = .BUTTONHOVER },
+    .{ .label = "buttonfocus:", .idx = .BUTTONFOCUS },
+    .{ .label = "base:", .idx = .BASE },
+    .{ .label = "basehover:", .idx = .BASEHOVER },
+    .{ .label = "basefocus:", .idx = .BASEFOCUS },
+    .{ .label = "scrollbase:", .idx = .SCROLLBASE },
+    .{ .label = "scrollthumb:", .idx = .SCROLLTHUMB },
 };
 
 pub fn uint8_slider(ctx: *zigmui.Context, value: *u8, low: i32, high: i32) zigmui.RES {

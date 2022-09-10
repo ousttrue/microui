@@ -4,12 +4,6 @@ const GLFW_BASE = "../cpp/_external/glfw";
 const CPP_BUILD_BASE = "../build";
 const CPP_BASE = "../cpp";
 
-const zigmui_pkg = std.build.Pkg{
-    .name = "zigmui",
-    .source = .{ .path = "pkgs/zigmui/main.zig" },
-    .dependencies = &.{c_pkg},
-};
-
 pub fn build(b: *std.build.Builder) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -25,11 +19,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.addPackage(c_pkg);
-    exe.addPackage(zigmui_pkg);
     exe.addIncludePath(GLFW_BASE ++ "/include");
-    exe.addIncludePath(CPP_BASE ++ "/microui");
-    exe.addIncludePath(CPP_BASE ++ "/uirf");
-    exe.addIncludePath(CPP_BASE ++ "/gl_renderer");
+    // exe.addIncludePath(CPP_BASE ++ "/microui");
+    // exe.addIncludePath(CPP_BASE ++ "/uirf");
+    // exe.addIncludePath(CPP_BASE ++ "/gl_renderer");
     // exe.addCSourceFiles(&.{
     //     "src/microui.cpp",
     //     "src/renderer.cpp",
@@ -41,10 +34,11 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkLibC();
     exe.linkLibCpp();
 
+    // exe.linkSystemLibrary("microui");
     exe.addLibraryPath("../cpp/build/Debug/lib");
-    exe.linkSystemLibrary("microui");
-    exe.linkSystemLibrary("gl_renderer");
     exe.linkSystemLibrary("glfw3dll");
+    exe.addLibraryPath("../zig_renderer/zig-out/lib");
+    exe.linkSystemLibrary("zig_renderer");
     exe.install();
 
     const run_cmd = exe.run();

@@ -15,6 +15,14 @@ pub const COMMAND = enum(u32) {
     ICON,
 };
 
+pub const ICON = enum(i32) {
+    CLOSE = 1,
+    CHECK,
+    COLLAPSED,
+    EXPANDED,
+    MAX,
+};
+
 const Self = @This();
 
 buffer: [COMMANDLIST_SIZE]u8 = undefined,
@@ -83,7 +91,7 @@ pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font:
     self.write(str);
 }
 
-pub fn write_icon(self: *Self, id: c_int, rect: Rect, color: Color32) void {
+pub fn write_icon(self: *Self, id: ICON, rect: Rect, color: Color32) void {
     self.write_bytes(c.UI_COMMAND_ICON);
     const value = c.UIIconCommand{
         .rect = .{
@@ -92,7 +100,7 @@ pub fn write_icon(self: *Self, id: c_int, rect: Rect, color: Color32) void {
             .w = rect.w,
             .h = rect.h,
         },
-        .id = id,
+        .id = @enumToInt(id),
         .color = .{
             .r = color.r,
             .g = color.g,
@@ -152,7 +160,7 @@ pub fn draw_text(self: *Self, str: []const u8, pos: Vec2, colorid: Style.STYLE) 
     }
 }
 
-pub fn draw_icon(self: *Self, id: c_int, rect: Rect, colorid: Style.STYLE) void {
+pub fn draw_icon(self: *Self, id: ICON, rect: Rect, colorid: Style.STYLE) void {
     // do clip command if the rect isn't fully contained within the cliprect
     const clipped = self.clip_stack.check_clip(rect);
     if (clipped == .ALL) {

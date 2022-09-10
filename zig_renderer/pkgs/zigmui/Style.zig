@@ -55,7 +55,7 @@ colors: [@enumToInt(STYLE.MAX)]Color32 = .{
 
 pub fn text_width(self: Self, str: []const u8) c_int {
     if (self.text_width_callback) |callback| {
-        return @intCast(c_int, callback.*(self.font, str));
+        return @intCast(c_int, callback(self.font, str));
     } else {
         unreachable;
     }
@@ -63,7 +63,7 @@ pub fn text_width(self: Self, str: []const u8) c_int {
 
 pub fn text_height(self: Self) c_int {
     if (self.text_height_callback) |callback| {
-        return @intCast(c_int, callback.*(self.font));
+        return @intCast(c_int, callback(self.font));
     } else {
         unreachable;
     }

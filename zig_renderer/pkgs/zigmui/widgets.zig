@@ -8,6 +8,7 @@ const Layout = @import("./Layout.zig");
 const Container = @import("./Container.zig");
 const Hash = @import("./Hash.zig");
 const TextEditor = @import("./TextEditor.zig");
+const CommandDrawer = @import("./CommandDrawer.zig");
 const Style = @import("./Style.zig");
 const OPT = Input.OPT;
 
@@ -125,7 +126,7 @@ pub fn textarea(ctx: *Context, src: []const u8) void {
 
 pub fn button(
     ctx: *Context,
-    value: union(enum) { text: []const u8, icon: i32 },
+    value: union(enum) { text: []const u8, icon: CommandDrawer.ICON },
     option: struct { opt: Input.OPT = .NONE },
 ) bool {
     var res = false;
@@ -168,7 +169,7 @@ pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) bool {
     // draw
     ctx.command_drawer.draw_control_frame(box, .BASE, .NONE, ctx.input.get_focus_state(id));
     if (state.*) {
-        ctx.command_drawer.draw_icon(c.MU_ICON_CHECK, box, .TEXT);
+        ctx.command_drawer.draw_icon(.CHECK, box, .TEXT);
     }
     const text_rect = Rect{ .x = r.x + box.w, .y = r.y, .w = r.w - box.w, .h = r.h };
     ctx.command_drawer.draw_control_text(text, text_rect, .TEXT, .NONE, false);
@@ -295,7 +296,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) bool 
             const close_id = ctx.hash.from_str("!close");
             const r = Rect{ .x = tr.x + tr.w - tr.h, .y = tr.y, .w = tr.h, .h = tr.h };
             tr.w -= r.w;
-            ctx.command_drawer.draw_icon(c.MU_ICON_CLOSE, r, .TITLETEXT);
+            ctx.command_drawer.draw_icon(.CLOSE, r, .TITLETEXT);
             const mouseover = ctx.mouse_over(r);
             ctx.input.update_focus_hover(close_id, opt, mouseover);
             if (ctx.input.mouse_pressed == .LEFT and
@@ -523,7 +524,7 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
         ctx.command_drawer.draw_control_frame(rect, .BUTTON, .NONE, ctx.input.get_focus_state(id));
     }
     ctx.command_drawer.draw_icon(
-        if (expanded) c.MU_ICON_EXPANDED else c.MU_ICON_COLLAPSED,
+        if (expanded) .EXPANDED else .COLLAPSED,
         Rect{ .x = rect.x, .y = rect.y, .w = rect.h, .h = rect.h },
         .TEXT,
     );
