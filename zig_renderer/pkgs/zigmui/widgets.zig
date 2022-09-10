@@ -524,7 +524,7 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
         ctx.command_drawer.draw_control_frame(rect, .BUTTON, .NONE, ctx.input.get_focus_state(id));
     }
     ctx.command_drawer.draw_icon(
-        if (expanded) .EXPANDED else .COLLAPSED,
+        if (expanded) .COLLAPSED else .EXPANDED,
         Rect{ .x = rect.x, .y = rect.y, .w = rect.h, .h = rect.h },
         .TEXT,
     );
