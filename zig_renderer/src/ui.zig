@@ -1,5 +1,4 @@
 const std = @import("std");
-const c = @import("c");
 const zigmui = @import("zigmui");
 
 const colors = [_]struct {
@@ -283,10 +282,10 @@ fn test_window(ctx: *zigmui.Context, bg: [*]f32) void {
     }
 }
 
-var command_groups: [1]c.struct_UICommandRange = undefined;
+var command_groups: [1]zigmui.CommandRange = undefined;
 var command_buffer: [1024]u8 = undefined;
 
-pub fn process_frame(ctx: *zigmui.Context, bg: [*]f32, frame: *c.UIRenderFrame) !void {
+pub fn process_frame(ctx: *zigmui.Context, bg: [*]f32, frame: *zigmui.RenderFrame) !void {
     ctx.begin();
 
     style_window(ctx);

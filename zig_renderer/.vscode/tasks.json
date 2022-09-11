@@ -8,6 +8,14 @@
                 "$gcc"
             ],
         },
+        {
+            "label": "build wasm",
+            "type": "shell",
+            "command": "zig build -Dtarget=wasm32-freestanding",
+            "problemMatcher": [
+                "$gcc"
+            ],
+        },        
     ],
     "version": "2.0.0"
 }

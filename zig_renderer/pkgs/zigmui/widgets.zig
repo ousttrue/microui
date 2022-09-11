@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const util = @import("./util.zig");
 const Context = @import("./Context.zig");
 const Vec2 = @import("./Vec2.zig");
 const Rect = @import("./Rect.zig");
@@ -31,7 +31,7 @@ pub fn textbox_raw(ctx: *Context, buf: []u8, id: Hash.Id, rect: Rect, opt: OPT) 
         res = res.add(handled.res);
         ctx.command_drawer.draw_control_text(buf[0..handled.size], rect, .TEXT, opt, true);
     } else {
-        const len = c.strlen(&buf[0]);
+        const len = util.strlen(&buf[0]);
         ctx.command_drawer.draw_control_text(buf[0..len], rect, .TEXT, opt, false);
     }
     return res;

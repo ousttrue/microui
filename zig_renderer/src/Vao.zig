@@ -1,4 +1,4 @@
-const c = @import("c");
+const gl = @import("./gl.zig");
 const Vbo = @import("./Vbo.zig");
 const Ibo = @import("./Ibo.zig");
 const Self = @This();
@@ -9,7 +9,7 @@ ibo: Ibo,
 
 pub fn init(vbo: Vbo, ibo: Ibo) Self {
     var id: u32 = undefined;
-    c.glGenVertexArrays(1, &id);
+    gl.genVertexArrays(1, &id);
     return Self{
         .id = id,
         .vbo = vbo,
@@ -18,14 +18,14 @@ pub fn init(vbo: Vbo, ibo: Ibo) Self {
 }
 
 pub fn deinit(self: Self) void {
-    c.glDeleteVertexArrays(1, &self.id);
+    gl.deleteVertexArrays(1, &self.id);
 }
 
 pub fn bind(self: Self) void {
-    c.glBindVertexArray(self.id);
+    gl.bindVertexArray(self.id);
 }
 pub fn unbind(_: Self) void {
-    c.glBindVertexArray(0);
+    gl.bindVertexArray(0);
 }
 
 pub fn draw(self: Self) void {

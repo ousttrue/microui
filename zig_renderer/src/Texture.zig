@@ -1,37 +1,37 @@
 const std = @import("std");
-const c = @import("c");
 const Self = @This();
+const gl = @import("./gl.zig");
 
-id: c.GLuint = undefined,
+id: c_uint = undefined,
 
 pub fn init(width: u32, height: u32, grayscale: []const u8) Self {
     var self = Self{};
-    c.glGenTextures(1, &self.id);
-    c.glBindTexture(c.GL_TEXTURE_2D, self.id);
-    c.glTexImage2D(
-        c.GL_TEXTURE_2D,
+    gl.genTextures(1, &self.id);
+    gl.bindTexture(gl.GL_TEXTURE_2D, self.id);
+    gl.texImage2D(
+        gl.GL_TEXTURE_2D,
         0,
-        c.GL_ALPHA,
+        gl.GL_ALPHA,
         @intCast(c_int, width),
         @intCast(c_int, height),
         0,
-        c.GL_ALPHA,
-        c.GL_UNSIGNED_BYTE,
+        gl.GL_ALPHA,
+        gl.GL_UNSIGNED_BYTE,
         &grayscale[0],
     );
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST);
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
-    std.debug.assert(c.glGetError() == 0);
+    gl.texParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
+    gl.texParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
+    // std.debug.assert(gl.getError() == 0);
     return self;
 }
 
 pub fn deinit(self: Self) void {
-    c.glDeleteTextures(1, &self.id);
+    gl.deleteTextures(1, &self.id);
 }
 
 pub fn bind(self: Self) void {
-    c.glBindTexture(c.GL_TEXTURE_2D, self.id);
+    gl.bindTexture(gl.GL_TEXTURE_2D, self.id);
 }
 pub fn unbind(_: Self) void {
-    c.glBindTexture(c.GL_TEXTURE_2D, 0);
+    gl.bindTexture(gl.GL_TEXTURE_2D, 0);
 }

@@ -1,4 +1,3 @@
-const c = @import("c");
 const Stack = @import("./stack.zig").Stack;
 const Rect = @import("./Rect.zig");
 const Vec2 = @import("./Vec2.zig");
@@ -6,6 +5,7 @@ const Color32 = @import("./Color32.zig");
 const ClipStack = @import("./ClipStack.zig");
 const Style = @import("./Style.zig");
 const Input = @import("./Input.zig");
+const RenderFrame = @import("./RenderFrame.zig");
 const COMMANDLIST_SIZE = (256 * 1024);
 
 pub const COMMAND = enum(u32) {
@@ -23,6 +23,28 @@ pub const ICON = enum(i32) {
     MAX,
 };
 
+pub const ClipCommand = struct {
+    rect: Rect,
+};
+
+pub const RectCommand = struct {
+    rect: Rect,
+    color: Color32,
+};
+
+pub const TextCommand = struct {
+    pos: Vec2,
+    color: Color32,
+    length: c_uint,
+    font: ?*const anyopaque,
+};
+
+pub const IconCommand = struct {
+    rect: Rect,
+    id: c_int,
+    color: Color32,
+};
+
 const Self = @This();
 
 buffer: [COMMANDLIST_SIZE]u8 = undefined,
@@ -34,7 +56,7 @@ pub fn begin(self: *Self) void {
     self.pos = 0;
 }
 
-pub fn end(self: *Self, command: *c.UIRenderFrame) void {
+pub fn end(self: *Self, command: *RenderFrame) void {
     self.clip_stack.end();
     command.command_buffer = @ptrCast([*c]u8, &self.buffer[0]);
 }
@@ -55,8 +77,8 @@ fn write(self: *Self, data: []const u8) void {
 }
 
 pub fn write_clip(self: *Self, rect: Rect) void {
-    self.write_bytes(c.UI_COMMAND_CLIP);
-    const value = c.UIClipCommand{
+    self.write_bytes(@enumToInt(COMMAND.CLIP));
+    const value = ClipCommand{
         .rect = .{
             .x = rect.x,
             .y = rect.y,
@@ -72,8 +94,8 @@ pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font:
     // 取り出すときに
     // @setRuntimeSafety(false);
     // が必要になっている。
-    self.write_bytes(c.UI_COMMAND_TEXT);
-    const value = c.UITextCommand{
+    self.write_bytes(@enumToInt(COMMAND.TEXT));
+    const value = TextCommand{
         .pos = .{
             .x = pos.x,
             .y = pos.y,
@@ -92,8 +114,8 @@ pub fn write_text(self: *Self, str: []const u8, pos: Vec2, color: Color32, font:
 }
 
 pub fn write_icon(self: *Self, id: ICON, rect: Rect, color: Color32) void {
-    self.write_bytes(c.UI_COMMAND_ICON);
-    const value = c.UIIconCommand{
+    self.write_bytes(@enumToInt(COMMAND.ICON));
+    const value = IconCommand{
         .rect = .{
             .x = rect.x,
             .y = rect.y,
@@ -112,8 +134,8 @@ pub fn write_icon(self: *Self, id: ICON, rect: Rect, color: Color32) void {
 }
 
 pub fn write_rect(self: *Self, rect: Rect, color: Color32) void {
-    self.write_bytes(c.UI_COMMAND_RECT);
-    const value = c.UIRectCommand{
+    self.write_bytes(@enumToInt(COMMAND.RECT));
+    const value = RectCommand{
         .rect = .{
             .x = rect.x,
             .y = rect.y,

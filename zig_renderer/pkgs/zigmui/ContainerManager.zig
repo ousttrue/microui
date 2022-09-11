@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const RenderFrame = @import("./RenderFrame.zig");
 const Pool = @import("./pool.zig").Pool;
 const Hash = @import("./Hash.zig");
 const Vec2 = @import("./Vec2.zig");
@@ -25,7 +25,7 @@ last_zindex: i32 = 0,
 hover_root: ?*const Container = null,
 next_hover_root: ?*Container = null,
 root_list: Stack(*Container, ROOTLIST_SIZE) = .{},
-root_window_ranges: [ROOTLIST_SIZE]c.struct_UICommandRange = undefined,
+root_window_ranges: [ROOTLIST_SIZE]RenderFrame.CommandRange = undefined,
 
 //   static int compare_zindex(const void *a, const void *b) {
 //     return (*(mu_Container **)a).zindex - (*(mu_Container **)b).zindex;
@@ -43,7 +43,7 @@ fn compare_zindex(a: ?*const anyopaque, b: ?*const anyopaque) callconv(.C) c_int
     return A.*.zindex - B.*.zindex;
 }
 
-pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *c.struct_UIRenderFrame) void {
+pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *RenderFrame) void {
     std.debug.assert(self.container_stack.size() == 0);
 
     // bring hover root to front if mouse was pressed
@@ -57,8 +57,8 @@ pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *c.struct_UI
     }
 
     // sort root containers by zindex
-    const n = self.root_list.size();
-    c.qsort(@ptrCast(*anyopaque, self.root_list.begin()), n, @sizeOf(*Container), compare_zindex);
+    // const n = self.root_list.size();
+    // std.c.qsort(@ptrCast(*anyopaque, self.root_list.begin()), n, @sizeOf(*Container), compare_zindex);
 
     // const root_end = self.root_list.end();
     // var p = @ptrCast([*]c.struct_UICommandRange, &self.root_window_ranges[0]);

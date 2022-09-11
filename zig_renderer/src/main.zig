@@ -1,11 +1,46 @@
 const std = @import("std");
-const c = @import("c");
+const builtin = @import("builtin");
 const zigmui = @import("zigmui");
 const logger = std.log.scoped(.zig_renderer);
 const atlas = @import("./atlas.zig");
 const Texture = @import("./Texture.zig");
 const Renderer = @import("./Renderer.zig");
 const ui = @import("./ui.zig");
+
+pub extern fn console_logger(level: c_int, ptr: *const u8, size: c_int) void;
+
+fn extern_write(level: c_int, m: []const u8) error{}!usize {
+    if (m.len > 0) {
+        console_logger(level, &m[0], @intCast(c_int, m.len));
+    }
+    return m.len;
+}
+
+pub fn log(
+    comptime message_level: std.log.Level,
+    comptime scope: @Type(.EnumLiteral),
+    comptime format: []const u8,
+    args: anytype,
+) void {
+    if (builtin.target.cpu.arch == .wasm32) {
+        const level = switch (message_level) {
+            .err => 0,
+            .warn => 1,
+            .info => 2,
+            .debug => 3,
+        };
+        const w = std.io.Writer(c_int, error{}, extern_write){
+            .context = level,
+        };
+        w.print(format, args) catch |err| {
+            const err_name = @errorName(err);
+            extern_write(0, err_name) catch unreachable;
+        };
+        _ = extern_write(level, "\n") catch unreachable;
+    } else {
+        std.log.defaultLog(message_level, scope, format, args);
+    }
+}
 
 fn text_width(_: ?*anyopaque, text: []const u8) u32 {
     if (text.len == 0) {
@@ -42,7 +77,7 @@ export fn ENGINE_init(p: *const anyopaque) callconv(.C) void {
     var style = &ctx.command_drawer.style;
     style.text_width_callback = &text_width;
     style.text_height_callback = &text_height;
-    // c.glfwSetWindowUserPointer(window, ctx);
+    // gl.fwSetWindowUserPointer(window, ctx);
 }
 
 export fn ENGINE_deinit() callconv(.C) void {
@@ -125,41 +160,40 @@ export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) void {
     const ctx = g_ctx orelse {
         return;
     };
-    var command: c.UIRenderFrame = undefined;
+    var command: zigmui.RenderFrame = undefined;
     try ui.process_frame(ctx, &bg, &command);
 
     if (g_renderer) |*r| {
         r.begin(width, height, bg[0..3]);
 
-        for (command.command_groups[0..command.command_group_count]) |it| {
-            var p = command.command_buffer + it.head;
-            var end = command.command_buffer + it.tail;
+        for (command.slice()) |it| {
+            var p = command.get(it.head);
+            var end = command.get(it.tail);
             while (p != end) {
-                const command_type = ptrAlignCast(*const c_int, p).*;
+                const command_type = @intToEnum(zigmui.COMMAND, ptrAlignCast(*const c_int, p).*);
                 switch (command_type) {
-                    c.UI_COMMAND_CLIP => {
-                        const cmd = ptrAlignCast(*const c.UIClipCommand, p + 4);
+                    .CLIP => {
+                        const cmd = ptrAlignCast(*const zigmui.ClipCommand, p + 4);
                         r.set_clip_rect(cmd.rect);
-                        p += (4 + @sizeOf(c.UIClipCommand));
+                        p += (4 + @sizeOf(zigmui.ClipCommand));
                     },
-                    c.UI_COMMAND_RECT => {
-                        const cmd = ptrAlignCast(*const c.UIRectCommand, p + 4);
+                    .RECT => {
+                        const cmd = ptrAlignCast(*const zigmui.RectCommand, p + 4);
                         r.draw_rect(cmd.rect, cmd.color);
-                        p += (4 + @sizeOf(c.UIRectCommand));
+                        p += (4 + @sizeOf(zigmui.RectCommand));
                     },
-                    c.UI_COMMAND_TEXT => {
-                        const cmd = ptrAlignCast(*const c.UITextCommand, p + 4);
-                        const begin = 4 + @sizeOf(c.UITextCommand);
+                    .TEXT => {
+                        const cmd = ptrAlignCast(*const zigmui.TextCommand, p + 4);
+                        const begin = 4 + @sizeOf(zigmui.TextCommand);
                         const text = p[begin .. begin + cmd.length];
                         r.draw_text(text, cmd.pos, cmd.color);
-                        p += (4 + @sizeOf(c.UITextCommand) + cmd.length);
+                        p += (4 + @sizeOf(zigmui.TextCommand) + cmd.length);
                     },
-                    c.UI_COMMAND_ICON => {
-                        const cmd = ptrAlignCast(*const c.UIIconCommand, p + 4);
+                    .ICON => {
+                        const cmd = ptrAlignCast(*const zigmui.IconCommand, p + 4);
                         r.draw_icon(@intCast(u32, cmd.id), cmd.rect, cmd.color);
-                        p += (4 + @sizeOf(c.UIIconCommand));
+                        p += (4 + @sizeOf(zigmui.IconCommand));
                     },
-                    else => unreachable,
                 }
             }
         }

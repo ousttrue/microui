@@ -1,5 +1,4 @@
 const std = @import("std");
-const c = @import("c");
 const Rect = @import("./Rect.zig");
 const Vec2 = @import("./Vec2.zig");
 const Color32 = @import("./Color32.zig");
@@ -7,12 +6,12 @@ const Hash = @import("./Hash.zig");
 const Container = @import("./Container.zig");
 const ContainerManager = @import("./ContainerManager.zig");
 const CommandDrawer = @import("./CommandDrawer.zig");
+const RenderFrame = @import("./RenderFrame.zig");
 const Input = @import("./Input.zig");
 const LayoutManager = @import("./LayoutManager.zig");
 const Layout = @import("./Layout.zig");
 const Tree = @import("./Tree.zig");
 const TextEditor = @import("./TextEditor.zig");
-
 const ROOTLIST_SIZE = 32;
 const COMMANDLIST_SIZE = 256 * 1024;
 
@@ -27,7 +26,7 @@ layout: LayoutManager = .{},
 tree: Tree = .{},
 editor: TextEditor = .{},
 
-command_groups: [ROOTLIST_SIZE]c.struct_UICommandRange = undefined,
+command_groups: [ROOTLIST_SIZE]RenderFrame.CommandRange = undefined,
 command_buffer: [COMMANDLIST_SIZE]u8 = undefined,
 
 pub fn mouse_over(self: Self, rect: Rect) bool {
@@ -50,7 +49,7 @@ pub fn begin(self: *Self) void {
     self.frame += 1;
 }
 
-pub fn end(self: *Self, command: *c.UIRenderFrame) !void {
+pub fn end(self: *Self, command: *RenderFrame) !void {
     self.hash.end();
     self.layout.end();
     const mouse_pressed = self.input.end();

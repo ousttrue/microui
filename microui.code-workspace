@@ -13,5 +13,7 @@
 			"path": "zig_renderer"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "zig_renderer"
+	}
 }

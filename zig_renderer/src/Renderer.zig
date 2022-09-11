@@ -1,5 +1,7 @@
 const std = @import("std");
-const c = @import("c");
+const builtin = @import("builtin");
+const zigmui = @import("zigmui");
+const gl = @import("./gl.zig");
 const Texture = @import("./Texture.zig");
 const Program = @import("./Program.zig");
 const VS = @embedFile("./quad.vs");
@@ -39,8 +41,17 @@ vertex_count: u32 = 0,
 indices: [MAX_QUADS * 6]u32 = undefined,
 index_count: u32 = 0,
 
+// init OpenGL by glad
+const GLADloadproc = fn ([*c]const u8) callconv(.C) ?*anyopaque;
+pub extern fn gladLoadGL(*const GLADloadproc) c_int;
+pub fn loadproc(ptr: *const anyopaque) void {
+    if (builtin.target.cpu.arch != .wasm32) {
+        _ = gladLoadGL(@ptrCast(*const GLADloadproc, ptr));
+    }
+}
+
 pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data: []const u8) Self {
-    _ = c.gladLoadGL(@ptrCast(c.GLADloadfunc, @alignCast(@alignOf(c.GLADloadfunc), p)));
+    _ = gladLoadGL(@ptrCast(*const GLADloadproc, @alignCast(@alignOf(GLADloadproc), p)));
 
     const vbo = Vbo.init(MAX_QUADS * 6 * @sizeOf(Vertex));
     const ibo = Ibo.init(MAX_QUADS * 4 * @sizeOf(Vertex));
@@ -53,12 +64,12 @@ pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data
     // https://www.khronos.org/opengl/wiki/Vertex_Specification
     self.vao.bind();
     vbo.bind();
-    c.glEnableVertexAttribArray(0);
-    c.glVertexAttribPointer(0, 2, c.GL_FLOAT, c.GL_FALSE, @sizeOf(Vertex), null);
-    c.glEnableVertexAttribArray(1);
-    c.glVertexAttribPointer(1, 2, c.GL_FLOAT, c.GL_FALSE, @sizeOf(Vertex), @intToPtr(*const anyopaque, @offsetOf(Vertex, "u")));
-    c.glEnableVertexAttribArray(2);
-    c.glVertexAttribPointer(2, 4, c.GL_UNSIGNED_BYTE, c.GL_TRUE, @sizeOf(Vertex), @intToPtr(*const anyopaque, @offsetOf(Vertex, "r")));
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, @sizeOf(Vertex), 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, @sizeOf(Vertex), @offsetOf(Vertex, "u"));
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 4, gl.GL_UNSIGNED_BYTE, gl.GL_TRUE, @sizeOf(Vertex), @offsetOf(Vertex, "r"));
     ibo.bind();
 
     self.vao.unbind();
@@ -71,15 +82,15 @@ pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data
 pub fn begin(self: *Self, width: i32, height: i32, bg: []const f32) void {
     self.width = width;
     self.height = height;
-    c.glViewport(0, 0, width, height);
-    c.glScissor(0, 0, width, height);
-    c.glClearColor(
+    gl.viewport(0, 0, width, height);
+    gl.scissor(0, 0, width, height);
+    gl.clearColor(
         bg[0] / 255.0,
         bg[1] / 255.0,
         bg[2] / 255.0,
         1,
     );
-    c.glClear(c.GL_COLOR_BUFFER_BIT);
+    gl.clear(gl.GL_COLOR_BUFFER_BIT);
 
     self.matrix[0] = 2.0 / @intToFloat(f32, width);
     self.matrix[3] = -1.0;
@@ -95,19 +106,19 @@ pub fn flush(self: *Self) void {
         self.vao.ibo.update(&self.indices[0], @sizeOf(u32) * self.index_count, self.index_count);
         self.index_count = 0;
 
-        c.glDisable(c.GL_CULL_FACE);
-        c.glDisable(c.GL_DEPTH_TEST);
-        c.glEnable(c.GL_SCISSOR_TEST);
-        c.glEnable(c.GL_TEXTURE_2D);
+        gl.disable(gl.GL_CULL_FACE);
+        gl.disable(gl.GL_DEPTH_TEST);
+        gl.enable(gl.GL_SCISSOR_TEST);
+        gl.enable(gl.GL_TEXTURE_2D);
 
         // alpha blend
-        c.glEnable(c.GL_BLEND);
-        c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+        gl.enable(gl.GL_BLEND);
+        gl.blendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 
         // draw
         self.program.bind();
         self.program.set_uniform_matrix("M", &self.matrix[0], true);
-        c.glActiveTexture(c.GL_TEXTURE0);
+        gl.activeTexture(gl.GL_TEXTURE0);
         self.atlas_texture.bind();
         self.vao.draw();
         self.atlas_texture.unbind();
@@ -115,11 +126,11 @@ pub fn flush(self: *Self) void {
     }
 }
 
-pub fn draw_rect(self: *Self, rect: c.UIRect, color: c.UIColor32) void {
+pub fn draw_rect(self: *Self, rect: zigmui.Rect, color: zigmui.Color32) void {
     self.push_quad(rect, atlas.atlas[@enumToInt(atlas.ATLAS_GLYPH.ATLAS_WHITE)], color);
 }
 
-pub fn draw_text(self: *Self, text: []const u8, pos: c.UIVec2, color: c.UIColor32) void {
+pub fn draw_text(self: *Self, text: []const u8, pos: zigmui.Vec2, color: zigmui.Color32) void {
     var x = pos.x;
     for (text) |ch| {
         if ((ch & 0xc0) == 0x80) {
@@ -137,19 +148,19 @@ pub fn draw_text(self: *Self, text: []const u8, pos: c.UIVec2, color: c.UIColor3
     }
 }
 
-pub fn draw_icon(self: *Self, id: u32, rect: c.UIRect, color: c.UIColor32) void {
+pub fn draw_icon(self: *Self, id: u32, rect: zigmui.Rect, color: zigmui.Color32) void {
     const glyph = atlas.atlas[id];
     const x = rect.x + @divTrunc(rect.w - glyph[2], 2);
     const y = rect.y + @divTrunc(rect.h - glyph[3], 2);
     self.push_quad(.{ .x = x, .y = y, .w = glyph[2], .h = glyph[3] }, glyph, color);
 }
 
-pub fn set_clip_rect(self: *Self, rect: c.UIRect) void {
+pub fn set_clip_rect(self: *Self, rect: zigmui.Rect) void {
     self.flush();
-    c.glScissor(rect.x, self.height - (rect.y + rect.h), rect.w, rect.h);
+    gl.scissor(rect.x, self.height - (rect.y + rect.h), rect.w, rect.h);
 }
 
-fn push_quad(self: *Self, quad: c.UIRect, glyph: atlas.Rect, color: c.UIColor32) void {
+fn push_quad(self: *Self, quad: zigmui.Rect, glyph: atlas.Rect, color: zigmui.Color32) void {
     const x = @intToFloat(f32, glyph[0]) / @intToFloat(f32, atlas.width);
     const y = @intToFloat(f32, glyph[1]) / @intToFloat(f32, atlas.height);
     const w = @intToFloat(f32, glyph[2]) / @intToFloat(f32, atlas.width);

@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("c");
+const util = @import("./util.zig");
 const Vec2 = @import("./Vec2.zig");
 const Rect = @import("./Rect.zig");
 const Hash = @import("./Hash.zig");
@@ -255,7 +255,7 @@ pub const HandleResult = struct {
 pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) HandleResult {
     var result = HandleResult{};
     if (self.has_focus(id)) {
-        result.size = @intCast(usize, c.strlen(&buf[0]));
+        result.size = @intCast(usize, util.strlen(&buf[0]));
 
         // handle text input
         const n = self.consume_text(buf[result.size..]);
