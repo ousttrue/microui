@@ -115,6 +115,9 @@ const importObject = {
     env: {
         console_logger: (level, ptr, len) => g_logger.logger(level, ptr, len),
         //
+        gladLoadGL: () => {
+            // dummy
+        },
         getString: (name) => {
             const param = gl.getParameter(name);
             if (typeof (param) == "string") {
@@ -149,7 +152,7 @@ const importObject = {
         },
         bufferSubData: (target, offset, size, dataPtr) => {
             const data = new Uint8Array(getMemory().buffer, Number(dataPtr), Number(size));
-            gl.bufferSubData(target, offset, data);
+            gl.bufferSubData(target, Number(offset), data);
         },
         createShader: (shaderType) => {
             glShaders.push(gl.createShader(shaderType));
@@ -354,6 +357,9 @@ const importObject = {
                 case gl.RGBA:
                     pixels = memGet(data, width * height * 4);
                     break;
+                case gl.ALPHA:
+                    pixels = memGet(data, width * height);
+                    break;
                 default:
                     logger.error(`unknown ${format}`);
                     break;
@@ -393,6 +399,7 @@ const importObject = {
         },
         enable: (cap) => gl.enable(cap),
         disable: (cap) => gl.disable(cap),
+        blendFunc: (sfactor, dfactor) => gl.blendFunc(sfactor, dfactor),
         blendEquation: (mode) => gl.blendEquation(mode),
         blendFuncSeparate: (srcRGB, dstRGB, srcAlpha, dstAlpha) => gl.blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha),
         blendEquationSeparate: (modeRGB, modeAlpha) => gl.blendEquationSeparate(modeRGB, modeAlpha),
@@ -400,7 +407,7 @@ const importObject = {
 };
 
 // get
-const response = await fetch('zig-out/lib/engine.wasm')
+const response = await fetch('zig-out/lib/zig_renderer.wasm')
 // byte array
 const buffer = await response.arrayBuffer();
 // compile

@@ -51,7 +51,9 @@ pub fn loadproc(ptr: *const anyopaque) void {
 }
 
 pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data: []const u8) Self {
-    _ = gladLoadGL(@ptrCast(*const GLADloadproc, @alignCast(@alignOf(GLADloadproc), p)));
+    if (builtin.target.cpu.arch != .wasm32) {
+        _ = gladLoadGL(@ptrCast(*const GLADloadproc, @alignCast(@alignOf(GLADloadproc), p)));
+    }
 
     const vbo = Vbo.init(MAX_QUADS * 6 * @sizeOf(Vertex));
     const ibo = Ibo.init(MAX_QUADS * 4 * @sizeOf(Vertex));

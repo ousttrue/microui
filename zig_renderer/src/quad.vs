@@ -1,4 +1,4 @@
-#version 400
+precision mediump float;
 attribute vec2 vPos;
 attribute vec2 vTex;
 attribute vec4 vCol;

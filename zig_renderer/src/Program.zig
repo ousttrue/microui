@@ -15,14 +15,15 @@ fn compile_shader(shader_type: gl.GLenum, src: [:0]const u8) !u32 {
     gl.getShaderiv(id, gl.GL_COMPILE_STATUS, &vertex_compiled);
     if (vertex_compiled == gl.GL_TRUE) {
         return id;
+    } else {
+        var log_length: c_int = 0;
+        var log_buf: [1024]u8 = undefined;
+        gl.getShaderInfoLog(id, log_buf.len, &log_length, &log_buf[0]);
+        if (log_length > 0) {
+            logger.err("{s}", .{log_buf[0..@intCast(usize, log_length)]});
+        }
+        return error.compileError;
     }
-    var log_length: c_int = 0;
-    var log_buf: [1024]u8 = undefined;
-    gl.getShaderInfoLog(id, log_buf.len, &log_length, &log_buf[0]);
-    if (log_length > 0) {
-        logger.err("{s}", .{log_buf[0..@intCast(usize, log_length)]});
-    }
-    return error.compileError;
 }
 
 pub fn create(vs: [:0]const u8, fs: [:0]const u8) ?Self {

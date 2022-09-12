@@ -17,10 +17,12 @@ pub fn build(b: *std.build.Builder) void {
     lib.setTarget(target);
 
     lib.addPackage(zigmui_pkg);
-    if (target.cpu_arch != std.Target.Cpu.Arch.wasm32) {
+    if (target.cpu_arch == std.Target.Cpu.Arch.wasm32) {
+        lib.stack_size = 6 * 1024 * 1024;
+    } else {
         lib.linkLibC();
         lib.linkLibCpp();
-        lib.linkSystemLibrary("OpenGL32");
+        // lib.linkSystemLibrary("OpenGL32");
         lib.addIncludePath("../cpp/uirf");
         lib.addIncludePath("../cpp/_external/glfw/deps");
         lib.addCSourceFile("../cpp/_external/glfw/deps/glad_gl.c", &.{});
