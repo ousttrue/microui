@@ -9,7 +9,15 @@ extern fn ENGINE_mousewheel(x: c_int, y: c_int) callconv(.C) void;
 extern fn ENGINE_key_press(key: c_int) callconv(.C) void;
 extern fn ENGINE_key_release(key: c_int) callconv(.C) void;
 extern fn ENGINE_unicode(cp: c_uint) callconv(.C) void;
-extern fn ENGINE_render(width: c_int, height: c_int) callconv(.C) void;
+pub const CURSOR_SHAPE = enum(u32) {
+    ARROW,
+    IBEAM,
+    CROSSHAIR,
+    HAND,
+    HRESIZE,
+    VRESIZE,
+};
+extern fn ENGINE_render(width: c_int, height: c_int) callconv(.C) CURSOR_SHAPE;
 
 fn cursor_position_callback(_: ?*c.GLFWwindow, xpos: f64, ypos: f64) callconv(.C) void {
     ENGINE_mousemove(@floatToInt(c_int, xpos), @floatToInt(c_int, ypos));
@@ -80,6 +88,19 @@ pub fn main() anyerror!void {
     _ = c.glfwSetKeyCallback(window, key_callback);
     _ = c.glfwSetCharCallback(window, character_callback);
 
+    const cursor_arrow = c.glfwCreateStandardCursor(c.GLFW_ARROW_CURSOR);
+    defer c.glfwDestroyCursor(cursor_arrow);
+    const cursor_ibeam = c.glfwCreateStandardCursor(c.GLFW_IBEAM_CURSOR);
+    defer c.glfwDestroyCursor(cursor_ibeam);
+    const cursor_crosshair = c.glfwCreateStandardCursor(c.GLFW_CROSSHAIR_CURSOR);
+    defer c.glfwDestroyCursor(cursor_crosshair);
+    const cursor_hand = c.glfwCreateStandardCursor(c.GLFW_HAND_CURSOR);
+    defer c.glfwDestroyCursor(cursor_hand);
+    const cursor_hresize = c.glfwCreateStandardCursor(c.GLFW_HRESIZE_CURSOR);
+    defer c.glfwDestroyCursor(cursor_hresize);
+    const cursor_vresize = c.glfwCreateStandardCursor(c.GLFW_VRESIZE_CURSOR);
+    defer c.glfwDestroyCursor(cursor_vresize);
+
     // Loop until the user closes the window
     while (c.glfwWindowShouldClose(window) == 0) {
         // Poll for and process events
@@ -89,7 +110,14 @@ pub fn main() anyerror!void {
         var height: c_int = undefined;
         c.glfwGetFramebufferSize(window, &width, &height);
 
-        ENGINE_render(width, height);
+        switch (ENGINE_render(width, height)) {
+            .ARROW => c.glfwSetCursor(window, cursor_arrow),
+            .IBEAM => c.glfwSetCursor(window, cursor_ibeam),
+            .CROSSHAIR => c.glfwSetCursor(window, cursor_crosshair),
+            .HAND => c.glfwSetCursor(window, cursor_hand),
+            .HRESIZE => c.glfwSetCursor(window, cursor_hresize),
+            .VRESIZE => c.glfwSetCursor(window, cursor_vresize),
+        }
 
         // Swap front and back buffers
         c.glfwSwapBuffers(window);

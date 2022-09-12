@@ -156,9 +156,10 @@ var bg = [3]f32{
     95,
     100,
 };
-export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) void {
+
+export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) zigmui.CURSOR_SHAPE {
     const ctx = g_ctx orelse {
-        return;
+        return .ARROW;
     };
     var command: zigmui.RenderFrame = undefined;
     try ui.process_frame(ctx, &bg, &command);
@@ -200,4 +201,6 @@ export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) void {
 
         r.flush();
     }
+
+    return command.cursor_shape;
 }

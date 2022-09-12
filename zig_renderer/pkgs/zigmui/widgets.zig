@@ -20,7 +20,7 @@ pub fn label(ctx: *Context, text: []const u8) void {
 pub fn textbox_raw(ctx: *Context, buf: []u8, id: Hash.Id, rect: Rect, opt: OPT) Input.RES {
     // base rect
     const mouseover = ctx.mouse_over(rect);
-    ctx.input.update_focus_hover(id, opt.add(.HOLDFOCUS), mouseover);
+    ctx.input.update_focus_hover(id, opt.add(.HOLDFOCUS), mouseover, .IBEAM);
     ctx.command_drawer.draw_control_frame(rect, .BASE, opt, ctx.input.get_focus_state(id));
 
     // base rect
@@ -137,7 +137,7 @@ pub fn button(
     const style = &ctx.command_drawer.style;
     const rect = ctx.layout.back().next(style);
     const mouseover = ctx.mouse_over(rect);
-    ctx.input.update_focus_hover(id, option.opt, mouseover);
+    ctx.input.update_focus_hover(id, option.opt, mouseover, .HAND);
     // handle click
     if (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id)) {
         res = true;
@@ -157,7 +157,7 @@ pub fn checkbox(ctx: *Context, text: []const u8, state: *bool) bool {
     const r = ctx.layout.back().next(style);
     const box = Rect{ .x = r.x, .y = r.y, .w = r.h, .h = r.h };
     const mouseover = ctx.mouse_over(r);
-    ctx.input.update_focus_hover(id, .NONE, mouseover);
+    ctx.input.update_focus_hover(id, .NONE, mouseover, .HAND);
 
     // handle click
     var res = false;
@@ -191,7 +191,7 @@ pub fn scrollbar(ctx: *Context, cnt: *Container, b: *Rect, cs: Vec2, key: []cons
 
         // handle input
         const mouseover = ctx.mouse_over(base);
-        ctx.input.update_focus_hover(id, .NONE, mouseover);
+        ctx.input.update_focus_hover(id, .NONE, mouseover, .VRESIZE);
         if (ctx.input.has_focus(id) and ctx.input.mouse_down == .LEFT) {
             cnt.scroll.y += @floatToInt(
                 i32,
@@ -278,7 +278,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) bool 
         {
             const title_id = ctx.hash.from_str("!title");
             const mouseover = ctx.mouse_over(tr);
-            ctx.input.update_focus_hover(title_id, opt, mouseover);
+            ctx.input.update_focus_hover(title_id, opt, mouseover, .HAND);
             ctx.command_drawer.draw_control_text(text, tr, .TITLETEXT, opt, false);
             if (ctx.input.has_focus(title_id) and
                 ctx.input.mouse_down == .LEFT)
@@ -298,7 +298,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) bool 
             tr.w -= r.w;
             ctx.command_drawer.draw_icon(.CLOSE, r, .TITLETEXT);
             const mouseover = ctx.mouse_over(r);
-            ctx.input.update_focus_hover(close_id, opt, mouseover);
+            ctx.input.update_focus_hover(close_id, opt, mouseover, .HAND);
             if (ctx.input.mouse_pressed == .LEFT and
                 ctx.input.has_focus(close_id))
             {
@@ -326,7 +326,7 @@ pub fn begin_window(ctx: *Context, text: []const u8, rect: Rect, opt: OPT) bool 
             .h = sz,
         };
         const mouseover = ctx.mouse_over(r);
-        ctx.input.update_focus_hover(resize_id, opt, mouseover);
+        ctx.input.update_focus_hover(resize_id, opt, mouseover, .CROSSHAIR);
         if (ctx.input.has_focus(resize_id) and
             ctx.input.mouse_down == .LEFT)
         {
@@ -459,7 +459,7 @@ pub fn slider(
 
     // handle normal mode
     const mouseover = ctx.mouse_over(base);
-    ctx.input.update_focus_hover(id, opt, mouseover);
+    ctx.input.update_focus_hover(id, opt, mouseover, .HRESIZE);
 
     // handle input
     if (ctx.input.has_focus(id) and
@@ -507,7 +507,7 @@ pub fn header(ctx: *Context, title: []const u8, option: struct { istreenode: boo
     const style = &ctx.command_drawer.style;
     var rect = ctx.layout.back().next(style);
     const mouseover = ctx.mouse_over(rect);
-    ctx.input.update_focus_hover(id, .NONE, mouseover);
+    ctx.input.update_focus_hover(id, .NONE, mouseover, .HAND);
 
     // handle click
     active = active != (ctx.input.mouse_pressed == .LEFT and ctx.input.has_focus(id));

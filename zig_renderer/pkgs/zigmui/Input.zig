@@ -85,6 +85,20 @@ pub const FOCUS_STATE = enum {
     FOCUS,
 };
 
+pub const CURSOR_SHAPE = enum(u32) {
+    ARROW,
+    IBEAM,
+    CROSSHAIR,
+    HAND,
+    HRESIZE,
+    VRESIZE,
+};
+
+pub const IdWithShape = struct {
+    id: Hash.Id,
+    shape: CURSOR_SHAPE,
+};
+
 const Self = @This();
 
 mouse_pos: Vec2 = .{},
@@ -98,9 +112,9 @@ key_pressed: KEY = .NONE,
 input_text: [32]u8 = .{0} ** 32,
 input_text_pos: usize = 0,
 
-focus: ?Hash.Id = null,
+focus: ?IdWithShape = null,
 keep_focus: bool = false,
-hover: ?Hash.Id = null,
+hover: ?IdWithShape = null,
 
 scroll_target: ?*Container = null,
 
@@ -174,63 +188,83 @@ pub fn push_text(self: *Self, text: []const u8) void {
     self.input_text_pos += text.len;
 }
 
-pub fn set_focus(self: *Self, id: Hash.Id) void {
-    self.focus = id;
-    self.keep_focus = true;
-}
-
-pub fn set_keep_focus(self: *Self, id: Hash.Id) void {
-    if (self.focus == id) {
+pub fn set_focus(self: *Self, id: Hash.Id, shape: CURSOR_SHAPE) void {
+    if (id == 0) {
+        self.focus = null;
+    } else {
+        self.focus = .{ .id = id, .shape = shape };
         self.keep_focus = true;
     }
 }
 
-pub fn has_focus(self: Self, id: Hash.Id) bool {
-    return self.focus == id;
+pub fn set_keep_focus(self: *Self, id: Hash.Id) void {
+    if (self.focus) |focus| {
+        if (focus.id == id) {
+            self.keep_focus = true;
+        }
+    }
 }
 
-pub fn set_hover(self: *Self, id: Hash.Id) void {
-    self.hover = id;
+pub fn has_focus(self: Self, id: Hash.Id) bool {
+    if (self.focus) |focus| {
+        if (focus.id == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+pub fn set_hover(self: *Self, id: Hash.Id, shape: CURSOR_SHAPE) void {
+    if (id == 0) {
+        self.hover = null;
+    } else {
+        self.hover = .{ .id = id, .shape = shape };
+    }
 }
 
 pub fn has_hover(self: Self, id: Hash.Id) bool {
-    return self.hover == id;
+    if (self.hover) |hover| {
+        if (hover.id == id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 pub fn get_focus_state(self: Self, id: Hash.Id) FOCUS_STATE {
     if (self.has_focus(id)) {
         return .FOCUS;
-    } else if (self.hover == id) {
+    } else if (self.has_hover(id)) {
         return .HOVER;
     } else {
         return .NONE;
     }
 }
 
-pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool) void {
+pub fn update_focus_hover(self: *Self, id: Hash.Id, opt: OPT, mouseover: bool, shape: CURSOR_SHAPE) void {
     self.set_keep_focus(id);
     if (opt.has(.NOINTERACT)) {
         return;
     }
 
     if (mouseover and self.mouse_down == .NONE) {
-        self.set_hover(id);
+        self.set_hover(id, shape);
     }
 
     if (self.has_focus(id)) {
         if (self.mouse_pressed != .NONE and !mouseover) {
-            self.set_focus(0);
+            self.set_focus(0, shape);
         }
         if (self.mouse_down == .NONE and !opt.has(.HOLDFOCUS)) {
-            self.set_focus(0);
+            self.set_focus(0, shape);
         }
     }
 
     if (self.has_hover(id)) {
         if (self.mouse_pressed != .NONE) {
-            self.set_focus(id);
+            self.set_focus(id, shape);
         } else if (!mouseover) {
-            self.set_hover(0);
+            self.set_hover(0, shape);
         }
     }
 }
@@ -275,7 +309,7 @@ pub fn handle_text(self: *Self, id: Hash.Id, buf: []u8) HandleResult {
 
         // handle return
         if (self.key_pressed.has(.RETURN)) {
-            self.set_focus(0);
+            self.set_focus(0, .ARROW);
             result.res = result.res.add(.SUBMIT);
         }
     }

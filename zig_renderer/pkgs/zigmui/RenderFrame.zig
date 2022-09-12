@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const Input = @import("./Input.zig");
 pub const CommandRange = extern struct {
     head: c_uint,
     tail: c_uint,
@@ -10,6 +11,7 @@ const Self = @This();
 command_groups: *const CommandRange,
 command_group_count: c_uint,
 command_buffer: *const u8,
+cursor_shape: Input.CURSOR_SHAPE = .ARROW,
 
 // comptime {
 //     if (builtin.target.cpu.arch == .wasm32) {

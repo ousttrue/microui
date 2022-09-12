@@ -55,4 +55,10 @@ pub fn end(self: *Self, command: *RenderFrame) !void {
     const mouse_pressed = self.input.end();
     self.container.end(mouse_pressed, command);
     self.command_drawer.end(command);
+    command.cursor_shape = if (self.input.focus) |focus|
+        focus.shape
+    else if (self.input.hover) |hover|
+        hover.shape
+    else
+        .ARROW;
 }

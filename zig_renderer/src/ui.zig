@@ -117,7 +117,7 @@ fn log_window(ctx: *zigmui.Context) void {
             var submitted = false;
             ctx.layout.stack.back().row(&.{ -70, -1 }, 0);
             if (zigmui.widgets.textbox(ctx, &S.buf, .{}).has(.SUBMIT)) {
-                ctx.input.set_focus(ctx.hash.last);
+                ctx.input.set_focus(ctx.hash.last, .ARROW);
                 submitted = true;
             }
             if (zigmui.widgets.button(ctx, .{ .text = "Submit" }, .{})) {
