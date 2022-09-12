@@ -111,7 +111,7 @@ pub fn flush(self: *Self) void {
         gl.disable(gl.GL_CULL_FACE);
         gl.disable(gl.GL_DEPTH_TEST);
         gl.enable(gl.GL_SCISSOR_TEST);
-        gl.enable(gl.GL_TEXTURE_2D);
+        // gl.enable(gl.GL_TEXTURE_2D); not exists in WebGL
 
         // alpha blend
         gl.enable(gl.GL_BLEND);
