@@ -438,12 +438,40 @@ canvas.addEventListener("wheel", (event) => {
     instance.exports.ENGINE_mousewheel(event.deltaX, event.deltaY);
 });
 
+const SHAPES = {
+    ARROW: 0,
+    IBEAM: 1,
+    CROSSHAIR: 2,
+    HAND: 3,
+    HRESIZE: 4,
+    VRESIZE: 5,
+};
+
 function step(timestamp) {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     canvas.width = w;
     canvas.height = h;
-    instance.exports.ENGINE_render(w, h);
+    switch (instance.exports.ENGINE_render(w, h)) {
+        case SHAPES.ARROW:
+            canvas.style.cursor = "default";
+            break;
+        case SHAPES.IBEAM:
+            canvas.style.cursor = "text";
+            break;
+        case SHAPES.CROSSHAIR:
+            canvas.style.cursor = "crosshair";
+            break;
+        case SHAPES.HAND:
+            canvas.style.cursor = "pointer";
+            break;
+        case SHAPES.HRESIZE:
+            canvas.style.cursor = "ew-resize";
+            break;
+        case SHAPES.VRESIZE:
+            canvas.style.cursor = "ns-resize";
+            break;
+    }
     window.requestAnimationFrame(step);
 }
 window.requestAnimationFrame(step);
