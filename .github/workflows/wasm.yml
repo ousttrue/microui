@@ -16,7 +16,7 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: master      
-      - run: cd engine && zig build -Dtarget=wasm32-freestanding
+      - run: cd zig_renderer && zig build -Dtarget=wasm32-freestanding
       - run: mkdir public
       - run: cp zig_renderer/index.* public/
       - run: mkdir -p public/zig-out/lib
