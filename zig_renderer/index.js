@@ -35,6 +35,16 @@ class Logger {
 const g_logger = new Logger();
 
 const canvas = document.querySelector("#gl");
+canvas.addEventListener("mousemove", (event) => {
+    instance.exports.ENGINE_mousemove(event.clientX, event.clientY);
+});
+canvas.addEventListener("mousedown", (event) => {
+    instance.exports.ENGINE_mousebutton_press(event.button);
+});
+canvas.addEventListener("mouseup", (event) => {
+    instance.exports.ENGINE_mousebutton_release(event.button);
+});
+
 const webglOptions = {
     alpha: true, //Boolean that indicates if the canvas contains an alpha buffer.
     antialias: true,  //Boolean that indicates whether or not to perform anti-aliasing.
