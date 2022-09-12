@@ -35,22 +35,6 @@ class Logger {
 const g_logger = new Logger();
 
 const canvas = document.querySelector("#gl");
-canvas.addEventListener("mousemove", (event) => {
-    event.preventDefault();
-    instance.exports.ENGINE_mousemove(event.clientX, event.clientY);
-});
-canvas.addEventListener("mousedown", (event) => {
-    event.preventDefault();
-    instance.exports.ENGINE_mousebutton_press(event.button);
-});
-canvas.addEventListener("mouseup", (event) => {
-    event.preventDefault();
-    instance.exports.ENGINE_mousebutton_release(event.button);
-});
-canvas.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    instance.exports.ENGINE_mousewheel(event.deltaX, event.deltaY);
-});
 
 const webglOptions = {
     alpha: true, //Boolean that indicates if the canvas contains an alpha buffer.
@@ -435,6 +419,25 @@ console.log(instance);
 
 // call
 instance.exports.ENGINE_init(null);
+
+// bind input event
+canvas.addEventListener("mousemove", (event) => {
+    event.preventDefault();
+    instance.exports.ENGINE_mousemove(event.clientX, event.clientY);
+});
+canvas.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+    instance.exports.ENGINE_mousebutton_press(event.button);
+});
+canvas.addEventListener("mouseup", (event) => {
+    event.preventDefault();
+    instance.exports.ENGINE_mousebutton_release(event.button);
+});
+canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    instance.exports.ENGINE_mousewheel(event.deltaX, event.deltaY);
+});
+
 function step(timestamp) {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;

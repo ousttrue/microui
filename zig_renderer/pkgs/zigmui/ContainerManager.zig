@@ -37,10 +37,8 @@ pub fn begin(self: *Self) void {
     self.root_list.clear();
 }
 
-fn compare_zindex(a: ?*const anyopaque, b: ?*const anyopaque) callconv(.C) c_int {
-    const A = @ptrCast(*const *Container, @alignCast(@alignOf(*Container), a));
-    const B = @ptrCast(*const *Container, @alignCast(@alignOf(*Container), b));
-    return A.*.zindex - B.*.zindex;
+fn compare_zindex(_: bool, a: *const Container, b: *const Container) bool {
+    return a.*.zindex < b.*.zindex;
 }
 
 pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *RenderFrame) void {
@@ -59,6 +57,7 @@ pub fn end(self: *Self, mouse_pressed: Input.MOUSE_BUTTON, command: *RenderFrame
     // sort root containers by zindex
     // const n = self.root_list.size();
     // std.c.qsort(@ptrCast(*anyopaque, self.root_list.begin()), n, @sizeOf(*Container), compare_zindex);
+    std.sort.sort(*const Container, self.root_list.slice(), true, compare_zindex);
 
     // const root_end = self.root_list.end();
     // var p = @ptrCast([*]c.struct_UICommandRange, &self.root_window_ranges[0]);
