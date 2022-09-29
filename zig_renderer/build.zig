@@ -23,7 +23,7 @@ pub fn build(b: *std.build.Builder) void {
         lib.linkLibC();
         lib.linkLibCpp();
         lib.addIncludePath("../_external/glfw/deps");
-        lib.addCSourceFile("../_external/glfw/deps/glad_gl.c", &.{});
+        lib.addCSourceFile("../_external/glfw/deps/glad_gl.c", &.{"-Wno-int-conversion"});
         lib.addCSourceFile("src/glad_placeholders.c", &.{});
     }
     lib.install();
