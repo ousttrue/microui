@@ -4,6 +4,37 @@ const GLFW_BASE = "../cpp/_external/glfw";
 const CPP_BUILD_BASE = "../build";
 const CPP_BASE = "../cpp";
 
+const GLFW_SOURCES = .{
+    GLFW_BASE ++ "/src/context.c",
+    GLFW_BASE ++ "/src/init.c",
+    GLFW_BASE ++ "/src/input.c",
+    GLFW_BASE ++ "/src/monitor.c",
+    GLFW_BASE ++ "/src/vulkan.c",
+    GLFW_BASE ++ "/src/window.c",
+    //
+    GLFW_BASE ++ "/src/win32_init.c",
+    GLFW_BASE ++ "/src/win32_joystick.c",
+    GLFW_BASE ++ "/src/win32_monitor.c",
+    GLFW_BASE ++ "/src/win32_time.c",
+    GLFW_BASE ++ "/src/win32_thread.c",
+    GLFW_BASE ++ "/src/win32_window.c",
+    GLFW_BASE ++ "/src/wgl_context.c",
+    GLFW_BASE ++ "/src/egl_context.c",
+    GLFW_BASE ++ "/src/osmesa_context.c",
+};
+const GLFW_FLAGS = .{
+    "-std=c99",
+    "-D_GLFW_WIN32",
+    "-DUNICODE",
+    "-D_UNICODE",
+};
+
+fn build_static_glfw(exe: *std.build.LibExeObjStep) void {
+    exe.addIncludePath(GLFW_BASE ++ "/include");
+    exe.addCSourceFiles(&GLFW_SOURCES, &GLFW_FLAGS);
+    exe.linkSystemLibrary("gdi32");
+}
+
 pub fn build(b: *std.build.Builder) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -19,26 +50,14 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.addPackage(c_pkg);
-    exe.addIncludePath(GLFW_BASE ++ "/include");
-    // exe.addIncludePath(CPP_BASE ++ "/microui");
-    // exe.addIncludePath(CPP_BASE ++ "/uirf");
-    // exe.addIncludePath(CPP_BASE ++ "/gl_renderer");
-    // exe.addCSourceFiles(&.{
-    //     "src/microui.cpp",
-    //     "src/renderer.cpp",
-    //     "src/atlas.c",
-    // }, &.{
-    //     "-DBUILD_MICROUI",
-    // });
-
+    build_static_glfw(exe);
     exe.linkLibC();
     exe.linkLibCpp();
 
-    // exe.linkSystemLibrary("microui");
-    exe.addLibraryPath("../cpp/build/Debug/lib");
-    exe.linkSystemLibrary("glfw3dll");
+    // link zig_renderer
     exe.addLibraryPath("../zig_renderer/zig-out/lib");
     exe.linkSystemLibrary("zig_renderer");
+
     exe.install();
 
     const run_cmd = exe.run();
