@@ -9,7 +9,7 @@ const FS = @embedFile("./quad.fs");
 const Vbo = @import("./Vbo.zig");
 const Ibo = @import("./Ibo.zig");
 const Vao = @import("./Vao.zig");
-const atlas = @import("./atlas.zig");
+const atlas = @import("atlas");
 const MAX_QUADS = 12800;
 
 const Vertex = struct {

@@ -10,6 +10,11 @@ const gl_pkg = std.build.Pkg{
     .source = .{ .path = "pkgs/gl_placeholder/main.zig" },
 };
 
+const atlas_pkg = std.build.Pkg{
+    .name = "atlas",
+    .source = .{ .path = "pkgs/atlas/main.zig" },
+};
+
 pub fn build(b: *std.build.Builder) void {
     const lib = b.addSharedLibrary("zig_renderer", "src/main.zig", .unversioned);
 
@@ -23,6 +28,7 @@ pub fn build(b: *std.build.Builder) void {
 
     lib.addPackage(zigmui_pkg);
     lib.addPackage(gl_pkg);
+    lib.addPackage(atlas_pkg);
     if (target.cpu_arch == std.Target.Cpu.Arch.wasm32) {
         lib.stack_size = 6 * 1024 * 1024;
     } else {
