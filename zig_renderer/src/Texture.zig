@@ -1,6 +1,6 @@
 const std = @import("std");
 const Self = @This();
-const gl = @import("./gl.zig");
+const gl = @import("gl");
 
 id: c_uint = undefined,
 

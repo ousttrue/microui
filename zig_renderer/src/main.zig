@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const zigmui = @import("zigmui");
 const logger = std.log.scoped(.zig_renderer);
-const atlas = @import("./atlas.zig");
+pub const atlas = @import("./atlas.zig");
 const Texture = @import("./Texture.zig");
 const Renderer = @import("./Renderer.zig");
 const ui = @import("./ui.zig");
@@ -42,17 +42,6 @@ pub fn log(
     }
 }
 
-fn text_width(_: ?*anyopaque, text: []const u8) u32 {
-    if (text.len == 0) {
-        return 0;
-    }
-    return atlas.get_text_width(text);
-}
-
-fn text_height(_: ?*anyopaque) u32 {
-    return atlas.get_text_height();
-}
-
 fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
     @setRuntimeSafety(false);
     const info = @typeInfo(T);
@@ -67,6 +56,7 @@ var allocator: std.mem.Allocator = undefined;
 export fn ENGINE_init(p: *const anyopaque) callconv(.C) void {
     std.debug.assert(g_renderer == null);
     g_renderer = Renderer.init(p, atlas.width, atlas.height, atlas.data);
+
     gpa = std.heap.GeneralPurposeAllocator(.{}){};
     allocator = gpa.allocator();
 
@@ -75,8 +65,8 @@ export fn ENGINE_init(p: *const anyopaque) callconv(.C) void {
     g_ctx = ctx;
     ctx.* = zigmui.Context{};
     var style = &ctx.command_drawer.style;
-    style.text_width_callback = &text_width;
-    style.text_height_callback = &text_height;
+    style.text_width_callback = &atlas.zigmui_width;
+    style.text_height_callback = &atlas.zigmui_height;
     // gl.fwSetWindowUserPointer(window, ctx);
 }
 

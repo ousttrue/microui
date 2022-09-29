@@ -26,8 +26,20 @@ pub fn get_text_width(text: []const u8) u32 {
     return @intCast(u32, res);
 }
 
+pub fn zigmui_width(_: ?*anyopaque, text: []const u8) u32 {
+    if (text.len == 0) {
+        return 0;
+    }
+    return get_text_width(text);
+}
+
 pub fn get_text_height() u32 {
     return 18;
+}
+
+
+pub fn zigmui_height(_: ?*anyopaque) u32 {
+    return get_text_height();
 }
 
 pub const atlas = [_]Rect{

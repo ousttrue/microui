@@ -1,4 +1,4 @@
-const gl = @import("./gl.zig");
+const gl = @import("gl");
 const Self = @This();
 
 id: u32,

@@ -1,4 +1,4 @@
-const gl = @import("./gl.zig");
+const gl = @import("gl");
 const Vbo = @import("./Vbo.zig");
 const Ibo = @import("./Ibo.zig");
 const Self = @This();
