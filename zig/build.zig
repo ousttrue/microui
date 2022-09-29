@@ -1,8 +1,6 @@
 const std = @import("std");
 const c_pkg = std.build.Pkg{ .name = "c", .source = .{ .path = "c.zig" } };
-const GLFW_BASE = "../cpp/_external/glfw";
-const CPP_BUILD_BASE = "../build";
-const CPP_BASE = "../cpp";
+const GLFW_BASE = "../_external/glfw";
 
 const GLFW_SOURCES = .{
     GLFW_BASE ++ "/src/context.c",

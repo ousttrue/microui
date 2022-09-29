@@ -22,8 +22,8 @@ pub fn build(b: *std.build.Builder) void {
     } else {
         lib.linkLibC();
         lib.linkLibCpp();
-        lib.addIncludePath("../cpp/_external/glfw/deps");
-        lib.addCSourceFile("../cpp/_external/glfw/deps/glad_gl.c", &.{});
+        lib.addIncludePath("../_external/glfw/deps");
+        lib.addCSourceFile("../_external/glfw/deps/glad_gl.c", &.{});
         lib.addCSourceFile("src/glad_placeholders.c", &.{});
     }
     lib.install();
