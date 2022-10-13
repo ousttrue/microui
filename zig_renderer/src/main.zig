@@ -3,8 +3,7 @@ const builtin = @import("builtin");
 const zigmui = @import("zigmui");
 const logger = std.log.scoped(.zig_renderer);
 pub const atlas = @import("atlas");
-const Texture = @import("./Texture.zig");
-const Renderer = @import("./Renderer.zig");
+const Renderer = @import("zigmui_impl_gl").Renderer;
 const ui = @import("./ui.zig");
 
 pub extern fn console_logger(level: c_int, ptr: *const u8, size: c_int) void;
