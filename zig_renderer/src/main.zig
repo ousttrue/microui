@@ -4,6 +4,7 @@ const zigmui = @import("zigmui");
 const logger = std.log.scoped(.zig_renderer);
 pub const atlas = @import("atlas");
 const Renderer = @import("zigmui_impl_gl").Renderer;
+const Scene = @import("./Scene.zig");
 const ui = @import("./ui.zig");
 
 pub extern fn console_logger(level: c_int, ptr: *const u8, size: c_int) void;
@@ -45,6 +46,7 @@ var g_renderer: ?Renderer = null;
 var g_ctx: ?*zigmui.Context = null;
 var gpa: std.heap.GeneralPurposeAllocator(.{}) = undefined;
 var allocator: std.mem.Allocator = undefined;
+var g_scene: ?Scene = null;
 
 export fn ENGINE_init(p: *const anyopaque) callconv(.C) void {
     std.debug.assert(g_renderer == null);
@@ -61,6 +63,16 @@ export fn ENGINE_init(p: *const anyopaque) callconv(.C) void {
     style.text_width_callback = &atlas.zigmui_width;
     style.text_height_callback = &atlas.zigmui_height;
     // gl.fwSetWindowUserPointer(window, ctx);
+
+    var scene = Scene.init();
+    g_scene = scene;
+    var it = std.process.ArgIterator.initWithAllocator(allocator) catch unreachable;
+    defer it.deinit();
+    // arg0
+    _ = it.next();
+    if (it.next()) |arg| {
+        scene.load(arg);
+    }
 }
 
 export fn ENGINE_deinit() callconv(.C) void {
@@ -144,12 +156,21 @@ export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) zigmui.CURSOR_
     const ctx = g_ctx orelse {
         return .ARROW;
     };
+
+    // update ui
     var command: zigmui.RenderFrame = undefined;
     try ui.process_frame(ctx, &bg, &command);
 
+    if (g_scene) |*s| {
+        // clear
+        s.clear(width, height, bg[0..3]);
+        // TODO
+    }
+
     if (g_renderer) |*r| {
-        r.clear(width, height, bg[0..3]);
-        r.redner_zigmui(command);
+        // render zigmui
+        r.redner_zigmui(width, height, command);
+        // do
         r.flush();
     }
 

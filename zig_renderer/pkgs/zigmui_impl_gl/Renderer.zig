@@ -81,25 +81,6 @@ pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data
     return self;
 }
 
-pub fn clear(self: *Self, width: i32, height: i32, bg: []const f32) void {
-    self.width = width;
-    self.height = height;
-    gl.viewport(0, 0, width, height);
-    gl.scissor(0, 0, width, height);
-    gl.clearColor(
-        bg[0] / 255.0,
-        bg[1] / 255.0,
-        bg[2] / 255.0,
-        1,
-    );
-    gl.clear(gl.GL_COLOR_BUFFER_BIT);
-
-    self.matrix[0] = 2.0 / @intToFloat(f32, width);
-    self.matrix[3] = -1.0;
-    self.matrix[5] = 2.0 / -@intToFloat(f32, height);
-    self.matrix[7] = 1.0;
-}
-
 pub fn flush(self: *Self) void {
     if (self.vertex_count > 0 and self.index_count > 0) {
         // update
@@ -134,7 +115,14 @@ fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
     return @ptrCast(T, @alignCast(info.Pointer.alignment, p));
 }
 
-pub fn redner_zigmui(self: *Self, command: zigmui.RenderFrame) void {
+pub fn redner_zigmui(self: *Self, width: i32, height: i32, command: zigmui.RenderFrame) void {
+    self.width = width;
+    self.height = height;
+    self.matrix[0] = 2.0 / @intToFloat(f32, width);
+    self.matrix[3] = -1.0;
+    self.matrix[5] = 2.0 / -@intToFloat(f32, height);
+    self.matrix[7] = 1.0;
+
     for (command.slice()) |it| {
         var p = command.get(it.head);
         var end = command.get(it.tail);
