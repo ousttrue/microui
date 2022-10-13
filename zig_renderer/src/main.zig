@@ -41,12 +41,6 @@ pub fn log(
     }
 }
 
-fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
-    @setRuntimeSafety(false);
-    const info = @typeInfo(T);
-    return @ptrCast(T, @alignCast(info.Pointer.alignment, p));
-}
-
 var g_renderer: ?Renderer = null;
 var g_ctx: ?*zigmui.Context = null;
 var gpa: std.heap.GeneralPurposeAllocator(.{}) = undefined;
@@ -154,40 +148,8 @@ export fn ENGINE_render(width: c_int, height: c_int) callconv(.C) zigmui.CURSOR_
     try ui.process_frame(ctx, &bg, &command);
 
     if (g_renderer) |*r| {
-        r.begin(width, height, bg[0..3]);
-
-        for (command.slice()) |it| {
-            var p = command.get(it.head);
-            var end = command.get(it.tail);
-            while (p != end) {
-                const command_type = @intToEnum(zigmui.COMMAND, ptrAlignCast(*const c_int, p).*);
-                switch (command_type) {
-                    .CLIP => {
-                        const cmd = ptrAlignCast(*const zigmui.ClipCommand, p + 4);
-                        r.set_clip_rect(cmd.rect);
-                        p += (4 + @sizeOf(zigmui.ClipCommand));
-                    },
-                    .RECT => {
-                        const cmd = ptrAlignCast(*const zigmui.RectCommand, p + 4);
-                        r.draw_rect(cmd.rect, cmd.color);
-                        p += (4 + @sizeOf(zigmui.RectCommand));
-                    },
-                    .TEXT => {
-                        const cmd = ptrAlignCast(*const zigmui.TextCommand, p + 4);
-                        const begin = 4 + @sizeOf(zigmui.TextCommand);
-                        const text = p[begin .. begin + cmd.length];
-                        r.draw_text(text, cmd.pos, cmd.color);
-                        p += (4 + @sizeOf(zigmui.TextCommand) + cmd.length);
-                    },
-                    .ICON => {
-                        const cmd = ptrAlignCast(*const zigmui.IconCommand, p + 4);
-                        r.draw_icon(@intCast(u32, cmd.id), cmd.rect, cmd.color);
-                        p += (4 + @sizeOf(zigmui.IconCommand));
-                    },
-                }
-            }
-        }
-
+        r.clear(width, height, bg[0..3]);
+        r.redner_zigmui(command);
         r.flush();
     }
 

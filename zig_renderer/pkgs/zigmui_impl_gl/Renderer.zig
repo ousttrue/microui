@@ -81,7 +81,7 @@ pub fn init(p: *const anyopaque, atlas_width: u32, atlas_height: u32, atlas_data
     return self;
 }
 
-pub fn begin(self: *Self, width: i32, height: i32, bg: []const f32) void {
+pub fn clear(self: *Self, width: i32, height: i32, bg: []const f32) void {
     self.width = width;
     self.height = height;
     gl.viewport(0, 0, width, height);
@@ -127,6 +127,48 @@ pub fn flush(self: *Self) void {
         self.program.unbind();
     }
 }
+
+fn ptrAlignCast(comptime T: type, p: *const anyopaque) T {
+    @setRuntimeSafety(false);
+    const info = @typeInfo(T);
+    return @ptrCast(T, @alignCast(info.Pointer.alignment, p));
+}
+
+pub fn redner_zigmui(self: *Self, command: zigmui.RenderFrame) void {
+    for (command.slice()) |it| {
+        var p = command.get(it.head);
+        var end = command.get(it.tail);
+        while (p != end) {
+            const command_type = @intToEnum(zigmui.COMMAND, ptrAlignCast(*const c_int, p).*);
+            switch (command_type) {
+                .CLIP => {
+                    const cmd = ptrAlignCast(*const zigmui.ClipCommand, p + 4);
+                    self.set_clip_rect(cmd.rect);
+                    p += (4 + @sizeOf(zigmui.ClipCommand));
+                },
+                .RECT => {
+                    const cmd = ptrAlignCast(*const zigmui.RectCommand, p + 4);
+                    self.draw_rect(cmd.rect, cmd.color);
+                    p += (4 + @sizeOf(zigmui.RectCommand));
+                },
+                .TEXT => {
+                    const cmd = ptrAlignCast(*const zigmui.TextCommand, p + 4);
+                    const begin = 4 + @sizeOf(zigmui.TextCommand);
+                    const text = p[begin .. begin + cmd.length];
+                    self.draw_text(text, cmd.pos, cmd.color);
+                    p += (4 + @sizeOf(zigmui.TextCommand) + cmd.length);
+                },
+                .ICON => {
+                    const cmd = ptrAlignCast(*const zigmui.IconCommand, p + 4);
+                    self.draw_icon(@intCast(u32, cmd.id), cmd.rect, cmd.color);
+                    p += (4 + @sizeOf(zigmui.IconCommand));
+                },
+            }
+        }
+    }
+}
+
+// fn redner_zigmui_command(self: *Self, command: zigmui.RenderFrame) void {}
 
 pub fn draw_rect(self: *Self, rect: zigmui.Rect, color: zigmui.Color32) void {
     self.push_quad(rect, atlas.atlas[@enumToInt(atlas.ATLAS_GLYPH.ATLAS_WHITE)], color);
