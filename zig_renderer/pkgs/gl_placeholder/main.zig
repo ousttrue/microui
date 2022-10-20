@@ -75,6 +75,10 @@ pub const GL_BLEND_SRC_ALPHA = 0x80CB;
 pub const GL_BLEND_EQUATION_RGB = 0x8009;
 pub const GL_BLEND_EQUATION_ALPHA = 0x883D;
 pub const GL_UNSIGNED_INT = 0x1405;
+pub const GL_ACTIVE_ATTRIBUTES = 0x8B89;
+pub const GL_FLOAT_VEC2 = 0x8B50;
+pub const GL_FLOAT_VEC3 = 0x8B51;
+pub const GL_FLOAT_VEC4 = 0x8B52;
 
 // [wasm] inject WebGL when instanciate by importObject
 // [desktop] inject OpenGL when link with glad_placeholders.c
@@ -90,22 +94,28 @@ pub extern fn bufferData(target: GLenum, size: GLsizeiptr, data: ?*const anyopaq
 pub extern fn bufferSubData(target: GLenum, offset: GLsizeiptr, size: GLsizeiptr, data: *const anyopaque) void;
 pub extern fn createShader(shaderType: GLenum) c_uint;
 pub extern fn deleteShader(shader: GLuint) void;
-pub extern fn shaderSource(shader: GLuint, count: GLuint, string: *const [*:0]const u8) void;
+pub extern fn shaderSource(shader: GLuint, count: GLuint, string: *const *const u8, length: *const GLint) void;
 pub extern fn compileShader(shader: GLuint) void;
 pub extern fn getShaderiv(shader: GLuint, pname: GLenum, params: *GLint) void;
 pub extern fn getShaderInfoLog(shader: GLuint, maxLength: GLsizei, length: ?*GLsizei, infoLog: *u8) void;
+
 pub extern fn createProgram() GLuint;
+pub extern fn deleteProgram(program: GLuint) void;
 pub extern fn attachShader(program: GLuint, shader: GLuint) void;
 pub extern fn detachShader(program: GLuint, shader: GLuint) void;
 pub extern fn linkProgram(program: GLuint) void;
 pub extern fn getProgramiv(program: GLuint, pname: GLenum, params: *GLint) void;
 pub extern fn getProgramInfoLog(program: GLuint, maxLength: GLsizei, length: ?*GLsizei, infoLog: *u8) void;
-pub extern fn getUniformLocation(program: GLuint, name: [*:0]const u8) GLuint;
-pub extern fn getAttribLocation(program: GLuint, name: [*:0]const u8) GLuint;
+pub extern fn getUniformLocation(program: GLuint, name: [*:0]const u8) GLint;
+pub extern fn getAttribLocation(program: GLuint, name: [*:0]const u8) GLint;
+pub extern fn getActiveAttrib(program: GLuint, index: GLuint, bufSize: GLsizei, length: *GLsizei, size: *GLint, type: *GLenum, name: *u8) void;
+
 pub extern fn enableVertexAttribArray(index: GLuint) void;
 pub extern fn vertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, offset: GLsizeiptr) void;
 pub extern fn useProgram(program: GLuint) void;
 pub extern fn uniformMatrix4fv(location: GLuint, count: GLsizei, transpose: GLboolean, value: *const GLfloat) void;
+pub extern fn uniform4fv(location: GLuint, count: GLsizei, value: *const GLfloat) void;
+
 pub extern fn uniform1i(location: GLuint, v0: GLint) void;
 pub extern fn drawArrays(mode: GLenum, first: GLint, count: GLsizei) void;
 pub extern fn drawElements(mode: GLenum, count: GLsizei, type: GLenum, offset: GLsizeiptr) void;

@@ -40,8 +40,8 @@ GLuint createShader(GLenum shaderType) {
 
 void deleteShader(GLuint shader) { glad_glDeleteShader(shader); }
 
-void shaderSource(GLuint shader, GLuint count, const GLchar *const *string) {
-  glad_glShaderSource(shader, count, string, 0);
+void shaderSource(GLuint shader, GLuint count, const GLchar *const *string, const GLint *length) {
+  glad_glShaderSource(shader, count, string, length);
 }
 
 void compileShader(GLuint shader) { glad_glCompileShader(shader); }
@@ -56,6 +56,11 @@ void getShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei *length,
 }
 
 GLuint createProgram(void) { return glad_glCreateProgram(); }
+
+void deleteProgram(GLuint program)
+{
+  return glad_glDeleteProgram(program);
+}
 
 void attachShader(GLuint program, GLuint shader) {
   glad_glAttachShader(program, shader);
@@ -94,6 +99,11 @@ void vertexAttribPointer(GLuint index, GLint size, GLenum type,
   glad_glVertexAttribPointer(index, size, type, normalized, stride, offset);
 }
 
+void getActiveAttrib(	GLuint program,GLuint index,GLsizei bufSize,GLsizei *length,GLint *size,GLenum *type,GLchar *name)
+{
+  glad_glGetActiveAttrib(program, index, bufSize, length, size, type, name);
+}
+
 void useProgram(GLuint program) { glad_glUseProgram(program); }
 
 void uniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose,
@@ -101,6 +111,11 @@ void uniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose,
   glad_glUniformMatrix4fv(location, count, transpose, value);
 }
 void uniform1i(GLint location, GLint v0) { glad_glUniform1i(location, v0); }
+
+void uniform4fv(GLint location, GLsizei count, const GLfloat *value)
+{
+  glad_glUniform4fv(location, count, value);
+}
 
 void drawArrays(GLenum mode, GLint first, GLsizei count) {
   glad_glDrawArrays(mode, first, count);

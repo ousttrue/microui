@@ -8,8 +8,9 @@ id: u32 = 0,
 fn compile_shader(shader_type: gl.GLenum, src: [:0]const u8) !u32 {
     const id = gl.createShader(shader_type);
     errdefer gl.deleteShader(id);
-    const pSrc = @ptrCast([*:0]const u8, &src[0]);
-    gl.shaderSource(id, 1, &pSrc);
+    const pSrc = &src[0];
+    const len: c_int = @intCast(c_int, src.len);
+    gl.shaderSource(id, 1, &pSrc, &len);
     gl.compileShader(id);
     var vertex_compiled: c_int = undefined;
     gl.getShaderiv(id, gl.GL_COMPILE_STATUS, &vertex_compiled);
@@ -59,5 +60,7 @@ pub fn set_uniform_matrix(
     transpose: bool,
 ) void {
     const location = gl.getUniformLocation(self.id, @ptrCast([*:0]const u8, &key[0]));
-    gl.uniformMatrix4fv(location, 1, if (transpose) 1 else 0, m);
+    if (location >= 0) {
+        gl.uniformMatrix4fv(@intCast(c_uint, location), 1, if (transpose) 1 else 0, m);
+    }
 }
